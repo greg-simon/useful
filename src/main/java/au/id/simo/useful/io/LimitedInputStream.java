@@ -35,7 +35,7 @@ public class LimitedInputStream extends InputStream {
         if (inputStream.getByteCount() >= byteLimit) {
             return -1;
         }
-        if (inputStream.getByteCount() + len >= byteLimit) {
+        if (inputStream.getByteCount() + len > byteLimit) {
             int newLen = (int) ((inputStream.getByteCount() + len) - byteLimit);
             return inputStream.read(b, off, newLen);
         }
