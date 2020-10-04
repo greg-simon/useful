@@ -20,6 +20,10 @@ public class ResourcesTest {
 
         res = new ResourcesImpl("path/");
         assertEquals("path/resource", res.resolveResourceName("resource"));
+        // test variations of the varags argument.
+        assertEquals("path/resource", res.resolveResourceName("resource", (Object) null));
+        assertEquals("path/resource", res.resolveResourceName("resource", (Object[]) null));
+        assertEquals("path/resource", res.resolveResourceName("resource", new Object[0]));
 
         res = new ResourcesImpl("path/%s.txt");
         assertEquals("path/resource.txt", res.resolveResourceName("resource"));
