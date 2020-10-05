@@ -1,5 +1,6 @@
 package au.id.simo.useful.xml;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,15 +15,24 @@ public class Tag implements Map<String, String> {
     private final StringBuilder content;
     private final Map<String, String> attributes;
     private final Tag parent;
-    private boolean hadChild;
+    private final Collection<Tag> children;
     private boolean significantContent = false;
 
+    /**
+     * Will register this instance as a child to the parent Tag (if not null).
+     * 
+     * @param name
+     * @param parent 
+     */
     public Tag(String name, Tag parent) {
-        super();
         this.name = name;
         this.parent = parent;
         this.content = new StringBuilder();
         this.attributes = new LinkedHashMap<>();
+        this.children = new ArrayList<>();
+        if (parent != null) {
+            parent.children.add(this);
+        }
     }
 
     public String getXPath() {
@@ -68,12 +78,12 @@ public class Tag implements Map<String, String> {
         return parent;
     }
 
-    public boolean hadChild() {
-        return hadChild;
+    public boolean hasChildren() {
+        return !children.isEmpty();
     }
-
-    public void setHadChild(boolean hadChild) {
-        this.hadChild = hadChild;
+    
+    public Collection<Tag> getChildren() {
+        return new ArrayList<>(this.children);
     }
 
     public void appendContent(String content) {
@@ -131,7 +141,7 @@ public class Tag implements Map<String, String> {
             return false;
         }
         // content
-        if (this.hasSignificantContent() && tObj.hasSignificantContent()) {
+        if (this.hasSignificantContent() || tObj.hasSignificantContent()) {
             if (!this.getContent().equals(tObj.getContent())) {
                 return false;
             }

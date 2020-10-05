@@ -35,14 +35,6 @@ public abstract class XmlHandler extends DefaultHandler {
         this.prefixMappings = new LinkedHashMap<>();
     }
 
-    public Tag getCurrentTag() {
-        return currentTag;
-    }
-
-    public Deque<Tag> getTagStack() {
-        return new LinkedList<>(tagStack);
-    }
-
     /**
      * This method is called when the provided tag has closed, and the fully
      * constructed {@link Tag} object is passed in as an argument.
@@ -61,7 +53,6 @@ public abstract class XmlHandler extends DefaultHandler {
         Tag parent = null;
         if (currentTag != null) {
             parent = currentTag;
-            parent.setHadChild(true);
             tagStack.push(currentTag);
         }
         currentTag = new Tag(qName, parent);
@@ -80,9 +71,12 @@ public abstract class XmlHandler extends DefaultHandler {
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
-        if (currentTag != null) {
-            currentTag.appendContent(ch, start, length);
+        if (currentTag == null) {
+            // mostly likly the parser has already thrown the exception and this
+            // code will never be reached.
+            throw new SAXException("Should not receive characters outside a tag.");
         }
+        currentTag.appendContent(ch, start, length);
     }
 
     @Override
@@ -109,7 +103,6 @@ public abstract class XmlHandler extends DefaultHandler {
         this.tagStack.clear();
     }
     
-
     /**
      * Will close the provided input stream.
      *
