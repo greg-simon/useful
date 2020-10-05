@@ -6,7 +6,7 @@ package au.id.simo.useful;
  * 
  * Useful for recording monitoring data.
  */
-public class CircleBuffer {
+public class CircleIntBuffer {
 
     /**
      * The actual ring buffer
@@ -25,7 +25,7 @@ public class CircleBuffer {
      *
      * @param size the size of the ring buffer, this is immutable.
      */
-    public CircleBuffer(int size) {
+    public CircleIntBuffer(int size) {
         array = new int[size];
         indexNextFree = 0;
     }
@@ -120,7 +120,7 @@ public class CircleBuffer {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("CircleBuffer[");
+        sb.append("CircleIntBuffer[");
         for (Integer num : array) {
             sb.append(num);
             sb.append(',');
