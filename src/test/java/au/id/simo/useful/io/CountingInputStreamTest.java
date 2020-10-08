@@ -39,4 +39,13 @@ public class CountingInputStreamTest {
         while (cin.read(buffer) >= 0) {}
         assertEquals(bytes.length, cin.getByteCount());
     }
+    
+    @Test
+    public void testReadByteArrayIndexLength() throws IOException {
+        byte[] bytes = "This is a counting test.".getBytes("UTF-8");
+        CountingInputStream cin = new CountingInputStream(new ByteArrayInputStream(bytes));
+        byte[] buffer = new byte[2];
+        while (cin.read(buffer, 0, 2) >= 0) {}
+        assertEquals(bytes.length, cin.getByteCount());
+    }
 }
