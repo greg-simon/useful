@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import au.id.simo.useful.io.FileResource;
 import au.id.simo.useful.io.Generator;
 import au.id.simo.useful.io.Resource;
 import au.id.simo.useful.io.URLSession;
@@ -100,12 +101,7 @@ public class LocalSession implements URLSession {
 
     @Override
     public String register(String path, File file) throws IOException {
-        return register(path, new Resource() {
-            @Override
-            public InputStream inputStream() throws IOException {
-                return new FileInputStream(file);
-            }
-        });
+        return register(path, new FileResource(file));
     }
 
     @Override

@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- *
+ * Allows repeated reads of a file.
  */
 public class FileResource extends Resource {
 
