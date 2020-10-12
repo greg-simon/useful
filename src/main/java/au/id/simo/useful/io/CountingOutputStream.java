@@ -26,12 +26,6 @@ public class CountingOutputStream extends FilterOutputStream {
     }
 
     @Override
-    public void write(byte[] b) throws IOException {
-        super.out.write(b);
-        byteCount+=b.length;
-    }
-
-    @Override
     public void write(int b) throws IOException {
         super.out.write(b);
         byteCount++;

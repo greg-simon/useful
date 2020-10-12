@@ -25,15 +25,6 @@ public class CountingInputStream extends FilterInputStream {
     }
 
     @Override
-    public int read(byte[] b) throws IOException {
-        int bytesRead = in.read(b);
-        if (bytesRead > 0) {
-            byteCount += bytesRead;
-        }
-        return bytesRead;
-    }
-
-    @Override
     public int read(byte[] b, int off, int len) throws IOException {
         int bytesRead = in.read(b, off, len);
         if (bytesRead > 0) {

@@ -77,16 +77,6 @@ public class HashInputStream extends CountingInputStream {
     }
 
     @Override
-    public int read(byte[] b) throws IOException {
-        int readByteCount = super.read(b);
-        if (readByteCount > 0) {
-            messageDigest.update(b, 0, readByteCount);
-        }
-
-        return readByteCount;
-    }
-
-    @Override
     public void close() throws IOException {
         super.close();
     }

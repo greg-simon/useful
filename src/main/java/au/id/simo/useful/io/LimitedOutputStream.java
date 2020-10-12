@@ -19,29 +19,17 @@ public class LimitedOutputStream extends OutputStream {
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        if ((cout.getByteCount() + len) <= byteLimit) {
+        long byteCount = cout.getByteCount();
+        if ((byteCount + len) <= byteLimit) {
             cout.write(b, off, len);
-        } else if (cout.getByteCount() < byteLimit) {
-            // how many bytes can I write?
-            int bytesToWrite = (int) (byteLimit - cout.getByteCount());
-            if (bytesToWrite <= len && bytesToWrite > 0) {
-                cout.write(b, off, bytesToWrite);
-            }
-        }
-    }
-
-    @Override
-    public void write(byte[] b) throws IOException {
-        if ((cout.getByteCount() + b.length) <= byteLimit) {
-            cout.write(b);
             return;
         }
         // can any bytes be written
-        if (cout.getByteCount() < byteLimit) {
+        if (byteCount < byteLimit) {
             // how many bytes can I write?
-            int bytesToWrite = (int) (byteLimit - cout.getByteCount());
-            if (bytesToWrite <= b.length && bytesToWrite > 0) {
-                cout.write(b, 0, bytesToWrite);
+            int bytesToWrite = (int) (byteLimit - byteCount);
+            if (bytesToWrite <= len && bytesToWrite > 0) {
+                cout.write(b, off, bytesToWrite);
             }
         }
         // nothing more can be written, just discarded.
