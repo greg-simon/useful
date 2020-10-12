@@ -3,6 +3,7 @@ package au.id.simo.useful.io;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 /**
  * Records all data read from provided InputStream up to a byte array buffer up
@@ -140,9 +141,7 @@ public class RecorderInputStream extends FilterInputStream {
     }
     
     public byte[] getReadByteArray() {
-        byte[] rightSized = new byte[index];
-        System.arraycopy(buffer, 0, rightSized, 0, index);
-        return rightSized;
+        return Arrays.copyOf(buffer, index);
     }
     
     protected int getResizeCount() {
