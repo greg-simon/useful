@@ -25,10 +25,10 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public abstract class XmlHandler extends DefaultHandler {
 
-    private final Deque<Tag> tagStack;
-    private final Map<String, String> prefixMappings;
+    protected final Deque<Tag> tagStack;
+    protected final Map<String, String> prefixMappings;
 
-    private Tag currentTag;
+    protected Tag currentTag;
 
     public XmlHandler() {
         this.tagStack = new LinkedList<>();
