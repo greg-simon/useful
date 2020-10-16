@@ -5,6 +5,8 @@ import java.util.Objects;
 
 /**
  * Byte buffer for use with streams.
+ * <p>
+ * Allows writing to it forever without additional memory usage.
  */
 public class RingBuffer implements Iterable<Byte> {
 

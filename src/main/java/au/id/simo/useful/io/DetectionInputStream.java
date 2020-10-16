@@ -85,6 +85,7 @@ public class DetectionInputStream extends InputStream {
         }
     }
     
+    @FunctionalInterface
     public interface MatchListener {
         void match(byte[] detected) throws IOException;
     }
