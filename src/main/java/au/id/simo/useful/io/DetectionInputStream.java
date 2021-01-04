@@ -3,7 +3,7 @@ package au.id.simo.useful.io;
 import java.io.IOException;
 import java.io.InputStream;
 
-import au.id.simo.useful.RingBuffer;
+import au.id.simo.useful.ByteRingBuffer;
 
 /**
  * A pass through InputStream that can run MatchListeners when a specified
@@ -15,7 +15,7 @@ public class DetectionInputStream extends InputStream {
     
     private final InputStream in;
     private final MatchListener[] listeners;
-    private final RingBuffer buffer;
+    private final ByteRingBuffer buffer;
     private final byte[] detectBytes;
     private boolean isClosed = false;
     private boolean matched = false;
@@ -24,7 +24,7 @@ public class DetectionInputStream extends InputStream {
         this.in = in;
         this.detectBytes = detectBytes;
         this.listeners = listeners;
-        this.buffer = new RingBuffer(detectBytes.length);
+        this.buffer = new ByteRingBuffer(detectBytes.length);
     }
 
     private void fillBuffer() throws IOException {

@@ -7,11 +7,11 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  *
  */
-public class RingBufferTest {
+public class ByteRingBufferTest {
 
     @Test
     public void testIncrementIndex() {
-        RingBuffer rb = new RingBuffer(3);
+        ByteRingBuffer rb = new ByteRingBuffer(3);
         assertEquals(1,rb.incrementIndex(0));
         assertEquals(2,rb.incrementIndex(1));
         assertEquals(0,rb.incrementIndex(2));
@@ -20,7 +20,7 @@ public class RingBufferTest {
 
     @Test
     public void testHappy() {
-        RingBuffer rb = new RingBuffer(3);
+        ByteRingBuffer rb = new ByteRingBuffer(3);
         System.out.println(rb);
         assertEquals(0, rb.size());
         assertEquals(3, rb.maxSize());
@@ -104,7 +104,7 @@ public class RingBufferTest {
     
     @Test
     public void testClearAndRemove() {
-        RingBuffer buf = new RingBuffer(5);
+        ByteRingBuffer buf = new ByteRingBuffer(5);
         buf.add(1);
         buf.add(2);
         buf.add(3);
@@ -144,7 +144,7 @@ public class RingBufferTest {
 
     @Test
     public void testGet() {
-        RingBuffer rb = new RingBuffer(3);
+        ByteRingBuffer rb = new ByteRingBuffer(3);
         rb.add(1);
         rb.add(2);
         rb.add(3);
@@ -175,7 +175,7 @@ public class RingBufferTest {
     public void testContainsArray() {
         String testStr = "testing 123";
         byte[] testArray = testStr.getBytes();
-        RingBuffer rb = new RingBuffer(testArray.length+1);
+        ByteRingBuffer rb = new ByteRingBuffer(testArray.length+1);
         for(byte b: testArray) {
             assertFalse(rb.containsArray(testArray));
             rb.add(b);

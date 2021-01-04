@@ -8,7 +8,7 @@ import java.util.Objects;
  * <p>
  * Allows writing to it forever without additional memory usage.
  */
-public class RingBuffer implements Iterable<Byte> {
+public class ByteRingBuffer implements Iterable<Byte> {
 
     private final byte[] buffer;
 
@@ -21,7 +21,7 @@ public class RingBuffer implements Iterable<Byte> {
      */
     private int tail;
 
-    public RingBuffer(int size) {
+    public ByteRingBuffer(int size) {
         buffer = new byte[size];
         head = -1; //empty
         tail = -1; //empty
@@ -179,7 +179,7 @@ public class RingBuffer implements Iterable<Byte> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("RingBuffer");
+        sb.append("ByteRingBuffer");
         if (head == -1) {
             sb.append('+');
         }
@@ -217,7 +217,7 @@ public class RingBuffer implements Iterable<Byte> {
 
     @Override
     public Iterator<Byte> iterator() {
-        return new RingBufferIterator();
+        return new ByteRingBufferIterator();
     }
 
     public void clear() {
@@ -227,7 +227,7 @@ public class RingBuffer implements Iterable<Byte> {
         tail = -1;
     }
 
-    private class RingBufferIterator implements Iterator<Byte> {
+    private class ByteRingBufferIterator implements Iterator<Byte> {
         private int index = 0;
 
         @Override
