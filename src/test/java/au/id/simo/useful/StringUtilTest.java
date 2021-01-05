@@ -20,4 +20,10 @@ public class StringUtilTest {
         String str = "' \" \t \n \r \r\n & < >";
         assertEquals("&apos; &quot; &#x9; &#xA; &#xD; &#xD;&#xA; &amp; &lt; &gt;", StringUtil.escapeAttribute(str));
     }
+    
+    @Test
+    public void testEscapeContent() {
+        String str = "& < >";
+        assertEquals("&amp; &lt; &gt;", StringUtil.escapeContent(str));
+    }
 }

@@ -4,6 +4,11 @@ package au.id.simo.useful;
  * String Utilities for modifying String and escaping XML characters.
  */
 public class StringUtil {
+        
+    private StringUtil() {
+        // no-op
+    };
+    
     public static String escapeAttribute(String str) {
         StringBuilder sb = new StringBuilder(str);
         replaceAttribute(sb);
