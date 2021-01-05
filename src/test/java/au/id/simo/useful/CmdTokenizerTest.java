@@ -1,6 +1,7 @@
 package au.id.simo.useful;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ public class CmdTokenizerTest {
     @Test
     public void testIterator() {
         String cmd = "one \t 'this is two'  three \"this is four\" ";
-        Iterator<String> itr = new CmdTokenizer(cmd).iterator();
+        Iterator<String> itr = CmdTokenizer.iterator(cmd);
         assertTrue(itr.hasNext());
         assertEquals("one", itr.next());
         assertTrue(itr.hasNext());
@@ -27,6 +28,18 @@ public class CmdTokenizerTest {
         assertTrue(itr.hasNext());
         assertEquals("this is four", itr.next());
         assertFalse(itr.hasNext());
+    }
+    
+    @Test
+    public void testList() {
+        String cmd = "one \t 'this is two'  three \"this is four\" ";
+        List<String> list = CmdTokenizer.toList(cmd);
+        assertNotNull(list);
+        assertEquals(4, list.size());
+        assertEquals("one", list.get(0));
+        assertEquals("this is two", list.get(1));
+        assertEquals("three", list.get(2));
+        assertEquals("this is four", list.get(3));
     }
     
     @Test
@@ -83,5 +96,18 @@ public class CmdTokenizerTest {
         assertEquals("PLACEHOLDER_TAG", itr.next());
         
         assertFalse(itr.hasNext());
+    }
+    
+    @Test
+    public void testNullCommand() {
+        String cmd = null;
+        CmdTokenizer tok = new CmdTokenizer(cmd);
+        
+        Iterator<String> itr = tok.iterator();
+        assertFalse(itr.hasNext());
+        
+        List<String> emptyList = tok.toList();
+        assertNotNull(emptyList);
+        assertEquals(0, emptyList.size());
     }
 }

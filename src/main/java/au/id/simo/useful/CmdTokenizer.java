@@ -16,6 +16,11 @@ public class CmdTokenizer implements Iterable<String> {
         return tokenizer.toList();
     }
     
+    public static Iterator<String> iterator(String command) {
+        CmdTokenizer tokenizer = new CmdTokenizer(command);
+        return tokenizer.iterator();
+    }
+    
     private final String command;
     
     public CmdTokenizer(String command) {
