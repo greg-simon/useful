@@ -12,9 +12,9 @@ import au.id.simo.useful.io.URLSession;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 /**
  *
- * @author gsimon
  */
 public class LocalSessionTest {
     @Test

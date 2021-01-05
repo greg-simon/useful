@@ -1,8 +1,7 @@
 package au.id.simo.useful;
 
 /**
- *
- * @author gsimon
+ * String Utilities for modifying String and escaping XML characters.
  */
 public class StringUtil {
     public static String escapeAttribute(String str) {
