@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,14 @@ public class FileSession implements URLSession {
      * @throws IOException if any errors occur in creating the temp directory.
      */
     public FileSession() throws IOException {
-        this(Files.createTempDirectory("FS_").toFile());
+        Path basePath = Files.createTempDirectory("FS_");
+        this.baseDir = basePath.toFile();
+        resources = new FileResources(baseDir);
+        createdFileList = new ArrayList<>();
+        createdDirList = new ArrayList<>();
+        closed = false;
+        
+        createdDirList.add(basePath);
     }
 
     /**
@@ -71,6 +79,13 @@ public class FileSession implements URLSession {
     @Override
     public String getBaseUrl() {
         return baseDir.toURI().toString();
+    }
+    
+    /**
+     * @return The base directory registered files will written to.
+     */
+    public File getBaseDir() {
+        return baseDir;
     }
 
     /**
@@ -179,7 +194,11 @@ public class FileSession implements URLSession {
         Path source = resource.toPath();
         File target = getFile(path);
         createDirectories(target);
-        Path newFile = Files.copy(source, target.toPath());
+        Path newFile = Files.copy(
+                source,
+                target.toPath(),
+                StandardCopyOption.REPLACE_EXISTING
+        );
         return newFile.toUri().toString();
     }
 
