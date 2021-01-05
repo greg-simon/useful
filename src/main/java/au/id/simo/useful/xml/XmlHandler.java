@@ -43,6 +43,16 @@ public abstract class XmlHandler extends DefaultHandler {
      */
     public abstract void endTag(Tag tag);
 
+    /**
+     * Run just after an opening tag has been read.
+     * 
+     * @param tag the opening tag. It will not contain any text as text will not
+     * have been read yet. But it will contain any tag attributes present.
+     */
+    public void startTag(Tag tag) {
+
+    }
+
     @Override
     public void startPrefixMapping(String prefix, String uri) throws SAXException {
         prefixMappings.put("xmlns:" + prefix, uri);
@@ -67,6 +77,8 @@ public abstract class XmlHandler extends DefaultHandler {
         for (int i = 0; i < attributes.getLength(); i++) {
             currentTag.put(attributes.getQName(i), attributes.getValue(i));
         }
+
+        startTag(currentTag);
     }
 
     @Override
