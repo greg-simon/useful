@@ -88,6 +88,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public E poll() {
         if (isEmpty()) {
             return null;
@@ -117,6 +118,7 @@ public class RingQueue<E> extends AbstractQueue<E> {
      * @return the value that is {@code index} positions from the oldest item in
      * the collection.
      */
+    @SuppressWarnings("unchecked")
     public E peek(int index) {
         if (index >= size()) {
             throw new ArrayIndexOutOfBoundsException(

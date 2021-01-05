@@ -13,7 +13,7 @@ public class RingQueueTest {
 
     @Test
     public void testIncrementIndex() {
-        RingQueue<Integer> rq = new RingQueue(3);
+        RingQueue<Integer> rq = new RingQueue<>(3);
         assertEquals(1,rq.incrementIndex(0));
         assertEquals(2,rq.incrementIndex(1));
         assertEquals(0,rq.incrementIndex(2));
