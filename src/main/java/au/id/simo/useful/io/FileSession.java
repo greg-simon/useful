@@ -59,7 +59,8 @@ public class FileSession implements URLSession {
      * directory is performed. Any errors creating files within it will occur
      * when registering resources.
      *
-     * @param baseDir the directory to store all registered resources in.
+     * @param baseDir the directory to store all registered resources in. It is
+     * expected this exists and is a directory.
      */
     public FileSession(File baseDir) {
         this.baseDir = baseDir;

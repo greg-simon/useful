@@ -19,12 +19,14 @@ public class FileUtilTest {
     @Test
     public void testNewFileInDir(@TempDir Path testFolder) throws Exception {
         File parentDir = testFolder.resolve("parent-test").toFile();
+        parentDir.mkdirs();
         File childFile = FileUtil.newFileInDir(parentDir, "child");
         assertEquals(parentDir, childFile.getParentFile());
     }
 
     @Test
     public void testNewFileInDir_ParentIsFile(@TempDir Path testFolder) throws Exception {
+        Files.createDirectories(testFolder);
         File parentFile = testFolder.resolve("parentIsFile-test").toFile();
         // make sure file exists by writing something to it.
         Files.write(parentFile.toPath(), Arrays.asList("parent file"));
@@ -38,6 +40,7 @@ public class FileUtilTest {
     @Test
     public void testNewFileBreakoutAttempt_DotDotSlash(@TempDir Path testFolder) throws Exception {
         File parentDir = testFolder.resolve("parent-test").toFile();
+        parentDir.mkdirs();
 
         // expect file creation to fail here as a break out is attempted
         assertThrows(IOException.class, () -> {
@@ -59,6 +62,7 @@ public class FileUtilTest {
     @Test
     public void testNewFileBreakoutAttempt_Root(@TempDir Path testFolder) throws Exception {
         File parentDir = testFolder.resolve("parent-test").toFile();
+        parentDir.mkdirs();
         // expect file creation to fail here as a break out is attempted
         assertThrows(IOException.class, () -> {
             FileUtil.newFileInDir(parentDir, "/outsideFile");

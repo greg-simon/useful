@@ -21,6 +21,7 @@ public class FileSessionTest {
     @Test
     public void testRegisterResource(@TempDir Path testFolder) throws Exception {
         File sessionRoot = testFolder.resolve("filesession").toFile();
+        sessionRoot.mkdirs();
 
         FileSession session = new FileSession(sessionRoot);
         String testFileContents = "This is a test file";
@@ -46,6 +47,8 @@ public class FileSessionTest {
     @Test
     public void testClose(@TempDir Path testFolder) throws Exception {
         File sessionRoot = testFolder.resolve("filesession").toFile();
+        sessionRoot.mkdirs();
+        
         assertTrue(sessionRoot.exists());
 
         FileSession session = new FileSession(sessionRoot);
@@ -68,6 +71,7 @@ public class FileSessionTest {
     @Test
     public void testClose_NonDestructiveDeletes(@TempDir Path testFolder) throws IOException {
         File sessionRoot = testFolder.resolve("filesession").toFile();
+        sessionRoot.mkdirs();
         assertTrue(sessionRoot.exists());
 
         FileSession session = new FileSession(sessionRoot);
