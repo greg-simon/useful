@@ -23,7 +23,6 @@ public class RingQueueTest {
     @Test
     public void testHappy() {
         RingQueue<Integer> rq = new RingQueue<>(3);
-        System.out.println(rq);
         assertEquals(0, rq.size());
         assertEquals(3, rq.maxSize());
         assertTrue(rq.isEmpty());
@@ -31,7 +30,6 @@ public class RingQueueTest {
         assertFalse(rq.isFull());
         
         rq.add(1);
-        System.out.println(rq);
         assertEquals(1, rq.size());
         assertFalse(rq.isEmpty());
         assertFalse(rq.isFull());
@@ -40,7 +38,6 @@ public class RingQueueTest {
         assertArrayEquals(new Integer[]{1}, rq.toArray());
         
         rq.add(2);
-        System.out.println(rq);
         assertEquals(2, rq.size());
         assertFalse(rq.isEmpty());
         assertFalse(rq.isFull());
@@ -49,7 +46,6 @@ public class RingQueueTest {
         assertArrayEquals(new Integer[]{1,2}, rq.toArray());
         
         rq.add(3);
-        System.out.println(rq);
         assertEquals(3, rq.size());
         assertFalse(rq.isEmpty());
         assertTrue(rq.isFull());
@@ -58,7 +54,6 @@ public class RingQueueTest {
         assertArrayEquals(new Integer[]{1,2,3}, rq.toArray());
         
         rq.add(4);
-        System.out.println(rq);
         assertEquals(3, rq.size());
         assertFalse(rq.isEmpty());
         assertTrue(rq.isNotEmpty());
@@ -67,7 +62,6 @@ public class RingQueueTest {
         assertArrayEquals(new Integer[]{2,3,4}, rq.toArray());
         
         rq.add(5);
-        System.out.println(rq);
         assertEquals(3, rq.size());
         assertFalse(rq.isEmpty());
         assertTrue(rq.isNotEmpty());
@@ -77,7 +71,6 @@ public class RingQueueTest {
         
         // removing values
         assertEquals(3, rq.remove());
-        System.out.println(rq);
         assertEquals(2, rq.size());
         assertFalse(rq.isEmpty());
         assertTrue(rq.isNotEmpty());
@@ -85,7 +78,6 @@ public class RingQueueTest {
         assertArrayEquals(new Integer[]{4,5}, rq.toArray());
         
         assertEquals(4, rq.remove());
-        System.out.println(rq);
         assertEquals(1, rq.size());
         assertFalse(rq.isEmpty());
         assertTrue(rq.isNotEmpty());
@@ -93,7 +85,6 @@ public class RingQueueTest {
         assertArrayEquals(new Integer[]{5}, rq.toArray());
         
         assertEquals(5, rq.remove());
-        System.out.println(rq);
         assertEquals(0, rq.size());
         assertTrue(rq.isEmpty());
         assertFalse(rq.isNotEmpty());
@@ -101,7 +92,6 @@ public class RingQueueTest {
         assertArrayEquals(new Integer[]{}, rq.toArray());
         
         rq.clear();
-        System.out.println(rq);
     }
     
     @Test
@@ -135,14 +125,9 @@ public class RingQueueTest {
         assertTrue(rq.isEmpty());
         assertNull(rq.peek());
         
-        boolean execeptionThrown = false;
-        try {
+        assertThrows(NoSuchElementException.class, () -> {
             rq.remove();
-            fail("Expected exception before this line");
-        } catch (NoSuchElementException e) {
-            execeptionThrown = true;
-        }
-        assertTrue(execeptionThrown);
+        });
     }
 
     @Test
@@ -151,26 +136,22 @@ public class RingQueueTest {
         rb.add(1);
         rb.add(2);
         rb.add(3);
-        System.out.println(rb);
         assertEquals(1, rb.peek(0));
         assertEquals(2, rb.peek(1));
         assertEquals(3, rb.peek(2));
         
-        try {
-            rb.peek(3);
-            fail("ArrayIndexOutOfBoundsException should have been thrown above");
-        } catch (ArrayIndexOutOfBoundsException e) {}
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
+            rb.peek(3); 
+        });
         
         rb.add(4);
         rb.add(5);
-        System.out.println(rb);
         assertEquals(3, rb.peek(0));
         assertEquals(4, rb.peek(1));
         assertEquals(5, rb.peek(2));
         
-        try {
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
             rb.peek(3);
-            fail("ArrayIndexOutOfBoundsException should have been thrown above");
-        } catch (ArrayIndexOutOfBoundsException e) {}
+        });
     }
 }

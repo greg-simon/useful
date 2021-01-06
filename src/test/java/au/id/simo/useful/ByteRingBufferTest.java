@@ -21,7 +21,6 @@ public class ByteRingBufferTest {
     @Test
     public void testHappy() {
         ByteRingBuffer rb = new ByteRingBuffer(3);
-        System.out.println(rb);
         assertEquals(0, rb.size());
         assertEquals(3, rb.maxSize());
         assertTrue(rb.isEmpty());
@@ -29,7 +28,6 @@ public class ByteRingBufferTest {
         assertFalse(rb.isFull());
         
         rb.add(1);
-        System.out.println(rb);
         assertEquals(1, rb.size());
         assertFalse(rb.isEmpty());
         assertFalse(rb.isFull());
@@ -38,7 +36,6 @@ public class ByteRingBufferTest {
         assertArrayEquals(new byte[]{1}, rb.toArray());
         
         rb.add(2);
-        System.out.println(rb);
         assertEquals(2, rb.size());
         assertFalse(rb.isEmpty());
         assertFalse(rb.isFull());
@@ -47,7 +44,6 @@ public class ByteRingBufferTest {
         assertArrayEquals(new byte[]{1,2}, rb.toArray());
         
         rb.add(3);
-        System.out.println(rb);
         assertEquals(3, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isFull());
@@ -56,7 +52,6 @@ public class ByteRingBufferTest {
         assertArrayEquals(new byte[]{1,2,3}, rb.toArray());
         
         rb.add(4);
-        System.out.println(rb);
         assertEquals(3, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
@@ -65,7 +60,6 @@ public class ByteRingBufferTest {
         assertArrayEquals(new byte[]{2,3,4}, rb.toArray());
         
         rb.add(5);
-        System.out.println(rb);
         assertEquals(3, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
@@ -75,7 +69,6 @@ public class ByteRingBufferTest {
         
         // removing values
         assertEquals(3, rb.remove());
-        System.out.println(rb);
         assertEquals(2, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
@@ -83,7 +76,6 @@ public class ByteRingBufferTest {
         assertArrayEquals(new byte[]{4,5}, rb.toArray());
         
         assertEquals(4, rb.remove());
-        System.out.println(rb);
         assertEquals(1, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
@@ -91,7 +83,6 @@ public class ByteRingBufferTest {
         assertArrayEquals(new byte[]{5}, rb.toArray());
         
         assertEquals(5, rb.remove());
-        System.out.println(rb);
         assertEquals(0, rb.size());
         assertTrue(rb.isEmpty());
         assertFalse(rb.isNotEmpty());
@@ -99,7 +90,6 @@ public class ByteRingBufferTest {
         assertArrayEquals(new byte[]{}, rb.toArray());
         
         rb.clear();
-        System.out.println(rb);
     }
     
     @Test
@@ -132,14 +122,9 @@ public class ByteRingBufferTest {
         assertEquals(0,buf.remove());
         assertTrue(buf.isEmpty());
         
-        boolean execeptionThrown = false;
-        try {
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
             buf.remove();
-            fail("Expected exception before this line");
-        } catch (ArrayIndexOutOfBoundsException e) {
-            execeptionThrown = true;
-        }
-        assertTrue(execeptionThrown);
+        });
     }
 
     @Test
@@ -148,27 +133,23 @@ public class ByteRingBufferTest {
         rb.add(1);
         rb.add(2);
         rb.add(3);
-        System.out.println(rb);
         assertEquals(1, rb.get(0));
         assertEquals(2, rb.get(1));
         assertEquals(3, rb.get(2));
         
-        try {
-            rb.get(3);
-            fail("ArrayIndexOutOfBoundsException should have been thrown above");
-        } catch (ArrayIndexOutOfBoundsException e) {}
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
+           rb.get(3); 
+        });
         
         rb.add(4);
         rb.add(5);
-        System.out.println(rb);
         assertEquals(3, rb.get(0));
         assertEquals(4, rb.get(1));
         assertEquals(5, rb.get(2));
         
-        try {
+        assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
             rb.get(3);
-            fail("ArrayIndexOutOfBoundsException should have been thrown above");
-        } catch (ArrayIndexOutOfBoundsException e) {}
+        });
     }
     
     @Test
