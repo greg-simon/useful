@@ -8,6 +8,7 @@ import java.net.URL;
 
 import au.id.simo.useful.io.Generator;
 import au.id.simo.useful.io.Resource;
+import au.id.simo.useful.io.URLResource;
 import au.id.simo.useful.io.URLSession;
 import org.junit.jupiter.api.Test;
 
@@ -51,13 +52,6 @@ public class LocalSessionTest {
     }
     
     public static String urlToString(String urlStr) throws IOException {
-        URL url = new URL(urlStr);
-        Resource urlRes = new Resource() {
-            @Override
-            public InputStream inputStream() throws IOException {
-                return url.openStream();
-            }
-        };
-        return urlRes.getString();
+        return new URLResource(urlStr).getString();
     }
 }
