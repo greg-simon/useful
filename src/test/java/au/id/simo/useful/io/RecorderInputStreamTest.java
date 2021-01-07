@@ -125,4 +125,19 @@ public class RecorderInputStreamTest {
         byte[] expected = new byte[]{1,2,3,4,5,6,7,8,9,10};
         assertArrayEquals(expected,rin.getReadByteArray());
     }
+    
+    @Test
+    public void testReadEndedStreamMultipleTimes() throws Exception {
+        byte testData[] = new byte[] {
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+        };
+        ByteArrayInputStream bin = new ByteArrayInputStream(testData);
+        RecorderInputStream rin = new RecorderInputStream(bin, 20);
+        // get to end of stream
+        while(rin.read()!=-1){};
+        
+        // read end of stream multiple times.
+        assertEquals(-1, rin.read());
+        assertEquals(-1, rin.read());
+    }
 }

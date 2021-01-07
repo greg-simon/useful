@@ -48,6 +48,7 @@ public class CachedResourceTest {
         assertEquals(2, rcr.counter);
     }
     
+    @Test
     public void testCacheSizeExceeded() throws Exception {
         ReadCountResource rcr = new ReadCountResource();
         CachedResource cRes = new CachedResource(rcr, 10);
