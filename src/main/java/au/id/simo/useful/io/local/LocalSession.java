@@ -1,14 +1,12 @@
 package au.id.simo.useful.io.local;
 
-import au.id.simo.useful.io.ConcurrentGeneratorResource;
-
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import au.id.simo.useful.io.ConcurrentGeneratorResource;
 import au.id.simo.useful.io.FileResource;
 import au.id.simo.useful.io.Generator;
 import au.id.simo.useful.io.Resource;
