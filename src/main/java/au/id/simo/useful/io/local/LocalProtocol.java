@@ -21,11 +21,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Usage:
  * <pre><code>
  * try (URLSession session = LocalProtocol.newSession()) {
- *         String url = session.register("index.html", new File("mypage.html"));
+ *     String url = session.register("index.html", new File("mypage.html"));
  *
- *         // url is "local://00001/index.html"
- *         URL indexUrl = new URL(url);
- *         // code using indexUrl here
+ *     // url is "local://00001/index.html"
+ *     URL indexUrl = new URL(url);
+ *     // code using indexUrl here
  * }
  * </code></pre>
  *

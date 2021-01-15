@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  */
 public class CountsTest {
-    
+
     public CountsTest() {
     }
 
@@ -19,7 +19,7 @@ public class CountsTest {
     public void beforeEachTest() {
         Counts.removeAll();
     }
-    
+
     @Test
     public void testIncrement() {
         String countName = "testIncrement";
@@ -37,7 +37,7 @@ public class CountsTest {
         assertEquals(5l, Counts.set(countName, 9));
         assertEquals(9l, Counts.get(countName));
     }
-    
+
     @Test
     public void testSetNonExistingCount() {
         String countName = "testSetNonExisting";
@@ -52,7 +52,7 @@ public class CountsTest {
         Counts.set(countName, 5);
         assertEquals(5l, Counts.get(countName));
     }
-    
+
     @Test
     public void testGetNonExisting() {
         String countName = "testGetNonExisting";
@@ -65,13 +65,13 @@ public class CountsTest {
         assertNotNull(names);
         assertTrue(names.isEmpty());
     }
-    
+
     @Test
     public void testGetCountNamesNotEmpty() {
         Counts.increment("count1");
         Counts.increment("count2");
         Counts.increment("count3");
-        
+
         List<String> names = Counts.getCountNames();
         assertNotNull(names);
         assertEquals(3, names.size());
@@ -85,17 +85,17 @@ public class CountsTest {
         // set up
         Counts.increment("count");
         assertTrue(Counts.getCountNames().contains("count"));
-        
+
         // actual test
         Counts.removeCount("count");
         assertFalse(Counts.getCountNames().contains("count"));
     }
-    
+
     @Test
     public void testRemoveCountNonExisting() {
         // set up assertion
         assertFalse(Counts.getCountNames().contains("count"));
-        
+
         // actual test, assert removal had no effect
         Counts.removeCount("count");
         assertFalse(Counts.getCountNames().contains("count"));
@@ -109,9 +109,9 @@ public class CountsTest {
         Counts.increment("3");
         Counts.increment("4");
         assertEquals(4, Counts.getCountNames().size());
-        
+
         // test
         Counts.removeAll();
         assertTrue(Counts.getCountNames().isEmpty());
-    }   
+    }
 }

@@ -11,7 +11,7 @@ public class CircleIntBufferTest {
         CircleIntBuffer buf = new CircleIntBuffer(0);
         assertEquals("CircleIntBuffer[]", buf.toString());
     }
-    
+
     @Test
     public void testSize() {
         CircleIntBuffer buf = new CircleIntBuffer(3);
@@ -28,12 +28,13 @@ public class CircleIntBufferTest {
         buf.add(5);
         assertEquals(3, buf.size());
     }
+
     @Test
     public void testMaxSize() {
         CircleIntBuffer buf = new CircleIntBuffer(3);
         assertEquals(3, buf.maxSize());
     }
-    
+
     @Test
     public void testSum() {
         CircleIntBuffer buffer = new CircleIntBuffer(3);
@@ -57,7 +58,7 @@ public class CircleIntBufferTest {
         buffer.add(6);
         assertEquals(buffer.toString(), "CircleIntBuffer[4,5,6]");
         assertEquals(buffer.sumLast(3), 15);
-        
+
         // sum more than exists
         assertEquals(buffer.toString(), "CircleIntBuffer[4,5,6]");
         assertEquals(buffer.sumLast(1000), 15);
