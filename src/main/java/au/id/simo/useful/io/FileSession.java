@@ -4,7 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
@@ -12,21 +11,22 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * An implementation of URLSession that uses the file system for the backing
  * store.
  * <p>
  * Any registered Resource, Generator or File will be written to a new file
- * within the base directory apon registration.
+ * within the session's base directory during registration.
  * <p>
- * Only files created during registration are deleted on session close, as are
- * any created directories if they are empty.
+ * Only files created from registration methods are deleted on session close,
+ * along with any created directories if they are empty. Any files or
+ * directories already existing or created outside of registration methods will
+ * remain after closing this session.
  */
 public class FileSession implements URLSession {
-
-    private static final String SESSION_CLOSE_MSG = "Session is closed";
-
     private final File baseDir;
     private final Resources resources;
     private final List<Path> createdFileList;
@@ -190,7 +190,7 @@ public class FileSession implements URLSession {
     @Override
     public String register(String path, File resource) throws IOException {
         if (isClosed()) {
-            throw new IllegalStateException(SESSION_CLOSE_MSG);
+            throw new IOException(SESSION_CLOSE_MSG);
         }
         Path source = resource.toPath();
         File target = getFile(path);
@@ -212,10 +212,12 @@ public class FileSession implements URLSession {
     }
 
     @Override
-    public InputStream getInputStream(String path)
-            throws IOException {
-        Resource prod = getResource(path);
-        return prod.inputStream();
+    public Set<String> getRegisteredPaths() {
+        Set<String> paths = new TreeSet<>();
+        createdFileList.forEach((filePath) -> {
+            paths.add(filePath.toUri().getPath());
+        });
+        return paths;
     }
 
     @Override

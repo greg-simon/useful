@@ -88,17 +88,20 @@ public abstract class Resources {
      * @param otherArgs Other optional arguments to apply to the Formatter
      * pattern.
      * @return A Resource that is able to create an InputStream based on the
-     * resource name and class scoped pattern.
+     * resource name and class scoped pattern. If no resource is found, null is
+     * returned.
      * @throws java.util.IllegalFormatException see {@link java.util.Formatter}
      * for further details on when exceptions are thrown.
      */
     public Resource get(Object resourceName, Object... otherArgs) {
+        String resovledResourceName = resolveResourceName(resourceName, otherArgs);
+        if (!exists(resovledResourceName)) {
+            return null;
+        }
         return new Resource() {
             @Override
             public InputStream inputStream() throws IOException {
-                return createStream(
-                        resolveResourceName(resourceName, otherArgs)
-                );
+                return createStream(resovledResourceName);
             }
         };
     }
@@ -141,9 +144,21 @@ public abstract class Resources {
      * @param resolvedResourceName the full resource name that has already been
      * resolved from the Formatter pattern and any {@code get()} arguments.
      * @return a newly created InputStream of the named resource
-     * @throws IOException if there is an error in creating the InputStream, of
+     * @throws IOException if there is an error in creating the InputStream, or
      * if the named resource could not be found, or is otherwise unavailable.
      */
     protected abstract InputStream createStream(String resolvedResourceName)
             throws IOException;
+    
+    /**
+     * Used to flag if the underlying resource identified by the resolved
+     * resource name exists.
+     * 
+     * @param resolvedResourceName the full resource name that has already been
+     * resolved from the Formatter pattern and any {@code get()} arguments.
+     * @return True if the underlying resource identified by the resolved
+     * resource name exists. False is returned if no resource was found, or
+     * there was an error in querying the underlying implementation.
+     */
+    protected abstract boolean exists(String resolvedResourceName);
 }

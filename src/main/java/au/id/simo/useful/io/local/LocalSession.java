@@ -2,9 +2,10 @@ package au.id.simo.useful.io.local;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import au.id.simo.useful.io.ConcurrentGeneratorResource;
 import au.id.simo.useful.io.FileResource;
@@ -90,7 +91,7 @@ public class LocalSession implements URLSession {
     @Override
     public String register(String urlPath, Resource resource) throws IOException {
         if (closed) {
-            throw new IOException("Session is closed");
+            throw new IOException(SESSION_CLOSE_MSG);
         }
         String normalisedPath = normalisePath(urlPath);
         resourceMap.put(normalisedPath, resource);
@@ -105,18 +106,14 @@ public class LocalSession implements URLSession {
     @Override
     public Resource getResource(String path) throws IOException {
         if (closed) {
-            throw new IOException("Session is closed");
+            throw new IOException(SESSION_CLOSE_MSG);
         }
         return resourceMap.get(normalisePath(path));
     }
 
     @Override
-    public InputStream getInputStream(String path) throws IOException {
-        Resource ressource = getResource(path);
-        if (ressource == null) {
-            throw new IOException("No resource registered on path: " + path);
-        }
-        return ressource.inputStream();
+    public Set<String> getRegisteredPaths() {
+        return new TreeSet<>(resourceMap.keySet());
     }
 
     @Override

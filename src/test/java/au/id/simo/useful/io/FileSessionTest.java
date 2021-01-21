@@ -1,9 +1,7 @@
 package au.id.simo.useful.io;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,8 +14,21 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  *
  */
-public class FileSessionTest {
+public class FileSessionTest implements URLSessionTest {
 
+    @Override
+    public URLSession createURLSession() throws IOException {
+        return new FileSession();
+    }
+    
+    @Test
+    public void testGetBaseDir(@TempDir Path testFolder) {
+        File sessionRoot = testFolder.resolve("filesession").toFile();
+        sessionRoot.mkdirs();
+        FileSession session = new FileSession(sessionRoot);
+        assertEquals(sessionRoot, session.getBaseDir());
+    }
+    
     @Test
     public void testRegisterResource(@TempDir Path testFolder) throws Exception {
         File sessionRoot = testFolder.resolve("filesession").toFile();
@@ -74,21 +85,25 @@ public class FileSessionTest {
         sessionRoot.mkdirs();
         assertTrue(sessionRoot.exists());
 
-        FileSession session = new FileSession(sessionRoot);
-        session.register("/path/to/test.txt",
-                new StringResource("Contents of file"));
-        File regFile = new File(sessionRoot, "path/to/test.txt");
-        assertTrue(regFile.exists());
-
-        Path otherFile = sessionRoot.toPath().resolve("path/other.txt");
-        Files.write(otherFile,
-                "File created outside the session".getBytes());
-
-        session.close();
+        File regFile;
+        Path otherFile;
+        try (FileSession session = new FileSession(sessionRoot)) {
+            session.register(
+                    "/path/to/test.txt",
+                    new StringResource("Contents of file")
+            );
+            regFile = new File(sessionRoot, "path/to/test.txt");
+            assertTrue(regFile.exists());
+            
+            // create new file outside of session.
+            otherFile = sessionRoot.toPath().resolve("path/other.txt");
+            Files.write(otherFile, "File created outside the session".getBytes());
+        }
         assertTrue(sessionRoot.exists(), "File preexisted, so it should still exist");
 
         // check created files
         assertFalse(regFile.exists());
+        // check other file is not deleted.
         assertTrue(Files.exists(otherFile));
 
         // check created dirs
@@ -97,17 +112,4 @@ public class FileSessionTest {
         assertFalse(Files.exists(sessionRootPath.resolve("path/to")));
     }
 
-    private static class StringResource extends Resource {
-
-        private final String str;
-
-        public StringResource(String str) {
-            this.str = str;
-        }
-
-        @Override
-        public InputStream inputStream() throws IOException {
-            return new ByteArrayInputStream(str.getBytes());
-        }
-    }
 }

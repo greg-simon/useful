@@ -2,6 +2,7 @@ package au.id.simo.useful.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 
 /**
  * A Resources implementation that will obtain resources from the class path.
@@ -58,5 +59,11 @@ public class ClasspathResources extends Resources {
             throw new IOException("Resource not found on Classpath: " + name);
         }
         return in;
+    }
+
+    @Override
+    protected boolean exists(String resolvedResourceName) {
+        URL resURL = classLoader.getResource(resolvedResourceName);
+        return resURL != null;
     }
 }

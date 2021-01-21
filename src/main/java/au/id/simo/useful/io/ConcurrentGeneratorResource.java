@@ -192,8 +192,7 @@ public class ConcurrentGeneratorResource extends Resource {
                 0, Integer.MAX_VALUE,
                 5L, TimeUnit.SECONDS,
                 new SynchronousQueue<>(),
-                new NamedThreadFactory(
-                        "concurrent-generator-resource", true));
+                new NamedThreadFactory("concurrent-generator-resource", true));
         ShutdownExecutorHook.registerService(newThreadPool);
         return newThreadPool;
     }

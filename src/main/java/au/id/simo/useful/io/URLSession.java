@@ -4,10 +4,12 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
- * Provides a way to register resources for rendering a web page using relative
- * URLs.
+ * Provides a way to temporarily arrange resources for the purpose of rendering
+ * a web page using URLs.
  * <p>
  * Usage Example:
  * <pre><code>
@@ -20,7 +22,9 @@ import java.io.InputStream;
  *
  *     String indexUrl = session.getUrl("index.html");
  *     URL url = new URL(indexUrl);
+ * 
  *     // use renderer here.
+ *     HtmlToPDF.generate(url, new File("output.pdf"));
  * }
  * </code></pre>
  * If a resource is registered on a path that already has a
@@ -32,7 +36,9 @@ import java.io.InputStream;
  * IOException.
  */
 public interface URLSession extends Closeable {
-
+    
+    static final String SESSION_CLOSE_MSG = "Session is closed";
+    
     /**
      * Obtains a string representation of base URL of this session.
      * <p>
@@ -128,12 +134,43 @@ public interface URLSession extends Closeable {
      * @param path the path the requested resource was registered to, relative
      * to the session base URL.
      * @return An InputStream to read data from the resource registered to the
-     * provided path. If no resource is found, an IOException is thrown.
+     * provided path. If no resource is found, then null is returned.
      * @throws IOException If a resource is not found on the provided path, if
      * there was an error in reading the resource, or of this session has been
      * closed.
      */
-    InputStream getInputStream(String path) throws IOException;
+    default InputStream getInputStream(String path) throws IOException {
+        if (isClosed()) {
+            throw new IOException(SESSION_CLOSE_MSG);
+        }
+        Resource resource = getResource(path);
+        if (resource == null) {
+            return null;
+        }
+        return resource.inputStream();
+    }
+    
+        
+    /**
+     * Obtain a set of paths that have been registered with this URLSession.
+     * <p>
+     * It allows for iterating over all resources registered along with the
+     * {@link #getResource(java.lang.String)} or
+     * {@link #getInputStream(java.lang.String)} methods.
+     * <code>
+     * for (String path: urlSession.getgetRegisteredPaths()) {
+     *    Resource res = urlSession.getResource(path);
+     *    ...
+     * }
+     * </code>
+     * 
+     * @return a set of paths that have been registered with this URLSession.
+     * Each path may have been normalised and may not be the exact String used
+     * during registration. If no paths have been registered, then an empty Set
+     * will be returned.
+     */
+    Set<String> getRegisteredPaths();
+    
 
     /**
      * Obtains the closed status of this session.
@@ -142,4 +179,44 @@ public interface URLSession extends Closeable {
      * session has been closed.
      */
     boolean isClosed();
+    
+    /**
+     * Functional method to allow an action to be taken for each registered
+     * Resource.
+     * @param consumer
+     * @throws IOException
+     */
+    default void forEachResource(Consumer<RegisteredResource> consumer) throws IOException {
+        for (String path: this.getRegisteredPaths()) {
+            Resource res = this.getResource(path);
+            consumer.accept(new RegisteredResource(path, res));
+        }
+    }
+    
+    /**
+     * A value class to provide a {@link Resource) and its registered path to the
+     * {@link Consumer} argument for the
+     * {@link #forEachResource(java.util.function.Consumer) } method.
+     */
+    class RegisteredResource {
+        private final String path;
+        private final Resource resource;
+
+        public RegisteredResource(String path, Resource resource) {
+            this.path = path;
+            this.resource = resource;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public Resource getResource() {
+            return resource;
+        }
+        
+        public InputStream getInputStream() throws IOException {
+            return resource.inputStream();
+        }
+    }
 }

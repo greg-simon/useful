@@ -10,6 +10,7 @@ import au.id.simo.useful.io.Generator;
 import au.id.simo.useful.io.Resource;
 import au.id.simo.useful.io.URLResource;
 import au.id.simo.useful.io.URLSession;
+import au.id.simo.useful.io.URLSessionTest;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,14 +18,20 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  *
  */
-public class LocalSessionTest {
+public class LocalSessionTest implements URLSessionTest {
+
+    @Override
+    public URLSession createURLSession() throws IOException {
+        return LocalProtocol.newSession();
+    }
+
     @Test
     public void testBasicUsage() throws IOException {
         try (URLSession session = LocalProtocol.newSession()) {
             String baseUrlStr = session.getBaseUrl();
             URL baseUrl = new URL(baseUrlStr);
             String sessionId = baseUrl.getHost();
-            
+
             String genUrl = session.register("generator", new Generator() {
                 @Override
                 public void writeTo(OutputStream out) throws IOException {
@@ -37,20 +44,20 @@ public class LocalSessionTest {
                     return new ByteArrayInputStream("This is a resource".getBytes());
                 }
             });
-            
-            String expectedGenUrl = "local://"+sessionId+"/generator";
-            String expectedResUrl = "local://"+sessionId+"/resource";
+
+            String expectedGenUrl = "local://" + sessionId + "/generator";
+            String expectedResUrl = "local://" + sessionId + "/resource";
             assertEquals(expectedGenUrl, genUrl);
             assertEquals(expectedResUrl, resUrl);
-            
+
             assertEquals("This is a generator", urlToString(genUrl));
             assertEquals("This is a resource", urlToString(resUrl));
-            
+
             assertEquals("This is a generator", session.getResource("generator").getString());
             assertEquals("This is a resource", session.getResource("resource").getString());
         }
     }
-    
+
     public static String urlToString(String urlStr) throws IOException {
         return new URLResource(urlStr).getString();
     }

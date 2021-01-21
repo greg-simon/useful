@@ -84,5 +84,10 @@ public class ResourcesTest {
                 throws IOException {
             throw new IOException("ResourcesImpl: Not implemented");
         }
+
+        @Override
+        protected boolean exists(String resolvedResourceName) {
+            return true;
+        }
     }
 }

@@ -67,8 +67,17 @@ public class FileResources extends Resources {
     @Override
     protected InputStream createStream(String resolvedResourceName)
             throws IOException {
-        File file = FileUtil.newFileInDir(parentDir,
-                resolvedResourceName);
+        File file = FileUtil.newFileInDir(parentDir, resolvedResourceName);
         return new FileInputStream(file);
+    }
+
+    @Override
+    protected boolean exists(String resolvedResourceName) {
+        try {
+            File file = FileUtil.newFileInDir(parentDir, resolvedResourceName);
+            return file.exists();
+        } catch (IOException ex) {
+            return false;
+        }
     }
 }
