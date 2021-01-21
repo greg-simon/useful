@@ -26,7 +26,7 @@ import java.net.URLStreamHandler;
  */
 public class Handler extends URLStreamHandler {
 
-    private static final String URL_HANDLER_PACKAGE = "au.id.simo.useful.io";
+    protected static final String URL_HANDLER_PACKAGE = "au.id.simo.useful.io";
 
     @Override
     protected URLConnection openConnection(URL u) throws IOException {

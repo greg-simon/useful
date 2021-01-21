@@ -25,11 +25,18 @@ public class LocalURLConnection extends URLConnection {
 
     @Override
     public void connect() throws IOException {
-        super.connected = true;
+        connected = true;
+    }
+    
+    public boolean isConnected() {
+        return connected;
     }
 
     @Override
     public InputStream getInputStream() throws IOException {
+        if (connected == false) {
+            this.connect();
+        }
         // sessionId is the host part of the url:
         // local://sessionid/path
         String sessionId = url.getHost();
