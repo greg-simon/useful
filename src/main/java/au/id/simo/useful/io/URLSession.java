@@ -152,7 +152,8 @@ public interface URLSession extends Closeable {
     
         
     /**
-     * Obtain a set of paths that have been registered with this URLSession.
+     * Obtain a set of relative paths that have been registered with this
+     * URLSession.
      * <p>
      * It allows for iterating over all resources registered along with the
      * {@link #getResource(java.lang.String)} or
@@ -163,6 +164,9 @@ public interface URLSession extends Closeable {
      *    ...
      * }
      * </code>
+     * 
+     * Paths returned are relative to the base url of the session, so will not
+     * contain a leading '/' character.
      * 
      * @return a set of paths that have been registered with this URLSession.
      * Each path may have been normalised and may not be the exact String used
@@ -186,37 +190,15 @@ public interface URLSession extends Closeable {
      * @param consumer
      * @throws IOException
      */
-    default void forEachResource(Consumer<RegisteredResource> consumer) throws IOException {
+    default void forEachResource(ResourceConsumer consumer) throws IOException {
         for (String path: this.getRegisteredPaths()) {
             Resource res = this.getResource(path);
-            consumer.accept(new RegisteredResource(path, res));
+            consumer.accept(path, res);
         }
     }
     
-    /**
-     * A value class to provide a {@link Resource) and its registered path to the
-     * {@link Consumer} argument for the
-     * {@link #forEachResource(java.util.function.Consumer) } method.
-     */
-    class RegisteredResource {
-        private final String path;
-        private final Resource resource;
-
-        public RegisteredResource(String path, Resource resource) {
-            this.path = path;
-            this.resource = resource;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public Resource getResource() {
-            return resource;
-        }
-        
-        public InputStream getInputStream() throws IOException {
-            return resource.inputStream();
-        }
+    @FunctionalInterface
+    interface ResourceConsumer {
+        void accept(String relativePath, Resource resource) throws IOException;
     }
 }

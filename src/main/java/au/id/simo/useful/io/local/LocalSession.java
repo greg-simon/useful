@@ -51,7 +51,7 @@ public class LocalSession implements URLSession {
 
     @Override
     public String getBaseUrl() {
-        return urlFromPath("/");
+        return urlFromPath("");
     }
 
     @Override
@@ -68,7 +68,7 @@ public class LocalSession implements URLSession {
      * @return a full URL to a resource.
      */
     private String urlFromPath(String normalisedPath) {
-        return String.format("local://%s%s", id, normalisedPath);
+        return String.format("local://%s/%s", id, normalisedPath);
     }
 
     /**
@@ -135,15 +135,15 @@ public class LocalSession implements URLSession {
     }
 
     /**
-     * Ensure all paths start with a '/'.
+     * Ensure paths don't start with a '/'.
      *
      * @param path the path to check for the correct leading character.
-     * @return a path that will always start with '/'.
+     * @return a path that will never start with '/'.
      */
     private static String normalisePath(String path) {
-        if (path.startsWith("/")) {
-            return path;
+        while (path.startsWith("/")) {
+            path = path.substring(1);
         }
-        return "/" + path;
+        return path;
     }
 }

@@ -77,10 +77,10 @@ public interface URLSessionTest {
 
             List<String> pathList = new ArrayList<>();
             List<String> resContentList = new ArrayList<>();
-            sess.forEachResource((rr) -> {
-                pathList.add(rr.getPath());
+            sess.forEachResource((path, resource) -> {
+                pathList.add(path);
                 try {
-                    resContentList.add(rr.getResource().getString());
+                    resContentList.add(resource.getString());
                 } catch (IOException ex) {
                     fail(ex.getMessage());
                 }
@@ -89,9 +89,9 @@ public interface URLSessionTest {
             assertEquals(3, pathList.size());
             assertEquals(3, resContentList.size());
             Collections.sort(pathList);
-            assertTrue(pathList.get(0).endsWith("path1"), "list contains path1");
-            assertTrue(pathList.get(1).endsWith("path2"), "list contains path2");
-            assertTrue(pathList.get(2).endsWith("path3"), "list contains path3");
+            assertEquals("path1", pathList.get(0), "list contains path1");
+            assertEquals("path2", pathList.get(1), "list contains path2");
+            assertEquals("path3", pathList.get(2), "list contains path3");
             assertTrue(resContentList.contains("This is path1"), "path1 contents found");
             assertTrue(resContentList.contains("This is path2"), "path2 contents found");
             assertTrue(resContentList.contains("This is path3"), "path3 contents found");
@@ -103,10 +103,10 @@ public interface URLSessionTest {
         try (URLSession sess = createURLSession()) {
             List<String> pathList = new ArrayList<>();
             List<String> resContentList = new ArrayList<>();
-            sess.forEachResource((rr) -> {
-                pathList.add(rr.getPath());
+            sess.forEachResource((path, resource) -> {
+                pathList.add(path);
                 try {
-                    resContentList.add(rr.getResource().getString());
+                    resContentList.add(resource.getString());
                 } catch (IOException ex) {
                     fail(ex.getMessage());
                 }
@@ -129,10 +129,10 @@ public interface URLSessionTest {
         List<String> resContentList = new ArrayList<>();
 
         IOException ioe = assertThrows(IOException.class, () -> {
-            sess.forEachResource((rr) -> {
-                pathList.add(rr.getPath());
+            sess.forEachResource((path, resource) -> {
+                pathList.add(path);
                 try {
-                    resContentList.add(rr.getResource().getString());
+                    resContentList.add(resource.getString());
                 } catch (IOException ex) {
                     fail(ex.getMessage());
                 }
@@ -384,9 +384,9 @@ public interface URLSessionTest {
             // order of set is not defined
             List<String> pathList = new ArrayList<>(pathSet);
             Collections.sort(pathList);
-            assertTrue(pathList.get(0).endsWith("path1"), "list contains path1");
-            assertTrue(pathList.get(1).endsWith("path2"), "list contains path2");
-            assertTrue(pathList.get(2).endsWith("path3"), "list contains path3");
+            assertEquals("path1", pathList.get(0), "list contains path1");
+            assertEquals("path2", pathList.get(1), "list contains path2");
+            assertEquals("path3", pathList.get(2), "list contains path3");
         }
     }
 

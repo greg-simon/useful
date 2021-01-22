@@ -211,11 +211,32 @@ public class FileSession implements URLSession {
         return resources.get(path);
     }
 
+    /**
+     * Creates a new Set of relative paths for each resource.
+     * <p>
+     * A relative path is the path of the resource relative to the base
+     * directory of this session.
+     * <p>
+     * For example:
+     * A FileSession has a base directory of /tmp/FS_BASE, and a registered
+     * resource of path/to/resource.txt.
+     * <p>
+     * This would result in the resource having a URL of
+     * {@code file:///tmp/FS_BASE/path/to/resource.txt }, A path of 
+     * {@code /tmp/FS_BASE/path/to/resource.txt} and a relative path of
+     * {@code path/to/resource.txt}.
+     * <p>
+     * The created Set will contain the relative path.
+     * 
+     * @return a new Set of relative paths for each resource.
+     */
     @Override
     public Set<String> getRegisteredPaths() {
+        Path basePath = baseDir.toPath();
         Set<String> paths = new TreeSet<>();
         createdFileList.forEach((filePath) -> {
-            paths.add(filePath.toUri().getPath());
+            Path normPath = basePath.relativize(filePath);
+            paths.add(normPath.toString());
         });
         return paths;
     }
