@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * Provides a way to temporarily arrange resources for the purpose of rendering
@@ -190,15 +189,15 @@ public interface URLSession extends Closeable {
      * @param consumer
      * @throws IOException
      */
-    default void forEachResource(ResourceConsumer consumer) throws IOException {
+    default void forEachResource(ResourceCollector consumer) throws IOException {
         for (String path: this.getRegisteredPaths()) {
             Resource res = this.getResource(path);
-            consumer.accept(path, res);
+            consumer.add(path, res);
         }
     }
     
     @FunctionalInterface
-    interface ResourceConsumer {
-        void accept(String relativePath, Resource resource) throws IOException;
+    interface ResourceCollector {
+        void add(String relativePath, Resource resource) throws IOException;
     }
 }

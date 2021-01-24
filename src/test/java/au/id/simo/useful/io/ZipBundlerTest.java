@@ -53,8 +53,8 @@ public class ZipBundlerTest {
     public void testConstructor_OutputStream() throws IOException {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         try (ZipBundler zipBundler = new ZipBundler(bout)) {
-            zipBundler.accept("path1", new StringResource("Path1"));
-            zipBundler.accept("path2", new StringResource("Path2"));
+            zipBundler.add("path1", new StringResource("Path1"));
+            zipBundler.add("path2", new StringResource("Path2"));
         }
         assertZipFileEntries(Arrays.asList(
                 "path1",
@@ -67,8 +67,8 @@ public class ZipBundlerTest {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         ZipOutputStream zout = new ZipOutputStream(bout);
         try (ZipBundler zipBundler = new ZipBundler(zout)) {
-            zipBundler.accept("path1", new StringResource("Path1"));
-            zipBundler.accept("path2", new StringResource("Path2"));
+            zipBundler.add("path1", new StringResource("Path1"));
+            zipBundler.add("path2", new StringResource("Path2"));
         }
         assertZipFileEntries(Arrays.asList(
                 "path1",
