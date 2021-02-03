@@ -183,11 +183,9 @@ public class ByteRingBufferTest {
             rb.put(b);
         }
         assertTrue(rb.isFull());
-        System.out.println(rb);
         
         byte[] newbuf = new byte[10];
         int readCount = rb.read(newbuf, 0, 10);
-        System.out.println(rb);
         assertEquals(10, readCount);
         assertArrayEquals(new byte[]{0,1,2,3,4,5,6,7,8,9}, newbuf);
         assertTrue(rb.isEmpty());
@@ -206,17 +204,18 @@ public class ByteRingBufferTest {
             rb.read();
         }
         
+        assertEquals(5, rb.size());
+        
         // add another 3
         rb.put(10);
         rb.put(11);
         rb.put(12);
+        assertEquals(8, rb.size());
         // expected array values within ring buffer: [10,11,12,-,-,5,6,7,8,9]
-        System.out.println(rb);
         // with tail after the head
         
         byte[] newbuf = new byte[10];
         int readCount = rb.read(newbuf, 0, 10);
-        System.out.println(rb);
         assertEquals(8, readCount);
         assertArrayEquals(new byte[]{5,6,7,8,9,10,11,12,0,0}, newbuf);
         assertTrue(rb.isEmpty());

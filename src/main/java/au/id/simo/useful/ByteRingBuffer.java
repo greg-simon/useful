@@ -19,18 +19,24 @@ public class ByteRingBuffer implements Iterable<Byte> {
     private final byte[] buffer;
 
     /**
-     * Add index. Points to last written location. Increment then write.
+     * Add index. Points to next location to write to. Write then increment.
      */
     private int head;
     /**
      * Remove index. Points to oldest value to read from. Read then increment.
      */
     private int tail;
+    
+    /**
+     * Represents the number of values stored in this buffer.
+     */
+    private int size;
 
-    public ByteRingBuffer(int size) {
-        buffer = new byte[size];
-        head = -1; //empty
-        tail = -1; //empty
+    public ByteRingBuffer(int maxSize) {
+        buffer = new byte[maxSize];
+        head = 0;
+        tail = 0;
+        size = 0;
     }
 
     /**
@@ -44,22 +50,6 @@ public class ByteRingBuffer implements Iterable<Byte> {
      */
     protected int incrementIndex(int index, int incrementBy) {
         return (index + incrementBy) % buffer.length;
-    }
-    
-    private void updateTailFromRead(int itemsRead) {
-        if (tail == head) {
-            tail = -1;
-        } else if (itemsRead == buffer.length) {
-            // case where wrap around has no aparent effect on tail index.
-            tail = -1;
-        } else {
-            int newTail = incrementIndex(tail, itemsRead);
-            if (tail > head && newTail> head) {
-                tail = -1;
-            } else {
-                tail = newTail;
-            }
-        }
     }
 
     /**
@@ -77,14 +67,16 @@ public class ByteRingBuffer implements Iterable<Byte> {
     }
 
     public void add(byte i) {
-        head = incrementIndex(head, 1);
+        // write
         buffer[head] = i;
-
-        // adjust tail if required.
-        if (tail == -1) {
+        // then increment
+        head = incrementIndex(head, 1);
+        
+        if (isFull()) {
+            // if old value was overriden, update the tail.
             tail = head;
-        } else if (tail == head) {
-            tail = incrementIndex(tail, 1);
+        } else {
+            size++;
         }
     }
     
@@ -153,9 +145,15 @@ public class ByteRingBuffer implements Iterable<Byte> {
         if (isEmpty()) {
             throw new ArrayIndexOutOfBoundsException("RingBuffer is empty");
         }
+        // read
         byte t = buffer[tail];
+        // zero out
         buffer[tail] = 0;
-        updateTailFromRead(1);
+        
+        // then increment
+        tail = incrementIndex(tail, 1);
+        size--;
+        
         return t;
     }
     
@@ -172,7 +170,8 @@ public class ByteRingBuffer implements Iterable<Byte> {
         if (head >= tail) {
             // straight array copy
             System.arraycopy(buffer, tail, dest, start, readLength);
-            updateTailFromRead(readLength);
+            tail = incrementIndex(tail, readLength);
+            size -= readLength;
             return readLength;
         }
         
@@ -191,25 +190,13 @@ public class ByteRingBuffer implements Iterable<Byte> {
         System.arraycopy(buffer, 0, dest, start + segTwoReadLength, segOneReadLength);
         
         int totalReadLength = segTwoReadLength + segOneReadLength;
-        // update pointer
-        updateTailFromRead(totalReadLength);
+        tail = incrementIndex(tail, totalReadLength);
+        size -= totalReadLength;
         return totalReadLength;
     }
 
     public int size() {
-        if (tail == -1) {
-            return 0; // initial empty state.
-        }
-
-        int size;
-        if (tail == head) {
-            size = 0;
-        } else if (tail > head) {
-            size = (buffer.length + head) - tail;
-        } else {
-            size = head - tail;
-        }
-        return size + 1;
+        return size;
     }
 
     public int maxSize() {
@@ -217,7 +204,7 @@ public class ByteRingBuffer implements Iterable<Byte> {
     }
 
     public boolean isEmpty() {
-        return tail == -1 || size() == 0;
+        return size == 0;
     }
 
     public boolean isNotEmpty() {
@@ -225,7 +212,11 @@ public class ByteRingBuffer implements Iterable<Byte> {
     }
 
     public boolean isFull() {
-        return tail == incrementIndex(head, 1);
+        return size == buffer.length;
+    }
+    
+    public boolean isNotFull() {
+        return !isFull();
     }
     
     public int getFreeSpace() {
@@ -237,16 +228,15 @@ public class ByteRingBuffer implements Iterable<Byte> {
     }
 
     public byte[] toArray(byte[] a) {
-        int size = size();
         if (size == 0) {
             return a;
         }
 
         if (size > a.length) {
-            a = new byte[size()];
+            a = new byte[size];
         }
 
-        if (head >= tail) {
+        if (head > tail) {
             System.arraycopy(buffer, tail, a, 0, size);
         } else {
             //[0,0,h, , ,t,0]
@@ -255,7 +245,7 @@ public class ByteRingBuffer implements Iterable<Byte> {
             int segTwoLength = buffer.length - tail;
             System.arraycopy(buffer, tail, a, 0, segTwoLength);
             // segment one to end of newArray
-            System.arraycopy(buffer, 0, a, segTwoLength, head + 1);
+            System.arraycopy(buffer, 0, a, segTwoLength, head);
         }
         return a;
     }
@@ -264,12 +254,6 @@ public class ByteRingBuffer implements Iterable<Byte> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("ByteRingBuffer");
-        if (head == -1) {
-            sb.append('+');
-        }
-        if (tail == -1) {
-            sb.append('-');
-        }
         sb.append('[');
         for (int i = 0; i < buffer.length; i++) {
             if (head == i) {
@@ -307,8 +291,9 @@ public class ByteRingBuffer implements Iterable<Byte> {
     public void clear() {
         // copy 0 over entire array.
         System.arraycopy(new byte[buffer.length], 0, buffer, 0, buffer.length);
-        head = -1;
-        tail = -1;
+        head = 0;
+        tail = 0;
+        size = 0;
     }
 
     private class ByteRingBufferIterator implements Iterator<Byte> {
