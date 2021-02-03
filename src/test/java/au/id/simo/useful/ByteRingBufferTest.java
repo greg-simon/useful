@@ -12,10 +12,10 @@ public class ByteRingBufferTest {
     @Test
     public void testIncrementIndex() {
         ByteRingBuffer rb = new ByteRingBuffer(3);
-        assertEquals(1, rb.incrementIndex(0));
-        assertEquals(2, rb.incrementIndex(1));
-        assertEquals(0, rb.incrementIndex(2));
-        assertEquals(1, rb.incrementIndex(3));
+        assertEquals(1, rb.incrementIndex(0, 1));
+        assertEquals(2, rb.incrementIndex(1, 1));
+        assertEquals(0, rb.incrementIndex(2, 1));
+        assertEquals(1, rb.incrementIndex(3, 1));
     }
 
     @Test
@@ -68,21 +68,21 @@ public class ByteRingBufferTest {
         assertArrayEquals(new byte[]{3, 4, 5}, rb.toArray());
 
         // removing values
-        assertEquals(3, rb.remove());
+        assertEquals(3, rb.read());
         assertEquals(2, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
         assertFalse(rb.isFull());
         assertArrayEquals(new byte[]{4, 5}, rb.toArray());
 
-        assertEquals(4, rb.remove());
+        assertEquals(4, rb.read());
         assertEquals(1, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
         assertFalse(rb.isFull());
         assertArrayEquals(new byte[]{5}, rb.toArray());
 
-        assertEquals(5, rb.remove());
+        assertEquals(5, rb.read());
         assertEquals(0, rb.size());
         assertTrue(rb.isEmpty());
         assertFalse(rb.isNotEmpty());
@@ -115,40 +115,40 @@ public class ByteRingBufferTest {
         buf.add(0);
         assertTrue(buf.isFull());
         assertFalse(buf.isEmpty());
-        assertEquals(6, buf.remove());
-        assertEquals(7, buf.remove());
-        assertEquals(8, buf.remove());
-        assertEquals(9, buf.remove());
-        assertEquals(0, buf.remove());
+        assertEquals(6, buf.read());
+        assertEquals(7, buf.read());
+        assertEquals(8, buf.read());
+        assertEquals(9, buf.read());
+        assertEquals(0, buf.read());
         assertTrue(buf.isEmpty());
 
         assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
-            buf.remove();
+            buf.read();
         });
     }
 
     @Test
-    public void testGet() {
+    public void testPeek() {
         ByteRingBuffer rb = new ByteRingBuffer(3);
         rb.add(1);
         rb.add(2);
         rb.add(3);
-        assertEquals(1, rb.get(0));
-        assertEquals(2, rb.get(1));
-        assertEquals(3, rb.get(2));
+        assertEquals(1, rb.peek(0));
+        assertEquals(2, rb.peek(1));
+        assertEquals(3, rb.peek(2));
 
         assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
-            rb.get(3);
+            rb.peek(3);
         });
 
         rb.add(4);
         rb.add(5);
-        assertEquals(3, rb.get(0));
-        assertEquals(4, rb.get(1));
-        assertEquals(5, rb.get(2));
+        assertEquals(3, rb.peek(0));
+        assertEquals(4, rb.peek(1));
+        assertEquals(5, rb.peek(2));
 
         assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
-            rb.get(3);
+            rb.peek(3);
         });
     }
 
@@ -162,5 +162,63 @@ public class ByteRingBufferTest {
             rb.add(b);
         }
         assertTrue(rb.containsArray(testArray));
+    }
+    
+    @Test
+    public void testRead() {
+        ByteRingBuffer rb = new ByteRingBuffer(3);
+        rb.add(1);
+        rb.add(2);
+        rb.add(3);
+        assertTrue(rb.isFull());
+        assertEquals(1,rb.read());
+        assertFalse(rb.isFull());
+        assertEquals(2, rb.size());
+    }
+    
+    @Test
+    public void testRead_array() {
+        ByteRingBuffer rb = new ByteRingBuffer(10);
+        for (byte b = 0; b < 10; b++) {
+            rb.put(b);
+        }
+        assertTrue(rb.isFull());
+        System.out.println(rb);
+        
+        byte[] newbuf = new byte[10];
+        int readCount = rb.read(newbuf, 0, 10);
+        System.out.println(rb);
+        assertEquals(10, readCount);
+        assertArrayEquals(new byte[]{0,1,2,3,4,5,6,7,8,9}, newbuf);
+        assertTrue(rb.isEmpty());
+    }
+    
+    @Test
+    public void testRead_array_split_segments() {
+        ByteRingBuffer rb = new ByteRingBuffer(10);
+        for (byte b = 0; b < 10; b++) {
+            rb.put(b);
+        }
+        assertTrue(rb.isFull());
+        
+        // remove first 5 values
+        for(int i=0;i<5;i++) {
+            rb.read();
+        }
+        
+        // add another 3
+        rb.put(10);
+        rb.put(11);
+        rb.put(12);
+        // expected array values within ring buffer: [10,11,12,-,-,5,6,7,8,9]
+        System.out.println(rb);
+        // with tail after the head
+        
+        byte[] newbuf = new byte[10];
+        int readCount = rb.read(newbuf, 0, 10);
+        System.out.println(rb);
+        assertEquals(8, readCount);
+        assertArrayEquals(new byte[]{5,6,7,8,9,10,11,12,0,0}, newbuf);
+        assertTrue(rb.isEmpty());
     }
 }

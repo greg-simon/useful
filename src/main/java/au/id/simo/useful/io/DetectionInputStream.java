@@ -63,7 +63,7 @@ public class DetectionInputStream extends InputStream {
         if (buffer.isEmpty()) {
             return -1;
         } else {
-            return buffer.remove();
+            return buffer.read();
         }
     }
 
