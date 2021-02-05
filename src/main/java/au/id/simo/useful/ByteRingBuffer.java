@@ -1,8 +1,5 @@
 package au.id.simo.useful;
 
-import java.util.Arrays;
-import java.util.Iterator;
-
 /**
  * Byte buffer for use with streams.
  * <p>
@@ -14,7 +11,7 @@ import java.util.Iterator;
  * <li>Writes error if no free space: Use put and read</li>
  * </ul>
  */
-public class ByteRingBuffer implements Iterable<Byte> {
+public class ByteRingBuffer {
 
     private final byte[] buffer;
 
@@ -120,12 +117,11 @@ public class ByteRingBuffer implements Iterable<Byte> {
      * the collection.
      */
     public byte peek(int index) {
-        if (index >= size()) {
+        if (index >= size) {
             throw new ArrayIndexOutOfBoundsException(
                     String.format("Index value %s is larger than the number of elements %s.",
                             index,
-                            size()
-                    )
+                            size                    )
             );
         }
         int relindex = incrementIndex(tail, index);
@@ -143,8 +139,6 @@ public class ByteRingBuffer implements Iterable<Byte> {
         }
         // read
         byte t = buffer[tail];
-        // zero out
-        buffer[tail] = 0;
 
         // then increment
         tail = incrementIndex(tail, 1);
@@ -162,28 +156,7 @@ public class ByteRingBuffer implements Iterable<Byte> {
      * @return
      */
     public int read(byte[] dest, int start, int length) {
-        int readLength = Math.min(size, length);
-
-        // buffer array could have two segments to copy out of order. One at
-        // start of the buffer and one at the end.
-        // (h is head index, t is tail index)
-        //[0,0,h, , ,t,0]
-        //[^s1 ^]   [^ ^]  <- seg2
-        // segment two to start of newArray, as seg two will be the oldest
-        // values
-        int segTwoLength = buffer.length - tail;
-        int segTwoReadLength = Math.min(readLength, segTwoLength);
-        System.arraycopy(buffer, tail, dest, start, segTwoReadLength);
-        // zero out read bytes
-        Arrays.fill(buffer, tail, tail + segTwoReadLength, (byte) 0);
-
-        // segment one to end of newArray
-        int segOneReadLength = Math.min(head + 1, readLength - segTwoReadLength);
-        System.arraycopy(buffer, 0, dest, start + segTwoReadLength, segOneReadLength);
-        // zero out read bytes
-        Arrays.fill(buffer, 0, segOneReadLength, (byte) 0);
-
-        int totalReadLength = segTwoReadLength + segOneReadLength;
+        int totalReadLength = peek(dest, start, length);
         tail = incrementIndex(tail, totalReadLength);
         size -= totalReadLength;
         return totalReadLength;
@@ -201,10 +174,11 @@ public class ByteRingBuffer implements Iterable<Byte> {
      * @return the number of values copied into the provided array.
      */
     public int peek(byte[] dest, int start, int length) {
-        int readLength = Math.min(size(), length);
+        int readLength = Math.min(size, length);
 
-        // buffer array has two segments to copy out of order. One at start of
-        // the buffer and one at the end. (h is head index, t is tail index)
+        // buffer array could have two segments to copy out of order. One at
+        // start of the buffer and one at the end.
+        // (h is head index, t is tail index)
         //[0,0,h, , ,t,0]
         //[^s1 ^]   [^ ^]  <- seg2
         // segment two to start of newArray, as seg two will be the oldest
@@ -269,7 +243,12 @@ public class ByteRingBuffer implements Iterable<Byte> {
             if (tail == i) {
                 sb.append('-');
             }
-            sb.append(buffer[i] & 0xff);
+            // is this byte actual data or uncleared noise?
+            if (isData(i)) {
+                sb.append(buffer[i] & 0xff);
+            } else {
+                sb.append("0");
+            }
             sb.append(',');
         }
         sb.deleteCharAt(sb.length()-1);
@@ -278,6 +257,16 @@ public class ByteRingBuffer implements Iterable<Byte> {
         }
         sb.append("]");
         return sb.toString();
+    }
+    
+    private boolean isData(int index) {
+        if (size == 0) {
+            return false;
+        }
+        if(head > tail) {
+            return index >= tail && index < head;
+        }
+        return index >= tail || index < head;
     }
 
     public boolean containsArray(byte[] array) {
@@ -292,31 +281,9 @@ public class ByteRingBuffer implements Iterable<Byte> {
         return true;
     }
 
-    @Override
-    public Iterator<Byte> iterator() {
-        return new ByteRingBufferIterator();
-    }
-
     public void clear() {
-        // copy 0 over entire array.
-        System.arraycopy(new byte[buffer.length], 0, buffer, 0, buffer.length);
         head = 0;
         tail = 0;
         size = 0;
-    }
-
-    private class ByteRingBufferIterator implements Iterator<Byte> {
-
-        private int index = 0;
-
-        @Override
-        public boolean hasNext() {
-            return index < size();
-        }
-
-        @Override
-        public Byte next() {
-            return ByteRingBuffer.this.peek(index++);
-        }
     }
 }

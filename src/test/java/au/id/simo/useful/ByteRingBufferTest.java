@@ -199,7 +199,6 @@ public class ByteRingBufferTest {
     @MethodSource("testReadArraySource")
     public void testReadArray(int bufferSize, int dataSize, int initialData) throws IOException {
         ByteRingBuffer rb = new ByteRingBuffer(bufferSize);
-        System.out.println(bufferSize + ":" +dataSize+":"+initialData);
         InputStream initData = DataGenFactory.incrementingBytes();
         for(int i=0;i<initialData; i++) {
             rb.add(initData.read());
@@ -212,7 +211,6 @@ public class ByteRingBufferTest {
         
         // read whole array
         byte[] newbuf = new byte[bufferSize];
-        System.out.println(rb);
         int readCount = rb.read(newbuf, 0, bufferSize);
         assertEquals(bufferSize, readCount);
         
@@ -224,7 +222,7 @@ public class ByteRingBufferTest {
                 new LimitedInputStream(DataGenFactory.incrementingBytes(), dataSize)
         );
         int skipBytes = Math.max(0, initialData + dataSize - bufferSize);
-        expectedData.skip(skipBytes);
+        expectedData.skip(skipBytes);        
         for (int i = bufferSize; i < bufferSize; i++) {
             byte expectedByte = (byte) expectedData.read();
             byte value = newbuf[i];
