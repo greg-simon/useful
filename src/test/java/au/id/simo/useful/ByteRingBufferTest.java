@@ -1,6 +1,16 @@
 package au.id.simo.useful;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.stream.Stream;
+
+import au.id.simo.useful.io.ConcatInputStream;
+import au.id.simo.useful.io.LimitedInputStream;
+import au.id.simo.useful.test.DataGenFactory;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,11 +36,13 @@ public class ByteRingBufferTest {
         assertTrue(rb.isEmpty());
         assertFalse(rb.isNotEmpty());
         assertFalse(rb.isFull());
+        assertTrue(rb.isNotFull());
 
         rb.add(1);
         assertEquals(1, rb.size());
         assertFalse(rb.isEmpty());
         assertFalse(rb.isFull());
+        assertTrue(rb.isNotFull());
         assertTrue(rb.isNotEmpty());
         assertEquals(1, rb.peek());
         assertArrayEquals(new byte[]{1}, rb.toArray());
@@ -39,6 +51,7 @@ public class ByteRingBufferTest {
         assertEquals(2, rb.size());
         assertFalse(rb.isEmpty());
         assertFalse(rb.isFull());
+        assertTrue(rb.isNotFull());
         assertTrue(rb.isNotEmpty());
         assertEquals(1, rb.peek());
         assertArrayEquals(new byte[]{1, 2}, rb.toArray());
@@ -47,6 +60,7 @@ public class ByteRingBufferTest {
         assertEquals(3, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isFull());
+        assertFalse(rb.isNotFull());
         assertTrue(rb.isNotEmpty());
         assertEquals(1, rb.peek());
         assertArrayEquals(new byte[]{1, 2, 3}, rb.toArray());
@@ -56,6 +70,7 @@ public class ByteRingBufferTest {
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
         assertTrue(rb.isFull());
+        assertFalse(rb.isNotFull());
         assertEquals(2, rb.peek());
         assertArrayEquals(new byte[]{2, 3, 4}, rb.toArray());
 
@@ -64,6 +79,7 @@ public class ByteRingBufferTest {
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
         assertTrue(rb.isFull());
+        assertFalse(rb.isNotFull());
         assertEquals(3, rb.peek());
         assertArrayEquals(new byte[]{3, 4, 5}, rb.toArray());
 
@@ -73,6 +89,7 @@ public class ByteRingBufferTest {
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
         assertFalse(rb.isFull());
+        assertTrue(rb.isNotFull());
         assertArrayEquals(new byte[]{4, 5}, rb.toArray());
 
         assertEquals(4, rb.read());
@@ -80,6 +97,7 @@ public class ByteRingBufferTest {
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
         assertFalse(rb.isFull());
+        assertTrue(rb.isNotFull());
         assertArrayEquals(new byte[]{5}, rb.toArray());
 
         assertEquals(5, rb.read());
@@ -87,6 +105,7 @@ public class ByteRingBufferTest {
         assertTrue(rb.isEmpty());
         assertFalse(rb.isNotEmpty());
         assertFalse(rb.isFull());
+        assertTrue(rb.isNotFull());
         assertArrayEquals(new byte[]{}, rb.toArray());
 
         rb.clear();
@@ -176,48 +195,160 @@ public class ByteRingBufferTest {
         assertEquals(2, rb.size());
     }
     
-    @Test
-    public void testRead_array() {
-        ByteRingBuffer rb = new ByteRingBuffer(10);
-        for (byte b = 0; b < 10; b++) {
-            rb.put(b);
+    @ParameterizedTest
+    @MethodSource("testReadArraySource")
+    public void testReadArray(int bufferSize, int dataSize, int initialData) throws IOException {
+        ByteRingBuffer rb = new ByteRingBuffer(bufferSize);
+        System.out.println(bufferSize + ":" +dataSize+":"+initialData);
+        InputStream initData = DataGenFactory.incrementingBytes();
+        for(int i=0;i<initialData; i++) {
+            rb.add(initData.read());
         }
-        assertTrue(rb.isFull());
+        // fill with data
+        InputStream data = DataGenFactory.incrementingBytes();
+        for (int b = 0; b < dataSize; b++) {
+            rb.add(data.read());
+        }
         
-        byte[] newbuf = new byte[10];
-        int readCount = rb.read(newbuf, 0, 10);
-        assertEquals(10, readCount);
-        assertArrayEquals(new byte[]{0,1,2,3,4,5,6,7,8,9}, newbuf);
-        assertTrue(rb.isEmpty());
+        // read whole array
+        byte[] newbuf = new byte[bufferSize];
+        System.out.println(rb);
+        int readCount = rb.read(newbuf, 0, bufferSize);
+        assertEquals(bufferSize, readCount);
+        
+        // what is the expected data read?
+        // [<-intialData-><-data->]
+        // now only take the last <buffer size> of all that as the rest has been overwritten
+        InputStream expectedData = new ConcatInputStream(
+                new LimitedInputStream(DataGenFactory.incrementingBytes(), initialData),
+                new LimitedInputStream(DataGenFactory.incrementingBytes(), dataSize)
+        );
+        int skipBytes = Math.max(0, initialData + dataSize - bufferSize);
+        expectedData.skip(skipBytes);
+        for (int i = bufferSize; i < bufferSize; i++) {
+            byte expectedByte = (byte) expectedData.read();
+            byte value = newbuf[i];
+            if (expectedByte != value) {
+                System.out.println("eh?");
+            }
+            assertEquals(expectedByte, value);
+        }
+    }
+    
+    @ParameterizedTest
+    @MethodSource("testReadArraySource")
+    public void testReadArray_segments(int bufferSize, int dataSize, int initialData) {
+        ByteRingBuffer rb = new ByteRingBuffer(bufferSize);
+        
+        // fill with data
+        for (int b = 0; b < dataSize; b++) {
+            rb.put(data(b));
+        }
+        
+        //find near enough to midpoint
+        int half = dataSize / 2;
+        
+        // read half whole array
+        byte[] newbuf = new byte[dataSize];
+        int readCount = rb.read(newbuf, 0, half);
+        assertEquals(half, readCount);
+        for (int expected = 0; expected < half; expected++) {
+            assertEquals(data(expected), newbuf[expected]);
+        }
+        assertEquals(dataSize - half, rb.size());
+        
+        // add a quarter more data to create data at each end of array
+        int quarter = dataSize / 4;
+        for (int i = 0; i < quarter; i++) {
+            rb.add(data(dataSize + i));
+        }
+        
+        readCount = rb.read(newbuf, 0, rb.size());
+        assertEquals(dataSize - half + quarter, readCount);
+
+        int expectedIndex = 0;
+        for (; expectedIndex < half; expectedIndex++) {
+            assertEquals(data(expectedIndex + half), newbuf[expectedIndex]);
+        }
+        for (int i = 0; i < quarter; i++) {
+            assertEquals(data(expectedIndex + half + i), newbuf[expectedIndex + i]);
+        }
+    }
+    
+    public static byte data(int i) {
+        return (byte) (i % Byte.MAX_VALUE);
+    }
+    
+    public static Stream<Arguments> testReadArraySource() {
+        //int bufferSize, int dataSize, int initialData
+        return Stream.of(
+                Arguments.of(10, 8, 2),
+                Arguments.of(3, 3, 2),
+                Arguments.of(6, 6, 2),
+                Arguments.of(2, 2, 1),
+                Arguments.of(4096, 4096, 150)
+        );
+    }
+
+    @Test
+    public void testToString() {
+        ByteRingBuffer rb = new ByteRingBuffer(3);
+        assertEquals("ByteRingBuffer[+-0,0,0]",rb.toString());
+        rb.add(1);
+        assertEquals("ByteRingBuffer[-1,+0,0]",rb.toString());
+        rb.add(2);
+        assertEquals("ByteRingBuffer[-1,2,+0]",rb.toString());
+        rb.read();
+        assertEquals("ByteRingBuffer[0,-2,+0]",rb.toString());
+        rb.add(3);
+        assertEquals("ByteRingBuffer[+0,-2,3]",rb.toString());
+        rb.add(4);
+        assertEquals("ByteRingBuffer[4,+-2,3]",rb.toString());
+        rb.read();
+        assertEquals("ByteRingBuffer[4,+0,-3]",rb.toString());
     }
     
     @Test
-    public void testRead_array_split_segments() {
-        ByteRingBuffer rb = new ByteRingBuffer(10);
-        for (byte b = 0; b < 10; b++) {
-            rb.put(b);
-        }
+    public void testGetFreeSpace() {
+        ByteRingBuffer rb = new ByteRingBuffer(5);
+        assertEquals(5, rb.getFreeSpace());
+        rb.add(0);
+        assertEquals(4, rb.getFreeSpace());
+        rb.add(0);
+        assertEquals(3, rb.getFreeSpace());
+        rb.add(0);
+        assertEquals(2, rb.getFreeSpace());
+        rb.add(0);
+        assertEquals(1, rb.getFreeSpace());
+        rb.add(0);
+        assertEquals(0, rb.getFreeSpace());
         assertTrue(rb.isFull());
         
-        // remove first 5 values
-        for(int i=0;i<5;i++) {
-            rb.read();
+        rb.add(0);
+        assertEquals(0, rb.getFreeSpace());
+        assertTrue(rb.isFull());
+        rb.add(0);
+        assertEquals(0, rb.getFreeSpace());
+        assertTrue(rb.isFull());
+        
+        rb.read();
+        assertEquals(1, rb.getFreeSpace());
+        assertFalse(rb.isFull());
+    }
+    
+    public class DataGen {
+        private int counter;
+
+        public DataGen() {
+            counter = 0;
         }
         
-        assertEquals(5, rb.size());
+        public void setNext(int value) {
+            this.counter = value;
+        }
         
-        // add another 3
-        rb.put(10);
-        rb.put(11);
-        rb.put(12);
-        assertEquals(8, rb.size());
-        // expected array values within ring buffer: [10,11,12,-,-,5,6,7,8,9]
-        // with tail after the head
-        
-        byte[] newbuf = new byte[10];
-        int readCount = rb.read(newbuf, 0, 10);
-        assertEquals(8, readCount);
-        assertArrayEquals(new byte[]{5,6,7,8,9,10,11,12,0,0}, newbuf);
-        assertTrue(rb.isEmpty());
+        public byte next() {
+            return (byte) (counter++ % Byte.MAX_VALUE);
+        }
     }
 }
