@@ -1,5 +1,6 @@
 package au.id.simo.useful.io;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,6 +8,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +33,32 @@ import static org.junit.jupiter.api.Assertions.*;
 public interface URLSessionTest {
 
     URLSession createURLSession() throws IOException;
+    
+    /**
+     * Replace when moving to java 9+
+     * @param in
+     * @return
+     * @throws IOException 
+     */
+    static byte[] readAllBytes(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buf = new byte[4048];
+        int readCount;
+        while((readCount = in.read(buf))!=-1) {
+            out.write(buf, 0, readCount);
+        }
+        return out.toByteArray();
+    }
+    
+    /**
+     * Replace with Files.writeString() when moving to java 11+
+     * @param path
+     * @param csq
+     * @throws IOException 
+     */
+    static void writeString(Path path, CharSequence csq) throws IOException {
+        Files.write(path, String.valueOf(csq).getBytes());
+    }
 
     @Test
     default void testGetInputStream() throws Exception {
@@ -41,7 +69,7 @@ public interface URLSessionTest {
             sess.register("test", res);
 
             InputStream in = sess.getInputStream("test");
-            byte[] fromStream = in.readAllBytes();
+            byte[] fromStream = readAllBytes(in);
             assertArrayEquals(fromRes, fromStream);
         }
     }
@@ -183,7 +211,7 @@ public interface URLSessionTest {
                 assertTrue(urlPath.endsWith("path"));
 
                 // read contents from registration url
-                String contents = new String(url.openStream().readAllBytes());
+                String contents = new String(readAllBytes(url.openStream()));
                 assertEquals("contents", contents);
             } catch (MalformedURLException e) {
                 fail(e);
@@ -204,7 +232,7 @@ public interface URLSessionTest {
                     String resURL = session.register("path", generator);
                     URL url = new URL(resURL);
                     // read contents from registration url
-                    String contents = new String(url.openStream().readAllBytes());
+                    String contents = new String(readAllBytes(url.openStream()));
                     assertEquals("contents", contents);
                 }
             } catch (MalformedURLException e) {
@@ -235,7 +263,7 @@ public interface URLSessionTest {
                 assertTrue(urlPath.endsWith("path"));
 
                 // read contents from registration url
-                String contents = new String(url.openStream().readAllBytes());
+                String contents = new String(readAllBytes(url.openStream()));
                 assertEquals("contents", contents);
             } catch (MalformedURLException e) {
                 fail(e);
@@ -254,7 +282,7 @@ public interface URLSessionTest {
                     String urlPath = url.getPath();
                     assertTrue(urlPath.endsWith("path"));
                     // read contents from registration url
-                    String contents = new String(url.openStream().readAllBytes());
+                    String contents = new String(readAllBytes(url.openStream()));
                     assertEquals("contents", contents);
                 }
             } catch (MalformedURLException e) {
@@ -277,7 +305,7 @@ public interface URLSessionTest {
     default void testRegister_String_File() throws IOException {
         File tmpFile = File.createTempFile("unitTest", "file-resource");
         try (URLSession session = createURLSession()) {
-            Files.writeString(tmpFile.toPath(), "contents");
+            writeString(tmpFile.toPath(), "contents");
             try {
                 String resURL = session.register("path", tmpFile);
                 URL url = new URL(resURL);
@@ -285,7 +313,7 @@ public interface URLSessionTest {
                 assertTrue(urlPath.endsWith("path"));
 
                 // read contents from registration url
-                String contents = new String(url.openStream().readAllBytes());
+                String contents = new String(readAllBytes(url.openStream()));
                 assertEquals("contents", contents);
             } catch (MalformedURLException e) {
                 fail(e);
@@ -299,7 +327,7 @@ public interface URLSessionTest {
     default void testRegister_String_File_Overwrite() throws IOException {
         File tmpFile = File.createTempFile("unitTest", "file-resource");
         try (URLSession session = createURLSession()) {
-            Files.writeString(tmpFile.toPath(), "contents");
+            writeString(tmpFile.toPath(), "contents");
             try {
                 for (int i = 0; i < 2; i++) {
                     String resURL = session.register("path", tmpFile);
@@ -307,7 +335,7 @@ public interface URLSessionTest {
                     String urlPath = url.getPath();
                     assertTrue(urlPath.endsWith("path"));
                     // read contents from registration url
-                    String contents = new String(url.openStream().readAllBytes());
+                    String contents = new String(readAllBytes(url.openStream()));
                     assertEquals("contents", contents);
                 }
             } catch (MalformedURLException e) {
@@ -324,7 +352,7 @@ public interface URLSessionTest {
         try {
             URLSession session = createURLSession();
             session.close();
-            Files.writeString(tmpFile.toPath(), "contents");
+            writeString(tmpFile.toPath(), "contents");
             IOException ioe = assertThrows(IOException.class, () -> {
                 session.register("path", tmpFile);
             });

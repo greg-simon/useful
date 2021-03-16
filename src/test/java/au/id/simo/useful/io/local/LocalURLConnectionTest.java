@@ -7,6 +7,7 @@ import java.net.URLConnection;
 
 import au.id.simo.useful.io.StringResource;
 import au.id.simo.useful.io.URLSession;
+import au.id.simo.useful.io.URLSessionTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -49,7 +50,7 @@ public class LocalURLConnectionTest {
             for (int i = 0; i < 2; i++) {
                 InputStream in = connection.getInputStream();
                 assertTrue(((LocalURLConnection) connection).isConnected());
-                String contents = new String(in.readAllBytes());
+                String contents = new String(URLSessionTest.readAllBytes(in));
                 assertEquals("contents", contents);
             }
         }
