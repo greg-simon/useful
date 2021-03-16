@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Un-optimised simplistic implementation
+ * Joins multiple InputStreams into one.
  */
 public class ConcatInputStream extends InputStream {
     
@@ -29,17 +29,38 @@ public class ConcatInputStream extends InputStream {
         return currentStream;
     }
     
+    private void currentEnded() {
+        currentStream = null;
+    }
+    
     @Override
     public int read() throws IOException {
         InputStream current = currentStream();
-        if(currentStream == null) {
-            return -1;
+        while(current != null) {
+            int returnValue = current.read();
+            if (returnValue == -1) {
+                currentEnded();
+                current = currentStream();
+            } else {
+                return returnValue;
+            }
         }
-        int returnValue = current.read();
-        if (returnValue == -1) {
-            currentStream = null;
+        return -1;
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        InputStream current = currentStream();
+        while(current != null) {
+            int readCount = current.read(b, off, len);
+            if (readCount == -1) {
+                currentEnded();
+                current = currentStream();
+            } else {
+                return readCount;
+            }
         }
-        return returnValue;
+        return -1;
     }
 
     @Override
