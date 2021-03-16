@@ -13,11 +13,7 @@ public class LimitedInputStream extends InputStream {
     private final CountingInputStream inputStream;
 
     public LimitedInputStream(InputStream in, long byteLimit) {
-        if (in instanceof CountingInputStream) {
-            inputStream = (CountingInputStream) in;
-        } else {
-            inputStream = new CountingInputStream(in);
-        }
+        this.inputStream = CountingInputStream.wrap(in);
         this.byteLimit = byteLimit;
     }
 

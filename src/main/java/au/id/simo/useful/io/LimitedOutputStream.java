@@ -13,7 +13,7 @@ public class LimitedOutputStream extends OutputStream {
     private final long byteLimit;
 
     public LimitedOutputStream(OutputStream out, long byteLimit) {
-        this.cout = new CountingOutputStream(out);
+        this.cout = CountingOutputStream.wrap(out);
         this.byteLimit = byteLimit;
     }
 
