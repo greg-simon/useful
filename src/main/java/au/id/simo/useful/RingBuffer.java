@@ -1,19 +1,20 @@
 package au.id.simo.useful;
 
+import java.util.Iterator;
+
 /**
- * Byte buffer for use with streams.
- * <p>
- * Allows writing to it forever without additional memory usage.
+ * Allows adding to it forever without additional memory usage.
  * <p>
  * Usage Modes:
  * <ul>
  * <li>Writes overwrite old values silently: Use add and get</li>
- * <li>Writes error if no free space: Use put and read</li>
+ * <li>Writes throw error if no free space: Use put and read</li>
  * </ul>
+ * @param <T> The types contained within the buffer.
  */
-public class ByteRingBuffer {
+public class RingBuffer<T> implements Iterable<T> {
 
-    private final byte[] buffer;
+    private final Object[] buffer;
 
     /**
      * Add index. Points to next location to write to. Write then increment.
@@ -29,8 +30,8 @@ public class ByteRingBuffer {
      */
     private int size;
 
-    public ByteRingBuffer(int maxSize) {
-        buffer = new byte[maxSize];
+    public RingBuffer(int maxSize) {
+        buffer = new Object[maxSize];
         head = 0;
         tail = 0;
         size = 0;
@@ -53,11 +54,7 @@ public class ByteRingBuffer {
      *
      * @param i add value, overwriting oldest value if at capacity.
      */
-    public void add(int i) {
-        add((byte) i);
-    }
-
-    public void add(byte i) {
+    public void add(T i) {
         // write
         buffer[head] = i;
         // then increment
@@ -76,21 +73,9 @@ public class ByteRingBuffer {
      *
      * @param i
      */
-    public void put(int i) {
+    public void put(T i) {
         if (isFull()) {
-            throw new ArrayIndexOutOfBoundsException("Buffer is full");
-        }
-        add(i);
-    }
-
-    /**
-     * Same as add except an exception will be thrown if there is no space.
-     *
-     * @param i
-     */
-    public void put(byte i) {
-        if (isFull()) {
-            throw new ArrayIndexOutOfBoundsException("Buffer is full");
+            throw new ArrayIndexOutOfBoundsException("RingBuffer is full");
         }
         add(i);
     }
@@ -99,11 +84,12 @@ public class ByteRingBuffer {
      *
      * @return oldest value or throws ArrayIndexOutOfBounds exception if empty.
      */
-    public byte peek() {
+    @SuppressWarnings("unchecked")
+    public T peek() {
         if (isEmpty()) {
-            throw new ArrayIndexOutOfBoundsException("Buffer is empty");
+            throw new ArrayIndexOutOfBoundsException("RingBuffer is empty");
         }
-        return buffer[tail];
+        return (T) buffer[tail];
     }
 
     /**
@@ -116,7 +102,8 @@ public class ByteRingBuffer {
      * @return the value that is {@code index} positions from the oldest item in
      * the collection.
      */
-    public byte peek(int index) {
+    @SuppressWarnings("unchecked")
+    public T peek(int index) {
         if (index >= size) {
             throw new ArrayIndexOutOfBoundsException(
                     String.format("Index value %s is larger than the number of elements %s.",
@@ -126,7 +113,7 @@ public class ByteRingBuffer {
             );
         }
         int relindex = incrementIndex(tail, index);
-        return buffer[relindex];
+        return (T) buffer[relindex];
     }
 
     /**
@@ -134,12 +121,13 @@ public class ByteRingBuffer {
      *
      * @return oldest value or throws ArrayIndexOutOfBounds exception if empty.
      */
-    public byte read() {
+    public T read() {
         if (isEmpty()) {
             throw new ArrayIndexOutOfBoundsException("RingBuffer is empty");
         }
         // read
-        byte t = buffer[tail];
+        @SuppressWarnings("unchecked")
+        T t = (T) buffer[tail];
 
         // then increment
         tail = incrementIndex(tail, 1);
@@ -156,7 +144,7 @@ public class ByteRingBuffer {
      * @param length the number of values to copy.
      * @return
      */
-    public int read(byte[] dest, int start, int length) {
+    public int read(T[] dest, int start, int length) {
         int totalReadLength = peek(dest, start, length);
         tail = incrementIndex(tail, totalReadLength);
         size -= totalReadLength;
@@ -174,7 +162,7 @@ public class ByteRingBuffer {
      * @param length the number of values to copy.
      * @return the number of values copied into the provided array.
      */
-    public int peek(byte[] dest, int start, int length) {
+    public int peek(T[] dest, int start, int length) {
         int readLength = Math.min(size, length);
 
         // buffer array could have two segments to copy out of order. One at
@@ -225,8 +213,9 @@ public class ByteRingBuffer {
         return maxSize() - size();
     }
 
-    public byte[] toArray() {
-        byte[] array = new byte[size];
+    public T[] toArray() {
+        @SuppressWarnings("unchecked")
+        T[] array = (T[]) new Object[size];
         peek(array, 0, size);
         return array;
     }
@@ -234,9 +223,9 @@ public class ByteRingBuffer {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("ByteRingBuffer");
+        sb.append("RingBuffer");
         sb.append('[');
-        int maxLoop = Math.min(buffer.length, 50);
+        int maxLoop = Math.min(buffer.length, 10);
         for (int i = 0; i < maxLoop; i++) {
             if (head == i) {
                 sb.append('+');
@@ -246,9 +235,9 @@ public class ByteRingBuffer {
             }
             // is this byte actual data or uncleared noise?
             if (isData(i)) {
-                sb.append(buffer[i] & 0xff);
+                sb.append(String.valueOf(buffer[i]));
             } else {
-                sb.append("0");
+                sb.append(" ");
             }
             sb.append(',');
         }
@@ -270,7 +259,7 @@ public class ByteRingBuffer {
         return index >= tail || index < head;
     }
 
-    public boolean containsArray(byte[] array) {
+    public boolean containsArray(T[] array) {
         if (array.length > size()) {
             return false;
         }
@@ -286,5 +275,24 @@ public class ByteRingBuffer {
         head = 0;
         tail = 0;
         size = 0;
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new RingBufferIterator();
+    }
+    
+    private class RingBufferIterator implements Iterator<T> {
+        private int index = 0;
+
+        @Override
+        public boolean hasNext() {
+            return index < size();
+        }
+
+        @Override
+        public T next() {
+            return peek(index++);
+        }
     }
 }
