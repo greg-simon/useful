@@ -8,7 +8,7 @@ package au.id.simo.useful;
  * Usage Modes:
  * <ul>
  * <li>Writes overwrite old values silently: Use add and get</li>
- * <li>Writes error if no free space: Use put and read</li>
+ * <li>Writes throw error if no free space: Use put and read</li>
  * </ul>
  */
 public class ByteRingBuffer {
@@ -252,19 +252,19 @@ public class ByteRingBuffer {
             }
             sb.append(',');
         }
-        sb.deleteCharAt(sb.length()-1);
+        sb.deleteCharAt(sb.length() - 1);
         if (maxLoop < buffer.length) {
             sb.append("...");
         }
         sb.append("]");
         return sb.toString();
     }
-    
+
     private boolean isData(int index) {
         if (size == 0) {
             return false;
         }
-        if(head > tail) {
+        if (head > tail) {
             return index >= tail && index < head;
         }
         return index >= tail || index < head;

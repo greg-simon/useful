@@ -66,9 +66,9 @@ public class CharRingBuffer {
             size++;
         }
     }
-    
+
     public void add(CharSequence chars) {
-        for(int i=0;i<chars.length();i++) {
+        for (int i = 0; i < chars.length(); i++) {
             add(chars.charAt(i));
         }
     }
@@ -84,9 +84,9 @@ public class CharRingBuffer {
         }
         add(i);
     }
-    
+
     public void put(CharSequence chars) {
-        for (int i=0;i<chars.length();i++) {
+        for (int i = 0; i < chars.length(); i++) {
             put(chars.charAt(i));
         }
     }
@@ -248,19 +248,19 @@ public class CharRingBuffer {
             }
             sb.append(',');
         }
-        sb.deleteCharAt(sb.length()-1);
+        sb.deleteCharAt(sb.length() - 1);
         if (maxLoop < buffer.length) {
             sb.append("...");
         }
         sb.append("]");
         return sb.toString();
     }
-    
+
     private boolean isData(int index) {
         if (size == 0) {
             return false;
         }
-        if(head > tail) {
+        if (head > tail) {
             return index >= tail && index < head;
         }
         return index >= tail || index < head;
@@ -272,13 +272,43 @@ public class CharRingBuffer {
             return false;
         }
         for (int i = 0; i < seqLength; i++) {
-            if(peek(i) != charSeq.charAt(i)) {
+            if (peek(i) != charSeq.charAt(i)) {
                 return false;
             }
         }
         return true;
     }
-    
+
+    public boolean contains(CharSequence charSeq) {
+        if (charSeq.length() > size) {
+            return false;
+        }
+        int offset = -1;
+        char firstChar = charSeq.charAt(0);
+        for (int i = 0; i < charSeq.length(); i++) {
+            if (this.peek(i) == firstChar) {
+                offset = i;
+                break;
+            }
+        }
+        if (offset < 0) {
+            // no first char found in buffer
+            return false;
+        }
+        // does the rest of the buffer match the charSeq?
+        if ((size - offset) < charSeq.length()) {
+            // not enough chars left to match.
+            return false;
+        }
+
+        for (int i = 0; i < charSeq.length(); i++) {
+            if (this.peek(offset + i) != charSeq.charAt(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean containsArray(char[] array) {
         if (array.length > size) {
             return false;
