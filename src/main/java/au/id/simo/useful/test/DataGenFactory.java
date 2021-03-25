@@ -23,7 +23,7 @@ public class DataGenFactory {
     
     public static InputStream incrementingBytes(long limit) {
         return new LimitedInputStream(new InputStream() {
-            private final CloseState closeState = new CloseState("Stream Closed");
+            private final CloseState closeState = CloseState.stream();
             private long counter=0;
             @Override
             public int read() throws IOException {
@@ -51,7 +51,7 @@ public class DataGenFactory {
     public static InputStream randomBytes(long limit) {
         Random random = new Random();
         return new LimitedInputStream(new InputStream() {
-            private final CloseState closeState = new CloseState("Stream Closed");
+            private final CloseState closeState = CloseState.stream();
             @Override
             public int read() throws IOException {
                 closeState.ensureOpen();
@@ -69,7 +69,7 @@ public class DataGenFactory {
     public static Reader ascendingChars(long limit) {
         return new LimitedReader(new Reader() {
             private static final String CHARS = "abcdefghijklmnopqrstuvwxyz ";
-            private final CloseState closeState = new CloseState("Reader Closed");
+            private final CloseState closeState = CloseState.reader();
             private volatile int index = 0;
             
             @Override
