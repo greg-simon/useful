@@ -28,11 +28,15 @@ public class LimitedInputStream extends InputStream {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        if (inputStream.getByteCount() >= byteLimit) {
+        long byteCount = inputStream.getByteCount();
+        if (byteCount >= byteLimit) {
             return -1;
         }
-        if (inputStream.getByteCount() + len > byteLimit) {
-            int newLen = (int) ((inputStream.getByteCount() + len) - byteLimit);
+        
+        long maxPostReadByteCount = byteCount + len;
+        if (maxPostReadByteCount > byteLimit) {
+            int reduceLenBy = (int) (maxPostReadByteCount - byteLimit);
+            int newLen = len - reduceLenBy;
             return inputStream.read(b, off, newLen);
         }
         return inputStream.read(b, off, len);

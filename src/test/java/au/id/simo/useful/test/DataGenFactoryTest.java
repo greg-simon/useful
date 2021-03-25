@@ -21,7 +21,8 @@ public class DataGenFactoryTest {
         InputStream in = DataGenFactory.incrementingBytes();
         for (int i=0;i<300;i++) {
             int expected = i % 256;
-            assertEquals(expected, in.read());
+            int value = in.read();
+            assertEquals(expected, value);
         }
     }
     

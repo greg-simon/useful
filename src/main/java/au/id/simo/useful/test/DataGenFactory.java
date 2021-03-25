@@ -15,35 +15,50 @@ public class DataGenFactory {
     /**
      * 
      * @return an InputStream that returns starts at zero and counts up for each
-     * byte.
+     * byte. Limited to Integer.MAX_VALUE by default (2GB).
      */
     public static InputStream incrementingBytes() {
-        return new InputStream() {
-            private int counter=0;
-            @Override
-            public int read() throws IOException {
-                return counter++ & 0xff;
-            }
-        };
+        return incrementingBytes(Integer.MAX_VALUE);
     }
     
-    /**
-     * 
-     * @param limit The number of bytes to return before ending the stream.
-     * @return an InputStream that returns starts at zero and counts up for each
-     * byte.
-     */
-    public static InputStream incrementingBytesWithLimit(long limit) {
-        return new LimitedInputStream(incrementingBytes(),limit);
+    public static InputStream incrementingBytes(long limit) {
+        return new LimitedInputStream(new InputStream() {
+            private final CloseState closeState = new CloseState("Stream Closed");
+            private long counter=0;
+            @Override
+            public int read() throws IOException {
+                closeState.ensureOpen();
+                return expectedValueForCount(counter++);
+            }
+
+            @Override
+            public void close() throws IOException {
+                super.close();
+                closeState.setClosed();
+            }
+        }, limit);
+    }
+    
+    public static int expectedValueForCount(long count) {
+        int intValue = (int)(count % (((long)Integer.MAX_VALUE) + 1));
+        return intValue & 0xff;
     }
     
     public static InputStream randomBytes() {
         Random random = new Random();
         return new InputStream() {
+            private final CloseState closeState = new CloseState("Stream Closed");
             @Override
             public int read() throws IOException {
+                closeState.ensureOpen();
                 return random.nextInt(256);
             }
+
+            @Override
+            public void close() throws IOException {
+                super.close();
+                closeState.setClosed();
+            }           
         };
     }
     
@@ -54,10 +69,12 @@ public class DataGenFactory {
     public static Reader ascendingChars(long limit) {
         return new LimitedReader(new Reader() {
             private static final String CHARS = "abcdefghijklmnopqrstuvwxyz ";
+            private final CloseState closeState = new CloseState("Reader Closed");
             private volatile int index = 0;
             
             @Override
             public int read(char[] cbuf, int off, int len) throws IOException {
+                closeState.ensureOpen();
                 for(int i=0;i<len;i++) {
                     index = nextIndex(index);
                     cbuf[off + i] = CHARS.charAt(index);
@@ -67,6 +84,7 @@ public class DataGenFactory {
 
             @Override
             public int read() throws IOException {
+                closeState.ensureOpen();
                 index = nextIndex(index);
                 return CHARS.charAt(index);
             }
@@ -77,7 +95,7 @@ public class DataGenFactory {
 
             @Override
             public void close() throws IOException {
-                
+                closeState.setClosed();
             }
         }, limit);
     }

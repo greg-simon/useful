@@ -1,7 +1,9 @@
 package au.id.simo.useful.io;
 
 import java.io.ByteArrayInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +13,13 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  *
  */
-public class CountingInputStreamTest {
+public class CountingInputStreamTest implements FilterInputStreamTest {
+    
+    @Override
+    public FilterInputStream create(InputStream in) {
+        return new CountingInputStream(in);
+    }
+    
     /**
      * Test of getByteCount method, of class SizeCounterInputStream.
      *
