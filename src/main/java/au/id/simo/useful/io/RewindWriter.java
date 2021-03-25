@@ -4,7 +4,11 @@ import java.io.IOException;
 import java.io.Writer;
 
 /**
- * Unlike a BufferedWriter, a buffer is not used unless mark() is called.
+ * A Writer implementation that allows marking and undoing those written
+ * characters.
+ * 
+ * Unlike BufferedReader or BufferedWriter, a buffer is not used unless mark()
+ * is called.
  * 
  */
 public class RewindWriter extends Writer {

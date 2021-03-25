@@ -28,25 +28,29 @@ public class DataGenFactory {
             @Override
             public int read() throws IOException {
                 closeState.ensureOpen();
-                return expectedValueForCount(counter++);
+                return expectedByte(counter++);
             }
 
             @Override
             public void close() throws IOException {
                 super.close();
-                closeState.setClosed();
+                closeState.close();
             }
         }, limit);
     }
     
-    public static int expectedValueForCount(long count) {
+    public static int expectedByte(long count) {
         int intValue = (int)(count % (((long)Integer.MAX_VALUE) + 1));
         return intValue & 0xff;
     }
     
     public static InputStream randomBytes() {
+        return randomBytes(Integer.MAX_VALUE);
+    }
+    
+    public static InputStream randomBytes(long limit) {
         Random random = new Random();
-        return new InputStream() {
+        return new LimitedInputStream(new InputStream() {
             private final CloseState closeState = new CloseState("Stream Closed");
             @Override
             public int read() throws IOException {
@@ -57,13 +61,9 @@ public class DataGenFactory {
             @Override
             public void close() throws IOException {
                 super.close();
-                closeState.setClosed();
+                closeState.close();
             }           
-        };
-    }
-    
-    public static InputStream randomBytesWithLimit(long limit) {
-        return new LimitedInputStream(randomBytes(), limit);
+        },limit);
     }
     
     public static Reader ascendingChars(long limit) {
@@ -95,7 +95,7 @@ public class DataGenFactory {
 
             @Override
             public void close() throws IOException {
-                closeState.setClosed();
+                closeState.close();
             }
         }, limit);
     }

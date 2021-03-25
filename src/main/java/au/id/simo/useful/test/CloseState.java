@@ -13,14 +13,17 @@ public class CloseState {
         this.errorMsg = errorMsg;
         this.closed = false;
     }
-    
+    /**
+     * Throws IOException if in a closed state.
+     * @throws IOException if close() has been called.
+     */
     public void ensureOpen() throws IOException {
         if (closed) {
             throw new IOException(errorMsg);
         }
     }
     
-    public void setClosed() {
+    public void close() {
         this.closed = true;
     }
 }

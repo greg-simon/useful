@@ -101,7 +101,7 @@ public interface FilterInputStreamTest {
         while((readCount = fin.read(bytBuf, offset, readLength))!=-1) {
             // verify expected results
             for(int i=0; i<readCount;i++) {
-                assertEquals(bytBuf[i+offset], (byte)DataGenFactory.expectedValueForCount(totalRead + i));
+                assertEquals(bytBuf[i+offset], (byte)DataGenFactory.expectedByte(totalRead + i));
             }
             totalRead += readCount;
         }
