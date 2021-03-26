@@ -8,14 +8,6 @@ import java.io.Reader;
  *
  */
 public class CountingReader extends FilterReader {
-    
-    public static CountingReader wrap(Reader reader) {
-        if (reader instanceof CountingReader) {
-            return (CountingReader) reader;
-        }
-        return new CountingReader(reader);
-    }
-    
     private long charCount;
     
     public CountingReader(Reader in) {
@@ -47,5 +39,12 @@ public class CountingReader extends FilterReader {
             charCount++;
         }
         return byt;
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+        long skipped = super.skip(n);
+        charCount+=skipped;
+        return skipped;
     }
 }

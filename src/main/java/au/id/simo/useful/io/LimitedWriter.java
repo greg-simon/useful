@@ -21,38 +21,23 @@ public class LimitedWriter extends CountingWriter {
         if (getCharCount() < charLimit) {
             super.write(c);
         }
-        // ignore if past the charLimit
     }
 
     @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
         long remaining = charLimit - getCharCount();
-        if (remaining > len) {
-            super.write(cbuf, off, len);
-            return;
+        if (remaining > 0) {
+            int newLen = (int) Math.min(remaining, len);
+            super.write(cbuf, off, newLen);
         }
-        if (getCharCount() < charLimit) {
-            int charsToWrite = (int) (charLimit - getCharCount());
-            if (charsToWrite <= len && charsToWrite > 0) {
-                super.write(cbuf, off, charsToWrite);
-            }
-        }
-        // nothing more can be written, so ignore the rest.
     }
 
     @Override
     public void write(String str, int off, int len) throws IOException {
         long remaining = charLimit - getCharCount();
-        if (remaining > len) {
-            super.write(str, off, len);
-            return;
+        if (remaining > 0) {
+            int newLen = (int) Math.min(remaining, len);
+            super.write(str, off, newLen);
         }
-        if (getCharCount() < charLimit) {
-            int charsToWrite = (int) (charLimit - getCharCount());
-            if (charsToWrite <= len && charsToWrite > 0) {
-                super.write(str, off, charsToWrite);
-            }
-        }
-        // nothing more can be written, so ignore the rest.
     }   
 }

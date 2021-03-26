@@ -18,14 +18,13 @@ public class LimitedReader extends CountingReader {
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
         long charCount = getCharCount();
-        if (charCount >= charLimit) {
+        long remaining = charLimit - charCount;
+        if (remaining <= 0) {
             return -1;
         }
-        if (charCount + len > charLimit) {
-            int newLen = (int) ((charCount + len) - charLimit);
-            return super.read(cbuf, off, newLen);
-        }
-        return super.read(cbuf, off, len);
+        
+        int newLen = (int) Math.min(remaining, (long) len);
+        return super.read(cbuf, off, newLen);
     }
 
     @Override
@@ -35,5 +34,12 @@ public class LimitedReader extends CountingReader {
         } else {
             return super.read();
         }
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+        long remaining = charLimit - getCharCount();
+        long skipAmount = Math.min(remaining, n);
+        return super.skip(skipAmount);
     }
 }

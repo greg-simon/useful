@@ -38,5 +38,5 @@ public class CountingWriter extends FilterWriter {
     public void write(int c) throws IOException {
         super.write(c);
         charCount++;
-    }    
+    }
 }

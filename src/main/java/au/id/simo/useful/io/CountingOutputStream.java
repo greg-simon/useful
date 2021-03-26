@@ -21,13 +21,13 @@ public class CountingOutputStream extends FilterOutputStream {
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        super.out.write(b, off, len);
+        super.write(b, off, len);
         byteCount+=len;
     }
 
     @Override
     public void write(int b) throws IOException {
-        super.out.write(b);
+        super.write(b);
         byteCount++;
     }
 }
