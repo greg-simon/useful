@@ -8,21 +8,6 @@ import java.io.InputStream;
  * Keeps track of the number of bytes that pass through it.
  */
 public class CountingInputStream extends FilterInputStream {
-    
-    /**
-     * Insures the wrapped InputStream is accessible as a CountingInputStream.
-     * @param in The stream to wrap in a new CountingInputStream.
-     * @return If provided stream is already a CountingInputStream, then the
-     * same instance will be returned. Otherwise a new CountingInputStream will
-     * be created.
-     */
-    public static CountingInputStream wrap(InputStream in) {
-        if (in instanceof CountingInputStream) {
-            return (CountingInputStream) in;
-        }
-        return new CountingInputStream(in);
-    }
-
     private long byteCount;
 
     public CountingInputStream(InputStream in) {
@@ -54,5 +39,12 @@ public class CountingInputStream extends FilterInputStream {
             byteCount++;
         }
         return byt;
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+        long skipResult = in.skip(n);
+        byteCount+=skipResult;
+        return skipResult;
     }
 }

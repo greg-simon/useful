@@ -7,43 +7,49 @@ import java.io.InputStream;
  * Reads in data from the underlying InputStream until the given limit is
  * reached.
  */
-public class LimitedInputStream extends InputStream {
+public class LimitedInputStream extends CountingInputStream {
 
     private final long byteLimit;
-    private final CountingInputStream inputStream;
 
     public LimitedInputStream(InputStream in, long byteLimit) {
-        this.inputStream = CountingInputStream.wrap(in);
+        super(in);
         this.byteLimit = byteLimit;
     }
 
     @Override
     public int read() throws IOException {
-        if (inputStream.getByteCount() >= byteLimit) {
+        if (getByteCount() >= byteLimit) {
             return -1;
         } else {
-            return inputStream.read();
+            return super.read();
         }
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        long byteCount = inputStream.getByteCount();
+        long byteCount = getByteCount();
         if (byteCount >= byteLimit) {
             return -1;
         }
         
-        long maxPostReadByteCount = byteCount + len;
-        if (maxPostReadByteCount > byteLimit) {
-            int reduceLenBy = (int) (maxPostReadByteCount - byteLimit);
-            int newLen = len - reduceLenBy;
-            return inputStream.read(b, off, newLen);
+        long remaining = byteLimit - byteCount;
+        int newLen = (int) Math.min((long)len, remaining);
+        return super.read(b, off, newLen);
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+        long byteCount = getByteCount();
+        if (byteCount >= byteLimit) {
+            return 0;
         }
-        return inputStream.read(b, off, len);
+        long remaining = byteLimit - byteCount;
+        long skipAmount = Math.min(remaining, n);
+        return super.skip(skipAmount);
     }
 
     @Override
     public void close() throws IOException {
-        inputStream.close();
+        super.close();
     }
 }

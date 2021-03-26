@@ -1,6 +1,7 @@
 package au.id.simo.useful.io;
 
 import java.io.ByteArrayInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -11,11 +12,16 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  *
  */
-public class LimitedInputStreamTest {
+public class LimitedInputStreamTest implements FilterInputStreamTest {
 
     private final byte[] testData = {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
     };
+    
+    @Override
+    public FilterInputStream create(InputStream in) {
+        return new LimitedInputStream(in, 60);
+    }
     
     @Test
     public void testConstructorWithCountingStream() throws IOException {

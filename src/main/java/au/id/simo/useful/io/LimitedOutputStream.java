@@ -7,48 +7,27 @@ import java.io.OutputStream;
  * Writes to the output stream until the given limit has been reached, then
  * anything else written is ignored.
  */
-public class LimitedOutputStream extends OutputStream {
-
-    private final CountingOutputStream cout;
+public class LimitedOutputStream extends CountingOutputStream {
     private final long byteLimit;
 
     public LimitedOutputStream(OutputStream out, long byteLimit) {
-        this.cout = CountingOutputStream.wrap(out);
+        super(out);
         this.byteLimit = byteLimit;
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        long byteCount = cout.getByteCount();
-        if ((byteCount + len) <= byteLimit) {
-            cout.write(b, off, len);
-            return;
-        }
-        // can any bytes be written
-        if (byteCount < byteLimit) {
-            // how many bytes can I write?
-            int bytesToWrite = (int) (byteLimit - byteCount);
-            if (bytesToWrite <= len && bytesToWrite > 0) {
-                cout.write(b, off, bytesToWrite);
-            }
-        }
-        // nothing more can be written, just discarded.
+        long byteCount = getByteCount();
+        
+        long remaining = byteLimit - byteCount;
+        int newLen = (int) Math.min((long)len, remaining);
+        super.write(b, off, newLen);
     }
 
     @Override
     public void write(int b) throws IOException {
-        if (cout.getByteCount() < byteLimit) {
-            cout.write(b);
+        if (getByteCount() < byteLimit) {
+            super.write(b);
         }
-    }
-
-    @Override
-    public void close() throws IOException {
-        cout.close();
-    }
-
-    @Override
-    public void flush() throws IOException {
-        cout.flush();
     }
 }
