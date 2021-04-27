@@ -14,30 +14,13 @@ public class HashInputStreamTest {
 
     public HashInputStreamTest() {
     }
-
-    /**
-     * Test of read method, of class HashInputStream.
-     *
-     * @throws java.lang.Exception
-     */
-    @Test
-    public void testReadDefault() throws Exception {
-        ByteArrayInputStream bin = new ByteArrayInputStream(
-                "This is some text that will be hashed.".getBytes("UTF-8")
-        );
-        HashInputStream hin = new HashInputStream(bin);
-        while(hin.read()!=-1){} // read through the whole input stream
-        hin.close();
-        
-        assertEquals("ae9626dfbb2fffc0daa201e7bc032ba1", hin.getHashString());
-    }
     
     @Test
-    public void testReadDefault_readArray() throws Exception {
+    public void testReadMD5_readArray() throws Exception {
         ByteArrayInputStream bin = new ByteArrayInputStream(
                 "This is some text that will be hashed.".getBytes("UTF-8")
         );
-        HashInputStream hin = new HashInputStream(bin);
+        HashInputStream hin = new HashInputStream(bin, "MD5");
         // available() should return count of all bytes from underlying bytearray stream
         byte[] buffer = new byte[hin.available()];
         int read = hin.read(buffer);

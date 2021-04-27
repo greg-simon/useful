@@ -6,28 +6,16 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * A FilterInputStream implementation to build a has of all bytes read through it.
+ * A InputStream implementation to build a hash of all bytes read through
+ * it.
  */
-public class HashInputStream extends CountingInputStream {
-    
-    private final MessageDigest messageDigest;
+public class HashInputStream extends CountingInputStream implements Hasher {
 
-    /**
-     * Uses MD5 algorithm by default.
-     * 
-     * @param inputStream
-     * @throws NoSuchAlgorithmException 
-     */
-    public HashInputStream(InputStream inputStream) throws NoSuchAlgorithmException {
-        super(inputStream);
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        this.messageDigest = md;
-    }
+    private final MessageDigest messageDigest;
 
     public HashInputStream(InputStream inputStream, String messageDigestAlgorithmn) throws NoSuchAlgorithmException {
         super(inputStream);
-        MessageDigest md = MessageDigest.getInstance(messageDigestAlgorithmn);
-        this.messageDigest = md;
+        this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithmn);
     }
 
     public HashInputStream(InputStream inputStream, MessageDigest messageDigest) {
@@ -35,21 +23,9 @@ public class HashInputStream extends CountingInputStream {
         this.messageDigest = messageDigest;
     }
 
+    @Override
     public byte[] getHash() {
         return messageDigest.digest();
-    }
-
-    public String getHashString() {
-        byte[] hash = getHash();
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < hash.length; i++) {
-            if ((0xff & hash[i]) < 0x10) {
-                sb.append("0");
-            }
-            sb.append(Integer.toHexString(0xFF & hash[i]));
-        }
-        return sb.toString();
     }
 
     @Override
@@ -62,22 +38,11 @@ public class HashInputStream extends CountingInputStream {
     }
 
     @Override
-    public int available() throws IOException {
-        return super.available();
-    }
-
-    @Override
     public int read(byte[] b, int off, int len) throws IOException {
         int readByteCount = super.read(b, off, len);
         if (readByteCount > 0) {
             messageDigest.update(b, off, readByteCount);
         }
-
         return readByteCount;
-    }
-
-    @Override
-    public void close() throws IOException {
-        super.close();
     }
 }
