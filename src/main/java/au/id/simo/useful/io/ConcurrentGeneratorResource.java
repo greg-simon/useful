@@ -9,14 +9,11 @@ import java.io.PipedOutputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import au.id.simo.useful.concurrent.NamedThreadFactory;
-import au.id.simo.useful.concurrent.ShutdownExecutorHook;
 
 /**
  * When the {@link InputStream} is requested, it runs the {@link Generator} in
@@ -25,11 +22,16 @@ import au.id.simo.useful.concurrent.ShutdownExecutorHook;
  * <p>
  * This avoids both loading the {@link Generator} content in to memory first,
  * and using temporary files.
+ * <p>
+ * {@link Executors#newCachedThreadPool() } is the default executor service used
+ * for generating resources when no ExecutorService is passed in a constructor.
  */
 public class ConcurrentGeneratorResource extends Resource {
 
     private static final int DEFAULT_BUFFER_SIZE = 1024;
-    private static final ExecutorService EXEC_SERVICE = createExecutorService();
+    private static final ExecutorService DEFAULT_EXEC_SERVICE = Executors.newCachedThreadPool();
+    
+    private final ExecutorService service;
     private final Generator generator;
     private final int bufferSize;
 
@@ -45,7 +47,18 @@ public class ConcurrentGeneratorResource extends Resource {
      * requested
      */
     public ConcurrentGeneratorResource(Generator generator) {
-        this(generator, DEFAULT_BUFFER_SIZE);
+        this(DEFAULT_EXEC_SERVICE, generator, DEFAULT_BUFFER_SIZE);
+    }
+    
+    /**
+     * Constructor.
+     *
+     * @param service The executor service that the Generator will use
+     * @param generator The Generator that will executed when an InputStream is
+     * requested
+     */
+    public ConcurrentGeneratorResource(ExecutorService service, Generator generator) {
+        this(service, generator, DEFAULT_BUFFER_SIZE);
     }
 
     /**
@@ -57,6 +70,20 @@ public class ConcurrentGeneratorResource extends Resource {
      * OutputStream the Generator s writing to and the created InputStream.
      */
     public ConcurrentGeneratorResource(Generator generator, int bufferSize) {
+        this(DEFAULT_EXEC_SERVICE, generator, bufferSize);
+    }
+    
+    /**
+     * Constructor.
+     *
+     * @param service The executor service that the Generator will use
+     * @param generator The Generator that will executed when an InputStream is
+     * requested
+     * @param bufferSize The number of bytes in size of the buffer between the
+     * OutputStream the Generator s writing to and the created InputStream.
+     */
+    public ConcurrentGeneratorResource(ExecutorService service, Generator generator, int bufferSize) {
+        this.service = service;
         this.generator = generator;
         this.bufferSize = bufferSize;
     }
@@ -78,7 +105,7 @@ public class ConcurrentGeneratorResource extends Resource {
         PipedInputStream in = new PipedInputStream(bufferSize);
         PipedOutputStream out = new PipedOutputStream(in);
         Callable<Object> producer = new GeneratorCallable(out);
-        future = EXEC_SERVICE.submit(producer);
+        future = service.submit(producer);
         return new SourceErrorInputStreamWrapper(in);
     }
 
@@ -176,24 +203,5 @@ public class ConcurrentGeneratorResource extends Resource {
             super.close();
             waitForGenerator();
         }
-    }
-
-    /**
-     * Creates an ExecutorService for all instances of this class to use.
-     * <p>
-     * A shutdown hook is also registered to shutdown this service when the
-     * application is shutdown.
-     *
-     * @return An ExecutorService shared among all instances of this class for
-     * running {@code Generator}'s in.
-     */
-    private static ExecutorService createExecutorService() {
-        ExecutorService newThreadPool = new ThreadPoolExecutor(
-                0, Integer.MAX_VALUE,
-                5L, TimeUnit.SECONDS,
-                new SynchronousQueue<>(),
-                new NamedThreadFactory("concurrent-generator-resource", true));
-        ShutdownExecutorHook.registerService(newThreadPool);
-        return newThreadPool;
     }
 }
