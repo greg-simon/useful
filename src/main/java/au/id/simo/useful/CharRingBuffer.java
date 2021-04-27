@@ -85,6 +85,11 @@ public class CharRingBuffer {
         add(i);
     }
 
+    /**
+     * Same as add except an exception will be thrown if there is no space.
+     *
+     * @param chars
+     */
     public void put(CharSequence chars) {
         for (int i = 0; i < chars.length(); i++) {
             put(chars.charAt(i));

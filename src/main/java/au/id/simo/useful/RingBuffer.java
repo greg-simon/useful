@@ -241,19 +241,19 @@ public class RingBuffer<T> implements Iterable<T> {
             }
             sb.append(',');
         }
-        sb.deleteCharAt(sb.length()-1);
+        sb.deleteCharAt(sb.length() - 1);
         if (maxLoop < buffer.length) {
             sb.append("...");
         }
         sb.append("]");
         return sb.toString();
     }
-    
+
     private boolean isData(int index) {
         if (size == 0) {
             return false;
         }
-        if(head > tail) {
+        if (head > tail) {
             return index >= tail && index < head;
         }
         return index >= tail || index < head;
