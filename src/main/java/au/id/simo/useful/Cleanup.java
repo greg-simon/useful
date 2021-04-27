@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  * {@link Runtime#addShutdownHook(java.lang.Thread) }
  * <p>
  * Example of simple instance usage:
- * <code>
+ * <pre>
  * try (Cleanup cleanup = new Cleanup()) {
  *    ExecutorService service = cleanup.executorService(Executors.newCachedThreadPool());
  *    cleanup.add(() -> {
@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  *    service.execute(...);
  *    ...
  * }
- * </code>
+ * </pre>
  * 
  * Cleanup also has two static instances:
  * <ol>

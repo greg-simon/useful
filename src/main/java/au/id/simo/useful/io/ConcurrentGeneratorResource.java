@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -29,7 +30,23 @@ import java.util.concurrent.TimeoutException;
 public class ConcurrentGeneratorResource extends Resource {
 
     private static final int DEFAULT_BUFFER_SIZE = 1024;
-    private static final ExecutorService DEFAULT_EXEC_SERVICE = Executors.newCachedThreadPool();
+    
+    private static ExecutorService defaultExecutorService = Executors.newCachedThreadPool();
+    
+    /**
+     * Replaces the default ExecutorService used to run the Generators.
+     * <p>
+     * It is recommended that the returned ExecutorService be shutdown by the
+     * calling code.
+     * 
+     * @param service The new ExecutorService.
+     * @return The existing ExecutorService.
+     */
+    public synchronized static ExecutorService setDefaultExecutorService(ExecutorService service) {
+        ExecutorService old = defaultExecutorService;
+        defaultExecutorService = service;
+        return old;
+    }
     
     private final ExecutorService service;
     private final Generator generator;
@@ -47,7 +64,7 @@ public class ConcurrentGeneratorResource extends Resource {
      * requested
      */
     public ConcurrentGeneratorResource(Generator generator) {
-        this(DEFAULT_EXEC_SERVICE, generator, DEFAULT_BUFFER_SIZE);
+        this(defaultExecutorService, generator, DEFAULT_BUFFER_SIZE);
     }
     
     /**
@@ -70,7 +87,7 @@ public class ConcurrentGeneratorResource extends Resource {
      * OutputStream the Generator s writing to and the created InputStream.
      */
     public ConcurrentGeneratorResource(Generator generator, int bufferSize) {
-        this(DEFAULT_EXEC_SERVICE, generator, bufferSize);
+        this(defaultExecutorService, generator, bufferSize);
     }
     
     /**
