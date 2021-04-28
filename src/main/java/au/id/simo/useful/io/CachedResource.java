@@ -35,15 +35,13 @@ public class CachedResource extends Resource {
         }
         if (buffer == null) {
             InputStream in = resource.inputStream();
-            RecorderInputStream rin = new RecorderInputStream(in, maxCacheSize) {
-                @Override
-                public void endStream() {
-                    limitExceeded = this.isExceededBuffer();
-                    if (limitExceeded == false) {
-                        buffer = this.getReadByteArray();
-                    }
+            RecorderInputStream rin = new RecorderInputStream(in, maxCacheSize);
+            rin.onEndStream((bytes) -> {
+                limitExceeded = rin.isExceededBuffer();
+                if (limitExceeded == false) {
+                    buffer = bytes;
                 }
-            };
+            });
             return rin;
         }
         return new ByteArrayInputStream(buffer);

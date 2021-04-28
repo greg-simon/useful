@@ -4,6 +4,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * Records all data read from provided InputStream up to a byte array buffer up
@@ -29,6 +30,7 @@ public class RecorderInputStream extends FilterInputStream {
      * Has method endStream been run.
      */
     private boolean streamEnded;
+    private Consumer<byte[]> endStreamConsumer;
 
     public RecorderInputStream(InputStream in) {
         this(in, MAX_ARRAY_SIZE);
@@ -128,18 +130,25 @@ public class RecorderInputStream extends FilterInputStream {
     private void endStreamIfRequired() {
         if (!streamEnded) {
             streamEnded = true;
-            endStream();
+            if (endStreamConsumer != null) {
+                endStreamConsumer.accept(buffer);
+            }
         }
     }
 
     /**
-     * A hook added that can be overridden to run code when the end of the
-     * underlying stream has been reached.
+     * Adds a consumer to be run when the end of stream has been reached.
      * <p>
      * Not run if closed before end of stream is reached.
+     *
+     * @param endStreamConsumer The Consumer to be run when the end of stream
+     * has been reached.
+     * @return a reference to this RecorderInputStream instance. To aid in
+     * running this method inline during construction.
      */
-    public void endStream() {
-
+    public RecorderInputStream onEndStream(Consumer<byte[]> endStreamConsumer) {
+        this.endStreamConsumer = endStreamConsumer;
+        return this;
     }
 
     public byte[] getReadByteArray() {
