@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * {@code long hits = Counts.get("hits");}
  */
 public class Counts {
+
     private static final Map<String, AtomicLong> countsMap = new ConcurrentHashMap<>();
 
     private Counts() {
@@ -22,9 +23,9 @@ public class Counts {
     }
 
     /**
-     * Adds one to the named count.
-     * If the named count doesn't exist then it will be first be created with a
-     * value of 0 and then incremented to 1.
+     * Adds one to the named count. If the named count doesn't exist then it
+     * will be first be created with a value of 0 and then incremented to 1.
+     *
      * @param countName the name of the count to increase by one.
      * @return the newly incremented value.
      */
@@ -40,6 +41,7 @@ public class Counts {
     /**
      * Set the specified value of the named count. If the named count didn't
      * previously exist, it will be created.
+     *
      * @param countName the named count to set.
      * @param value the value to set the named count.
      * @return the replaced number, or 0 of there was no previous value.
@@ -55,6 +57,7 @@ public class Counts {
 
     /**
      * Returns the count value of the given named count.
+     *
      * @param countName the name of the count to obtain the value of.
      * @return the current value of the named count. If the count doesn't exist
      * then 0 is returned.
@@ -70,6 +73,7 @@ public class Counts {
 
     /**
      * Lists the name of all existing counts.
+     *
      * @return A list containing a copy of all existing count names at time of
      * method call. Any changes to the returned list will not affect the counts
      * managed within this class.
@@ -78,9 +82,10 @@ public class Counts {
         Set<String> keySet = countsMap.keySet();
         return new ArrayList<>(keySet);
     }
-    
+
     /**
      * Removes the named count.
+     *
      * @param countName the name of the count to remove.
      * @return Any value that was present at time of removal. Otherwise 0 if
      * count doesn't exist.
@@ -92,7 +97,7 @@ public class Counts {
         }
         return atomicLong.get();
     }
-    
+
     /**
      * Removes all counts.
      */

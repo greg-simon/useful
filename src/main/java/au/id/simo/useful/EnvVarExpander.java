@@ -4,24 +4,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Expands variables found in provided {@code String} formatted like 
+ * Expands variables found in provided {@code String} formatted like
  * {@code $VAR} or {@code ${VAR}}.
- * 
+ *
  * And variables with no found value will be simply removed.
  */
 public class EnvVarExpander implements VarExpander {
+
     private final Map<String, String> varMap;
-    
+
     public EnvVarExpander() {
         varMap = new HashMap<>();
     }
-    
+
     public EnvVarExpander(Map<String, String> varMap) {
         this.varMap = varMap;
     }
-    
+
     /**
      * Builder style method for populating variable mappings.
+     *
      * @param key variable name
      * @param value variable value
      * @return this EnvVarExpander for further method chaining.
@@ -31,14 +33,14 @@ public class EnvVarExpander implements VarExpander {
         varMap.put(key, value);
         return this;
     }
-        
+
     @Override
     public String expand(String sourceStr) {
         StringBuilder output = new StringBuilder();
         StringBuilder varName = new StringBuilder();
         State state = State.NORMAL;
-        
-        for(int index=0; index < sourceStr.length(); index++) {
+
+        for (int index = 0; index < sourceStr.length(); index++) {
             char c = sourceStr.charAt(index);
             switch (state) {
                 case BRACE_VARNAME:
@@ -52,9 +54,9 @@ public class EnvVarExpander implements VarExpander {
                     }
                     break;
                 case VARNAME:
-                    if(isAcceptableVarNameChar(c)) {                        
+                    if (isAcceptableVarNameChar(c)) {
                         varName.append(c);
-                    } else {                        
+                    } else {
                         // end the variable name reading and lookup the value
                         output.append(expandVar(varName));
                         // dont forget to add the whitespace to the output
@@ -83,29 +85,27 @@ public class EnvVarExpander implements VarExpander {
             }
         }
         // for when the variable name is the last part of the source str.
-        if(varName.length()>0) {
+        if (varName.length() > 0) {
             output.append(expandVar(varName));
         }
         return output.toString();
     }
-    
+
     private String expandVar(StringBuilder varName) {
         String value = varMap.get(varName.toString());
         clearSB(varName);
-        if(value == null) {
+        if (value == null) {
             return "";
         } else {
             return value;
         }
     }
-    
+
     private void clearSB(StringBuilder sb) {
         sb.delete(0, sb.length());
     }
-    
+
     private enum State {
-        NORMAL
-        ,VARNAME
-        ,BRACE_VARNAME
+        NORMAL, VARNAME, BRACE_VARNAME
     }
 }

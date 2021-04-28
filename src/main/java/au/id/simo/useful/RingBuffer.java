@@ -10,6 +10,7 @@ import java.util.Iterator;
  * <li>Writes overwrite old values silently: Use add and get</li>
  * <li>Writes throw error if no free space: Use put and read</li>
  * </ul>
+ *
  * @param <T> The types contained within the buffer.
  */
 public class RingBuffer<T> implements Iterable<T> {
@@ -106,7 +107,8 @@ public class RingBuffer<T> implements Iterable<T> {
     public T peek(int index) {
         if (index >= size) {
             throw new ArrayIndexOutOfBoundsException(
-                    String.format("Index value %s is larger than the number of elements %s.",
+                    String.format(
+                            "Index value %s is larger than the number of elements %s.",
                             index,
                             size
                     )
@@ -281,8 +283,9 @@ public class RingBuffer<T> implements Iterable<T> {
     public Iterator<T> iterator() {
         return new RingBufferIterator();
     }
-    
+
     private class RingBufferIterator implements Iterator<T> {
+
         private int index = 0;
 
         @Override

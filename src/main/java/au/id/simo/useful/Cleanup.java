@@ -13,8 +13,8 @@ import java.util.function.Consumer;
  * Cleanup is conceptually a list of {@link Runnable} instances that are
  * executed in order when {@link #execute() } is called.
  * <p>
- * Cleanup implements Runnable and AutoCloseable for convenience to enable it
- * to be used easily in try-with-resources blocks and
+ * Cleanup implements Runnable and AutoCloseable for convenience to enable it to
+ * be used easily in try-with-resources blocks and
  * {@link Runtime#addShutdownHook(java.lang.Thread) }
  * <p>
  * Example of simple instance usage:
@@ -28,29 +28,31 @@ import java.util.function.Consumer;
  *    ...
  * }
  * </pre>
- * 
+ *
  * Cleanup also has two static instances:
  * <ol>
  * <li>{@code onShutdown}: This instance is registered with
  * {@link Runtime#addShutdownHook(java.lang.Thread) } to be executed on JVM
- * shutdown. This allows any stand alone application code to add resources to
- * be cleaned up on shutdown from anywhere.
- * 
- * <li>{@code onDemand}: This instance is never executed unless {@link #onDemandClean()}
- * is called. This is a better option for applications requiring more control
- * over when resources are cleaned up, such as within Servlet containers or
- * regularly scheduled cleanups. It's singleton like nature also enables callers
- * to use it from anywhere without the need of passing a Cleanup instance around
- * manually.
+ * shutdown. This allows any stand alone application code to add resources to be
+ * cleaned up on shutdown from anywhere.
+ *
+ * <li>{@code onDemand}: This instance is never executed unless
+ * {@link #onDemandClean()} is called. This is a better option for applications
+ * requiring more control over when resources are cleaned up, such as within
+ * Servlet containers or regularly scheduled cleanups. It's singleton like
+ * nature also enables callers to use it from anywhere without the need of
+ * passing a Cleanup instance around manually.
  * </ol>
  * <p>
- * {@link Runnable}s added to the Cleanup list are only ever run once before being
- * discarded. This makes repeat calls to an instances {@link #execute() } safe.
+ * {@link Runnable}s added to the Cleanup list are only ever run once before
+ * being discarded. This makes repeat calls to an instances {@link #execute() }
+ * safe.
  */
 public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
-    
+
     /**
-     * Utility for use in adapting any cleanup function into a try-with-resources block.
+     * Utility for use in adapting any cleanup function into a
+     * try-with-resources block.
      * <p>
      * No item is added to any Cleanup instance.
      * <p>
@@ -60,6 +62,7 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
      *    ...
      * } // list cleared here even if exception thrown in try block
      * </pre>
+     *
      * @param <T> The object type to be passed to the close Consumer
      * @param obj The object instance to be passed to the close Consumer
      * @param closeOp The closing function
@@ -70,12 +73,13 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
             closeOp.accept(obj);
         };
     }
-    
+
     private static Cleanup onShutdownInstance;
     private static Cleanup onDemandInstance;
-    
+
     /**
      * Obtains a Cleanup instance that will be executed on JVM shutdown.
+     *
      * @return a Cleanup instance that will be executed on JVM shutdown.
      * @see Runtime#addShutdownHook(java.lang.Thread)
      */
@@ -86,15 +90,15 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
         }
         return onShutdownInstance;
     }
-    
+
     /**
      * Obtains a Cleanup instance that requires {@link Cleanup#onDemandClean()}
      * to be called to be cleaned up.
      * <p>
-     * This static instance is best used where the application requires more control
-     * over clean up, such as within a Servlet container or regularly scheduled
-     * cleanups.
-     * 
+     * This static instance is best used where the application requires more
+     * control over clean up, such as within a Servlet container or regularly
+     * scheduled cleanups.
+     *
      * @return the on demand Cleanup instance.
      */
     public static synchronized Cleanup onDemand() {
@@ -103,7 +107,7 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
         }
         return onDemandInstance;
     }
-    
+
     /**
      * Executes the onDemand instance. Cleaning all resources registered with
      * it.
@@ -111,22 +115,23 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
     public static void onDemandClean() {
         onDemand().execute();
     }
-    
+
     private final List<Runnable> runnables;
-    
+
     public Cleanup() {
         this.runnables = new ArrayList<>();
     }
 
     /**
      * Iterates over all registered {@link Runnable}s.
+     *
      * @return An iterator allowing access to all registered {@link Runnable}s
      */
     @Override
     public Iterator<Runnable> iterator() {
         return runnables.iterator();
     }
-    
+
     /**
      * Runs all the {@link Runnable}s added to the cleanup list.
      * <p>
@@ -136,7 +141,7 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
      * Any exception thrown by any {@link Runnable} is ignored.
      */
     public synchronized void execute() {
-        for(Runnable r: runnables) {
+        for (Runnable r : runnables) {
             try {
                 r.run();
             } catch (Throwable t) {
@@ -146,7 +151,7 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
         }
         runnables.clear();
     }
-    
+
     /**
      * {@link Runnable#run()} implementation that calls {@link #execute()}.
      */
@@ -156,23 +161,24 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
     }
 
     /**
-     * {@link AutoCloseable#close()} implementation that calls {@link #execute()}.
+     * {@link AutoCloseable#close()} implementation that calls
+     * {@link #execute()}.
      */
     @Override
     public void close() throws Exception {
         execute();
     }
-    
+
     /**
      * Registers a task to be cleaned up.
+     *
      * @param cleanupTask executed when this Cleanup instance is executed.
      */
     public void add(Runnable cleanupTask) {
         runnables.add(cleanupTask);
     }
-    
+
     // specialised helper methods below
-    
     /**
      * Convenience method to make registering ExecutorServices easier.
      * <p>
@@ -180,6 +186,7 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
      * <pre>
      * ExecutorService service = cleanup.executorService(Executors.newCachedThreadPool());
      * </pre>
+     *
      * @param <S> The exact type passed as an argument.
      * @param service The ExecutorService instance to shutdown when this Cleanup
      * instance is executed.
@@ -200,7 +207,7 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
         });
         return service;
     }
-    
+
     /**
      * Convenience method to make registering AutoClosable easier.
      * <p>
@@ -212,6 +219,7 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
      *    ...
      * } // streams closed here
      * </pre>
+     *
      * @param <C> The exact type passed as an argument.
      * @param closable The AutoClosable instance to shutdown when this Cleanup
      * instance is executed.

@@ -12,16 +12,17 @@ import java.math.RoundingMode;
  * start time is the only state contained in this class.
  */
 public class Stopwatch {
+
     public static Stopwatch start() {
         return new Stopwatch();
     }
-    
+
     private final Long startTime;
 
     public Stopwatch() {
         this(System.currentTimeMillis());
     }
-    
+
     public Stopwatch(long startTime) {
         this.startTime = startTime;
     }
@@ -42,18 +43,18 @@ public class Stopwatch {
         int mins = 0;
         int hours = 0;
         int days = 0;
-        
+
         while (secs > 60) {
             mins++;
             secs = secs - 60;
         }
-        
-        while(mins > 60) {
+
+        while (mins > 60) {
             hours++;
             mins = mins - 60;
         }
-        
-        while(hours > 24) {
+
+        while (hours > 24) {
             days++;
             hours = hours - 24;
         }
