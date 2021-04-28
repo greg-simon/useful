@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 /**
- * A Writer implementation that allows marking ({@link #mark()) and undoing
+ * A Writer implementation that allows marking ({@link #mark()}) and undoing
  * ({@link #rewind()}) those written characters.
  * <p>
  * A buffer is not allocated and used unless {@link #mark()} is called.

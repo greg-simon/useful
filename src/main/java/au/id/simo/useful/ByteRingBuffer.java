@@ -72,9 +72,11 @@ public class ByteRingBuffer {
     }
 
     /**
-     * Same as add except an exception will be thrown if there is no space.
-     *
-     * @param i
+     * Same as {@link add} except an exception will be thrown if there is no
+     * space.
+     * @param i the byte to put on the buffer.
+     * @throws ArrayIndexOutOfBoundsException if there is no free space left on
+     * the buffer for this byte.
      */
     public void put(int i) {
         if (isFull()) {
@@ -84,9 +86,11 @@ public class ByteRingBuffer {
     }
 
     /**
-     * Same as add except an exception will be thrown if there is no space.
-     *
-     * @param i
+     * Same as {@link add} except an exception will be thrown if there is no
+     * space.
+     * @param i the byte to put on the buffer.
+     * @throws ArrayIndexOutOfBoundsException if there is no free space left on
+     * the buffer for this byte.
      */
     public void put(byte i) {
         if (isFull()) {
@@ -149,12 +153,12 @@ public class ByteRingBuffer {
     }
 
     /**
-     *
+     * Copies bytes into the provided array.
      * @param dest destination array to copy values into
      * @param start the index of the destination array to start copying values
      * into
      * @param length the number of values to copy.
-     * @return
+     * @return the number of bytes copied into the destination array.
      */
     public int read(byte[] dest, int start, int length) {
         int totalReadLength = peek(dest, start, length);

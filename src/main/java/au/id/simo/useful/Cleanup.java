@@ -58,7 +58,7 @@ public class Cleanup implements AutoCloseable, Runnable, Iterable<Runnable> {
      * <p>
      * Usage example of clearing a {@link java.util.List}:
      * <pre>
-     * try (AutoClosable ac = Cleanup.autoClose(list, (l) ->&gt; {l.clear()})) {
+     * try (AutoClosable ac = Cleanup.autoClose(list, (l) -&gt; {l.clear()})) {
      *    ...
      * } // list cleared here even if exception thrown in try block
      * </pre>

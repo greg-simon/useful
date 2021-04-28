@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import au.id.simo.useful.io.Resource;
+
 /**
  * Provides a URL protocol implementation that allows URL access to data from
- * {@link Resource} implementations.
+ * {@link Resource} implementations via creating {@link LocalSession}s.
  * <p>
  * The components of the {@code local://} protocol are:
  * <pre>

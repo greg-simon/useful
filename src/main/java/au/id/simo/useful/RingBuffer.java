@@ -70,9 +70,11 @@ public class RingBuffer<T> implements Iterable<T> {
     }
 
     /**
-     * Same as add except an exception will be thrown if there is no space.
-     *
-     * @param i
+     * Same as {@link add} except an exception will be thrown if there is no
+     * space.
+     * @param i the object to put on the buffer.
+     * @throws ArrayIndexOutOfBoundsException if there is no free space left on
+     * the buffer for this object.
      */
     public void put(T i) {
         if (isFull()) {
@@ -139,12 +141,12 @@ public class RingBuffer<T> implements Iterable<T> {
     }
 
     /**
-     *
+     * Copies object into the provided array.
      * @param dest destination array to copy values into
      * @param start the index of the destination array to start copying values
      * into
      * @param length the number of values to copy.
-     * @return
+     * @return the number of items copied into the destination array.
      */
     public int read(T[] dest, int start, int length) {
         int totalReadLength = peek(dest, start, length);

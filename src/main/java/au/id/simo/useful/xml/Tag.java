@@ -21,8 +21,8 @@ public class Tag implements Map<String, String> {
     /**
      * Will register this instance as a child to the parent Tag (if not null).
      * 
-     * @param name
-     * @param parent 
+     * @param name The name of the tag.
+     * @param parent The parent Tag.
      */
     public Tag(String name, Tag parent) {
         this.name = name;
@@ -115,7 +115,7 @@ public class Tag implements Map<String, String> {
     /**
      * Check if tag has content with more than just whitespace.
      *
-     * @return
+     * @return if the text content of this tag is more than just whitespace.
      */
     public boolean hasSignificantContent() {
         return significantContent;

@@ -39,7 +39,7 @@ public class ArrayBag<C> {
     
     /**
      *
-     * @param array
+     * @param array Add this array to the bag.
      */
     @SuppressWarnings("unchecked")
     public void add(C... array) {

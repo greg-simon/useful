@@ -74,9 +74,11 @@ public class CharRingBuffer {
     }
 
     /**
-     * Same as add except an exception will be thrown if there is no space.
-     *
-     * @param i
+     * Same as {@link add} except an exception will be thrown if there is no
+     * space.
+     * @param i the char to put on the buffer.
+     * @throws ArrayIndexOutOfBoundsException if there is no free space left on
+     * the buffer for this char.
      */
     public void put(char i) {
         if (isFull()) {
@@ -86,9 +88,11 @@ public class CharRingBuffer {
     }
 
     /**
-     * Same as add except an exception will be thrown if there is no space.
-     *
-     * @param chars
+     * Same as {@link add} except an exception will be thrown if there is no
+     * space.
+     * @param chars the sequence of chars to put on the buffer.
+     * @throws ArrayIndexOutOfBoundsException if there is no free space left on
+     * the buffer for all of the chars in the sequence.
      */
     public void put(CharSequence chars) {
         for (int i = 0; i < chars.length(); i++) {
@@ -150,12 +154,12 @@ public class CharRingBuffer {
     }
 
     /**
-     *
+     * Copies chars into the provided array.
      * @param dest destination array to copy values into
      * @param start the index of the destination array to start copying values
      * into
      * @param length the number of values to copy.
-     * @return
+     * @return the number of chars copied into the destination array.
      */
     public int read(char[] dest, int start, int length) {
         int totalReadLength = peek(dest, start, length);

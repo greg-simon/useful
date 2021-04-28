@@ -18,9 +18,9 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * Custom implementation of a SAX DefaultHandler, to make traversing an xml
+ * Custom implementation of a SAX DefaultHandler, to make traversing an XML
  * document easier.
- *
+ * <p>
  * To use, extend this class and implement the endTag method.
  */
 public abstract class XmlHandler extends DefaultHandler {
@@ -45,7 +45,7 @@ public abstract class XmlHandler extends DefaultHandler {
 
     /**
      * Run just after an opening tag has been read.
-     * 
+     *
      * @param tag the opening tag. It will not contain any text as text will not
      * have been read yet. But it will contain any tag attributes present.
      */
@@ -114,14 +114,15 @@ public abstract class XmlHandler extends DefaultHandler {
         this.prefixMappings.clear();
         this.tagStack.clear();
     }
-    
+
     /**
      * Will close the provided input stream.
      *
-     * @param inputStream
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
+     * @param inputStream The InputStream to read the XML from.
+     * @throws IOException If there is an issue in reading from the InputStream.
+     * @throws SAXException If there is a syntax issue in reading the XML.
+     * @throws ParserConfigurationException If there is an issue with the
+     * configuration of the XML parser.
      */
     public void parseStream(InputStream inputStream) throws IOException,
             SAXException, ParserConfigurationException {

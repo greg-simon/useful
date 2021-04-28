@@ -184,8 +184,9 @@ public interface URLSession extends Closeable {
      * Functional method to allow an action to be taken for each registered
      * Resource.
      *
-     * @param consumer
-     * @throws IOException
+     * @param consumer The functional interface to consume the full set of
+     * registered Resources and their paths.
+     * @throws IOException if there is an issue in reading from the URLs.
      */
     default void forEachResource(ResourceCollector consumer) throws IOException {
         for (String path : this.getRegisteredPaths()) {
