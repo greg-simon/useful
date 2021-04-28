@@ -7,9 +7,10 @@ import java.io.OutputStream;
 /**
  * An OutputStream that counts all bytes written to it.
  */
-public class CountingOutputStream extends FilterOutputStream {    
+public class CountingOutputStream extends FilterOutputStream {
+
     private long byteCount;
-    
+
     public CountingOutputStream(OutputStream out) {
         super(out);
         byteCount = 0;
@@ -22,7 +23,7 @@ public class CountingOutputStream extends FilterOutputStream {
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         super.write(b, off, len);
-        byteCount+=len;
+        byteCount += len;
     }
 
     @Override

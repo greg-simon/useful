@@ -8,16 +8,17 @@ import java.io.Writer;
  * Keeps track of the number of characters written.
  */
 public class CountingWriter extends FilterWriter {
+
     private long charCount;
-    
+
     public CountingWriter(Writer out) {
         super(out);
     }
-    
+
     public long getCharCount() {
         return charCount;
     }
-    
+
     public void resetCharCount() {
         charCount = 0;
     }
@@ -25,13 +26,13 @@ public class CountingWriter extends FilterWriter {
     @Override
     public void write(String str, int off, int len) throws IOException {
         super.write(str, off, len);
-        charCount+=len;
+        charCount += len;
     }
 
     @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
         super.write(cbuf, off, len);
-        charCount+=len;
+        charCount += len;
     }
 
     @Override

@@ -13,18 +13,19 @@ import java.net.URL;
  * however will reuse the same {@link URL} instance created in the first call.
  */
 public class URLResource extends Resource {
+
     private final String urlString;
     private URL url;
-    
+
     public URLResource(String url) {
         this.urlString = url;
     }
-    
+
     public URLResource(URL url) {
         this.url = url;
         this.urlString = null;
     }
-    
+
     @Override
     public InputStream inputStream() throws IOException {
         if (url == null) {

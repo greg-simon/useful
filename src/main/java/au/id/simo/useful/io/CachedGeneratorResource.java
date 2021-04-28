@@ -12,6 +12,7 @@ import java.io.InputStream;
  * The usual byte array size limitation of 2GB for the Generator output applies.
  */
 public class CachedGeneratorResource extends Resource {
+
     private final Generator generator;
     private byte[] generatedData;
 
@@ -39,8 +40,7 @@ public class CachedGeneratorResource extends Resource {
     @Override
     public InputStream inputStream() throws IOException {
         if (generatedData == null) {
-            ByteArrayOutputStream bout
-                    = new ByteArrayOutputStream();
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
             generator.writeTo(bout);
             generatedData = bout.toByteArray();
         }

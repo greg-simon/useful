@@ -11,7 +11,7 @@ import java.util.Set;
  * a web page using URLs.
  * <p>
  * Usage Example:
- * <pre><code>
+ * <pre>
  * try (URLSession session = ...)
  * {
  *     session.register("index.html", new File("my-app.html"));
@@ -21,23 +21,23 @@ import java.util.Set;
  *
  *     String indexUrl = session.getUrl("index.html");
  *     URL url = new URL(indexUrl);
- * 
+ *
  *     // use renderer here.
  *     HtmlToPDF.generate(url, new File("output.pdf"));
- * }
- * </code></pre>
- * If a resource is registered on a path that already has a
- * registered resource, then the existing resource is silently replaced with the
- * new one.
+ * } // session close
+ * </pre>
+ * <p>
+ * If a resource is registered on a path that already has a registered resource,
+ * then the existing resource is silently replaced with the new one.
  * <p>
  * Any resources are to be cleaned up when the session is closed. Any attempt to
  * obtain registered resources after the session is closed, should result in an
  * IOException.
  */
 public interface URLSession extends Closeable {
-    
+
     static final String SESSION_CLOSE_MSG = "Session is closed";
-    
+
     /**
      * Obtains a string representation of base URL of this session.
      * <p>
@@ -148,32 +148,29 @@ public interface URLSession extends Closeable {
         }
         return resource.inputStream();
     }
-    
-        
+
     /**
      * Obtain a set of relative paths that have been registered with this
      * URLSession.
      * <p>
      * It allows for iterating over all resources registered along with the
      * {@link #getResource(java.lang.String)} or
-     * {@link #getInputStream(java.lang.String)} methods.
-     * <code>
+     * {@link #getInputStream(java.lang.String)} methods.      <code>
      * for (String path: urlSession.getgetRegisteredPaths()) {
      *    Resource res = urlSession.getResource(path);
      *    ...
      * }
      * </code>
-     * 
+     *
      * Paths returned are relative to the base url of the session, so will not
      * contain a leading '/' character.
-     * 
+     *
      * @return a set of paths that have been registered with this URLSession.
      * Each path may have been normalised and may not be the exact String used
      * during registration. If no paths have been registered, then an empty Set
      * will be returned.
      */
     Set<String> getRegisteredPaths();
-    
 
     /**
      * Obtains the closed status of this session.
@@ -182,22 +179,24 @@ public interface URLSession extends Closeable {
      * session has been closed.
      */
     boolean isClosed();
-    
+
     /**
      * Functional method to allow an action to be taken for each registered
      * Resource.
+     *
      * @param consumer
      * @throws IOException
      */
     default void forEachResource(ResourceCollector consumer) throws IOException {
-        for (String path: this.getRegisteredPaths()) {
+        for (String path : this.getRegisteredPaths()) {
             Resource res = this.getResource(path);
             consumer.add(path, res);
         }
     }
-    
+
     @FunctionalInterface
     interface ResourceCollector {
+
         void add(String relativePath, Resource resource) throws IOException;
     }
 }

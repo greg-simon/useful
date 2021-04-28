@@ -8,21 +8,22 @@ import java.io.Reader;
  *
  */
 public class CountingReader extends FilterReader {
+
     private long charCount;
-    
+
     public CountingReader(Reader in) {
         super(in);
         charCount = 0;
     }
-    
+
     public long getCharCount() {
         return charCount;
     }
-    
+
     public void resetCharCount() {
         charCount = 0;
     }
-    
+
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
         int charsRead = in.read(cbuf, off, len);
@@ -44,7 +45,7 @@ public class CountingReader extends FilterReader {
     @Override
     public long skip(long n) throws IOException {
         long skipped = super.skip(n);
-        charCount+=skipped;
+        charCount += skipped;
         return skipped;
     }
 }

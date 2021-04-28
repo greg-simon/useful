@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.io.Writer;
 
 /**
- * Writes characters to the provided Writer until the character limit is
+ * Writes characters to the provided {@link Writer} until the character limit is
  * reached, then ignores any thing else written.
- * 
+ *
  */
 public class LimitedWriter extends CountingWriter {
+
     private final long charLimit;
-    
+
     public LimitedWriter(Writer out, long charLimit) {
         super(out);
         this.charLimit = charLimit;
@@ -39,5 +40,5 @@ public class LimitedWriter extends CountingWriter {
             int newLen = (int) Math.min(remaining, len);
             super.write(str, off, newLen);
         }
-    }   
+    }
 }

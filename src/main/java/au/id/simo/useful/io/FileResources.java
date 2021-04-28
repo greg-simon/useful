@@ -65,8 +65,7 @@ public class FileResources extends Resources {
     }
 
     @Override
-    protected InputStream createStream(String resolvedResourceName)
-            throws IOException {
+    protected InputStream createStream(String resolvedResourceName) throws IOException {
         File file = FileUtil.newFileInDir(parentDir, resolvedResourceName);
         return new FileInputStream(file);
     }

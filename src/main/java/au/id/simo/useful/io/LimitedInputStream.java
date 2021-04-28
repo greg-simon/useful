@@ -5,7 +5,7 @@ import java.io.InputStream;
 
 /**
  * Reads in data from the underlying InputStream until the given limit is
- * reached.
+ * reached, then behaves like the stream has ended.
  */
 public class LimitedInputStream extends CountingInputStream {
 
@@ -31,9 +31,9 @@ public class LimitedInputStream extends CountingInputStream {
         if (byteCount >= byteLimit) {
             return -1;
         }
-        
+
         long remaining = byteLimit - byteCount;
-        int newLen = (int) Math.min((long)len, remaining);
+        int newLen = (int) Math.min((long) len, remaining);
         return super.read(b, off, newLen);
     }
 

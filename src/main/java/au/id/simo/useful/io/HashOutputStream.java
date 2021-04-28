@@ -6,7 +6,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- *
+ * An OutputStream implementation to build a hash of all bytes written to it.
  */
 public class HashOutputStream extends CountingOutputStream implements Hasher {
 

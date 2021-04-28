@@ -5,21 +5,24 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Provides a URL protocol implementation that allows URL access to data that is
- * either in memory or generated on access.
+ * Provides a URL protocol implementation that allows URL access to data from
+ * {@link Resource} implementations.
  * <p>
  * The components of the {@code local://} protocol are:
- * <pre><code>
+ * <pre>
  * local://[sessionId]/[path]
- *
+ * </pre>
  * Example:
+ * <pre>
  * local://00001/index.html
- * </code></pre> Each {@code sessionId} is a five digit incrementing number
+ * </pre>
+ * <p>
+ * Each {@code sessionId} is a five digit incrementing number
  * assigned when the session is created. The {@code path} is provided by the
  * calling code when resources are registered to the session.
  * <p>
  * Usage:
- * <pre><code>
+ * <pre>
  * try (URLSession session = LocalProtocol.newSession()) {
  *     String url = session.register("index.html", new File("mypage.html"));
  *
@@ -27,8 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  *     URL indexUrl = new URL(url);
  *     // code using indexUrl here
  * }
- * </code></pre>
- *
+ * </pre>
+ * <p>
  * This is particularly useful in rendering web pages using libraries that are
  * based on fetching resources from URLs. As HTML often contains other resources
  * with relative URLs that also need fetching.
@@ -107,8 +110,7 @@ public class LocalProtocol {
      */
     protected static void closeSession(LocalSession session) {
         synchronized (SESSION_REGISTRY) {
-            LocalSession sess
-                    = SESSION_REGISTRY.remove(session.getId());
+            LocalSession sess = SESSION_REGISTRY.remove(session.getId());
             if (sess != null) {
                 sess.closeLocalSession();
             }

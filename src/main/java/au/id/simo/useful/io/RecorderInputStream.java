@@ -8,30 +8,32 @@ import java.util.Arrays;
 /**
  * Records all data read from provided InputStream up to a byte array buffer up
  * to a set limit.
- * 
  */
 public class RecorderInputStream extends FilterInputStream {
+
     /**
-     * The maximum size of array to allocate (unless necessary).
-     * Some VMs reserve some header words in an array.
-     * Attempts to allocate larger arrays may result in
-     * OutOfMemoryError: Requested array size exceeds VM limit
+     * The maximum size of array to allocate (not allocated unless necessary).
+     * Some VMs reserve some header words in an array. Attempts to allocate
+     * larger arrays may result in OutOfMemoryError: Requested array size
+     * exceeds VM limit
      */
     protected static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
-    
+
     private final int maxBufferSize;
-    
+
     private byte[] buffer;
     private int index;
     private int resizeCount;
     private boolean exceededBuffer;
-    /** Has method endStream been run. **/
+    /**
+     * Has method endStream been run.
+     */
     private boolean streamEnded;
-    
+
     public RecorderInputStream(InputStream in) {
         this(in, MAX_ARRAY_SIZE);
     }
-    
+
     public RecorderInputStream(InputStream in, int maxBufferSize) {
         super(in);
         this.maxBufferSize = maxBufferSize;
@@ -41,9 +43,9 @@ public class RecorderInputStream extends FilterInputStream {
         this.buffer = new byte[initialCapacity];
         this.exceededBuffer = false;
     }
-    
+
     /**
-     * 
+     *
      * @param newBytesCount
      * @return capacity available in the buffer.
      */
@@ -53,13 +55,13 @@ public class RecorderInputStream extends FilterInputStream {
             // there is already enough space for the new bytes, do nothing.
             return existingCapacity;
         }
-        
+
         // Adding any int could result in overflow if result in greater than
         // Integer.MAX_VALUE. So all math must use subtraction and remainders.
         int remainingIntLimit = MAX_ARRAY_SIZE - buffer.length;
         int remainingSizeLimit = maxBufferSize - buffer.length;
         int remainingLimit = Math.min(remainingSizeLimit, remainingIntLimit);
-        
+
         int minGrowthRequired = newBytesCount - existingCapacity;
         int growth;
         if (remainingLimit <= minGrowthRequired) {
@@ -70,7 +72,7 @@ public class RecorderInputStream extends FilterInputStream {
             int limitedGrowthFactor = Math.min(growthFactor, remainingLimit);
             growth = limitedGrowthFactor;
         }
-        
+
         if (growth == 0) {
             // no growth will happen, so don't bother allocating new buffer and
             // copying over the data.
@@ -101,7 +103,7 @@ public class RecorderInputStream extends FilterInputStream {
         int writeToBuf = Math.min(capacity, read);
         if (writeToBuf > 0) {
             System.arraycopy(b, off, buffer, index, writeToBuf);
-            index+=writeToBuf;
+            index += writeToBuf;
         }
         return read;
     }
@@ -122,14 +124,14 @@ public class RecorderInputStream extends FilterInputStream {
         }
         return read;
     }
-    
+
     private void endStreamIfRequired() {
         if (!streamEnded) {
             streamEnded = true;
             endStream();
         }
     }
-    
+
     /**
      * A hook added that can be overridden to run code when the end of the
      * underlying stream has been reached.
@@ -137,17 +139,17 @@ public class RecorderInputStream extends FilterInputStream {
      * Not run if closed before end of stream is reached.
      */
     public void endStream() {
-        
+
     }
-    
+
     public byte[] getReadByteArray() {
         return Arrays.copyOf(buffer, index);
     }
-    
+
     protected int getResizeCount() {
         return resizeCount;
     }
-    
+
     protected int getRecordedByteCount() {
         return index;
     }

@@ -66,6 +66,6 @@ public class LocalURLConnectionTest {
         IOException ioe = assertThrows(IOException.class, () -> {
             connection.getInputStream();
         });
-        assertEquals("Unknown local session: unknownsession", ioe.getMessage());
+        assertEquals("Unknown local session (Session may have been closed): unknownsession", ioe.getMessage());
     }
 }

@@ -27,6 +27,7 @@ import java.util.TreeSet;
  * remain after closing this session.
  */
 public class FileSession implements URLSession {
+
     private final File baseDir;
     private final Resources resources;
     private final List<Path> createdFileList;
@@ -48,7 +49,7 @@ public class FileSession implements URLSession {
         createdFileList = new ArrayList<>();
         createdDirList = new ArrayList<>();
         closed = false;
-        
+
         createdDirList.add(basePath);
     }
 
@@ -81,7 +82,7 @@ public class FileSession implements URLSession {
     public String getBaseUrl() {
         return baseDir.toURI().toString();
     }
-    
+
     /**
      * @return The base directory registered files will written to.
      */
@@ -172,16 +173,15 @@ public class FileSession implements URLSession {
         }
         File outFile = getFile(urlPath);
         createDirectories(outFile);
-        try (OutputStream out = new BufferedOutputStream(
-                new FileOutputStream(outFile))) {
+        FileOutputStream fout = new FileOutputStream(outFile);
+        try (OutputStream out = new BufferedOutputStream(fout)) {
             product.writeTo(out);
         }
         return outFile.toURI().toString();
     }
 
     @Override
-    public String register(String urlPath, Resource resource)
-            throws IOException {
+    public String register(String urlPath, Resource resource) throws IOException {
         return register(urlPath, (OutputStream out) -> {
             resource.copyTo(out);
         });
@@ -217,17 +217,16 @@ public class FileSession implements URLSession {
      * A relative path is the path of the resource relative to the base
      * directory of this session.
      * <p>
-     * For example:
-     * A FileSession has a base directory of /tmp/FS_BASE, and a registered
-     * resource of path/to/resource.txt.
+     * For example: A FileSession has a base directory of /tmp/FS_BASE, and a
+     * registered resource of path/to/resource.txt.
      * <p>
      * This would result in the resource having a URL of
-     * {@code file:///tmp/FS_BASE/path/to/resource.txt }, A path of 
+     * {@code file:///tmp/FS_BASE/path/to/resource.txt }, A path of
      * {@code /tmp/FS_BASE/path/to/resource.txt} and a relative path of
      * {@code path/to/resource.txt}.
      * <p>
      * The created Set will contain the relative path.
-     * 
+     *
      * @return a new Set of relative paths for each resource.
      */
     @Override

@@ -10,7 +10,7 @@ import java.util.List;
  * Joins multiple Readers into one.
  */
 public class ConcatReader extends Reader {
-    
+
     private final List<Reader> readers;
     private final Iterator<Reader> readerItr;
     private Reader currentReader;
@@ -19,24 +19,24 @@ public class ConcatReader extends Reader {
         this.readers = Arrays.asList(readers);
         this.readerItr = this.readers.iterator();
     }
-    
+
     private Reader currentStream() {
-        if (currentReader==null) {
-            if(readerItr.hasNext()) {
+        if (currentReader == null) {
+            if (readerItr.hasNext()) {
                 currentReader = readerItr.next();
             }
         }
         return currentReader;
     }
-    
+
     private void currentEnded() {
         currentReader = null;
     }
-    
+
     @Override
     public int read() throws IOException {
         Reader current = currentStream();
-        while(current != null) {
+        while (current != null) {
             int returnValue = current.read();
             if (returnValue == -1) {
                 currentEnded();
@@ -51,7 +51,7 @@ public class ConcatReader extends Reader {
     @Override
     public int read(char[] b, int off, int len) throws IOException {
         Reader current = currentStream();
-        while(current != null) {
+        while (current != null) {
             int readCount = current.read(b, off, len);
             if (readCount == -1) {
                 currentEnded();
@@ -65,7 +65,7 @@ public class ConcatReader extends Reader {
 
     @Override
     public void close() throws IOException {
-        for(Reader in: readers) {
+        for (Reader in : readers) {
             in.close();
         }
     }

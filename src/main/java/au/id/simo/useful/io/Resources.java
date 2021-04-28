@@ -4,44 +4,43 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Utility class to help load {@link Resource}s.
+ * Utility class to help load {@link Resource}s using a naming pattern.
  * <p>
  * It uses the {@link java.util.Formatter} template system to resolve resource
  * names. Typically '%s' in the pattern provided to the constructor, and it is
  * formatted with resource name arguments in the
  * {@link #get(java.lang.Object, java.lang.Object...)} method.
  * <p>
- *
  * Template pattern example:
- * <pre><code>
+ * <pre>
  * Resources resources = new FileResources("%s.txt");
  * Resource readme = resources.get("README"); // README.txt
  * Resource notes = resources.get("notes"); // notes.txt
- * </code></pre>
- *
+ * </pre>
+ * <p>
  * An equivalent example, without using a template pattern:
- * <pre><code>
+ * <pre>
  * Resources resources = new FileResources();
  * Resource readme = resources.get("README.txt");
  * Resource notes = resources.get("notes.txt");
- * </code></pre>
- *
+ * </pre>
+ * <p>
  * Any byte to String conversion will assume UTF-8.
  * <p>
  * Further Example Usage:<br>
  * To load the contents of 'my-report.template' from the system class path as a
  * String, you could code it like the following:
- * <pre><code>
+ * <pre>
  * Resources clResources = new ClasspathResources("%s.template");
  * Resource myReportTemplateRes = clResources.get("my-report");
- * </code></pre>
- *
+ * </pre>
+ * <p>
  * To load .gif files from a directory (/path/to/images/my-image.gif):
- * <pre><code>
+ * <pre>
  * File templateDir = new File("/path/to/images/");
  * Resources imageResources = new FileResources(templateDir, "%s.gif");
  * Resource imageRes =  imageResources.get("my-image");
- * </code></pre>
+ * </pre>
  *
  * @see FileResources
  * @see ClasspathResources
@@ -118,8 +117,7 @@ public abstract class Resources {
      * @throws java.util.IllegalFormatException see {@link java.util.Formatter}
      * for further details on when exceptions are thrown.
      */
-    protected String resolveResourceName(Object resourceName,
-            Object... otherArgs) {
+    protected String resolveResourceName(Object resourceName, Object... otherArgs) {
         if (resourcePattern == null) {
             return String.valueOf(resourceName);
         }
@@ -147,13 +145,12 @@ public abstract class Resources {
      * @throws IOException if there is an error in creating the InputStream, or
      * if the named resource could not be found, or is otherwise unavailable.
      */
-    protected abstract InputStream createStream(String resolvedResourceName)
-            throws IOException;
-    
+    protected abstract InputStream createStream(String resolvedResourceName) throws IOException;
+
     /**
      * Used to flag if the underlying resource identified by the resolved
      * resource name exists.
-     * 
+     *
      * @param resolvedResourceName the full resource name that has already been
      * resolved from the Formatter pattern and any {@code get()} arguments.
      * @return True if the underlying resource identified by the resolved

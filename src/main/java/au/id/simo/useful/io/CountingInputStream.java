@@ -8,6 +8,7 @@ import java.io.InputStream;
  * Keeps track of the number of bytes that pass through it.
  */
 public class CountingInputStream extends FilterInputStream {
+
     private long byteCount;
 
     public CountingInputStream(InputStream in) {
@@ -44,7 +45,7 @@ public class CountingInputStream extends FilterInputStream {
     @Override
     public long skip(long n) throws IOException {
         long skipResult = in.skip(n);
-        byteCount+=skipResult;
+        byteCount += skipResult;
         return skipResult;
     }
 }

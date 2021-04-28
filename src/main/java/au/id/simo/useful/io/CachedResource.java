@@ -12,21 +12,22 @@ import java.io.InputStream;
  * Instead the underlying Resource will be read again.
  */
 public class CachedResource extends Resource {
+
     private final Resource resource;
     private final int maxCacheSize;
     private byte[] buffer;
     private boolean limitExceeded;
-    
+
     public CachedResource(Resource resource) {
-        this(resource, Integer.MAX_VALUE-8);
+        this(resource, Integer.MAX_VALUE - 8);
     }
-    
+
     public CachedResource(Resource resource, int maxCacheSize) {
         this.resource = resource;
         this.maxCacheSize = maxCacheSize;
         limitExceeded = false;
     }
-    
+
     @Override
     public InputStream inputStream() throws IOException {
         if (limitExceeded) {
@@ -47,7 +48,7 @@ public class CachedResource extends Resource {
         }
         return new ByteArrayInputStream(buffer);
     }
-    
+
     public void clearCache() {
         buffer = null;
     }

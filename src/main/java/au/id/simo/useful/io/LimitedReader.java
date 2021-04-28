@@ -4,12 +4,13 @@ import java.io.IOException;
 import java.io.Reader;
 
 /**
- * Reads in characters from the underlying Reader until the given limit is
- * reached.
+ * Reads in characters from the underlying {@link Reader} until the given limit
+ * is reached.
  */
 public class LimitedReader extends CountingReader {
+
     private final long charLimit;
-    
+
     public LimitedReader(Reader in, long limit) {
         super(in);
         this.charLimit = limit;
@@ -22,7 +23,7 @@ public class LimitedReader extends CountingReader {
         if (remaining <= 0) {
             return -1;
         }
-        
+
         int newLen = (int) Math.min(remaining, (long) len);
         return super.read(cbuf, off, newLen);
     }

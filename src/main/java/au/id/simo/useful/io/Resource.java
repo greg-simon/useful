@@ -8,7 +8,8 @@ import java.io.OutputStream;
 import java.io.Reader;
 
 /**
- * Provides unified access to a source of bytes that can be read repeatedly.
+ * An {@link InputStream} factory. Providing unified access to a source of bytes
+ * that can be read repeatedly.
  * <p>
  * No attempt is to be made to test the existence or validity of the underlying
  * resource at instance creation time.

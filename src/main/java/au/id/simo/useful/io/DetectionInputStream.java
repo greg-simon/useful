@@ -8,11 +8,11 @@ import au.id.simo.useful.ByteRingBuffer;
 /**
  * A pass through InputStream that can run MatchListeners when a specified
  * series of bytes is detected.
- * 
+ *
  * Detected bytes are discarded and not provided to the consumer of this stream.
  */
 public class DetectionInputStream extends InputStream {
-    
+
     private final InputStream in;
     private final MatchListener[] listeners;
     private final ByteRingBuffer buffer;
@@ -20,7 +20,7 @@ public class DetectionInputStream extends InputStream {
     private boolean isClosed = false;
     private boolean matched = false;
 
-    public DetectionInputStream(InputStream in, byte[] detectBytes, MatchListener... listeners ) {
+    public DetectionInputStream(InputStream in, byte[] detectBytes, MatchListener... listeners) {
         this.in = in;
         this.detectBytes = detectBytes;
         this.listeners = listeners;
@@ -42,16 +42,16 @@ public class DetectionInputStream extends InputStream {
         if (matched && buffer.isEmpty()) {
             return in.read();
         }
-        
+
         // try to fill buffer
         if (!buffer.isFull()) {
             fillBuffer();
         }
-        
+
         // check for prompt if not matched
         if (!matched && buffer.isFull() && buffer.containsArray(detectBytes)) {
             matched = true;
-            for(MatchListener listener: listeners) {
+            for (MatchListener listener : listeners) {
                 listener.match(detectBytes);
             }
             // buffer contents is the prompt
@@ -59,7 +59,7 @@ public class DetectionInputStream extends InputStream {
             buffer.clear();
             fillBuffer();
         }
-        
+
         if (buffer.isEmpty()) {
             return -1;
         } else {
@@ -84,9 +84,10 @@ public class DetectionInputStream extends InputStream {
             return super.read(b);
         }
     }
-    
+
     @FunctionalInterface
     public interface MatchListener {
+
         void match(byte[] detected) throws IOException;
     }
 }

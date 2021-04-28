@@ -42,8 +42,10 @@ public class LocalURLConnection extends URLConnection {
         String sessionId = url.getHost();
         LocalSession session = LocalProtocol.getSession(sessionId);
         if (session == null) {
-            throw new IOException("Unknown local session: "
-                    + sessionId);
+            throw new IOException(String.format(
+                    "Unknown local session (Session may have been closed): %s"
+                    ,sessionId
+            ));
         }
         return session.getInputStream(url.getPath());
     }

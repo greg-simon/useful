@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -14,7 +13,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 
 /**
  * When the {@link InputStream} is requested, it runs the {@link Generator} in
@@ -30,24 +28,25 @@ import java.util.concurrent.TimeoutException;
 public class ConcurrentGeneratorResource extends Resource {
 
     private static final int DEFAULT_BUFFER_SIZE = 1024;
-    
+
     private static ExecutorService defaultExecutorService = Executors.newCachedThreadPool();
-    
+
     /**
      * Replaces the default ExecutorService used to run the Generators.
      * <p>
      * It is recommended that the returned ExecutorService be shutdown by the
      * calling code.
-     * 
+     *
      * @param service The new ExecutorService.
-     * @return The existing ExecutorService.
+     * @return The existing ExecutorService so the caller can shut it down
+     * cleanly.
      */
     public synchronized static ExecutorService setDefaultExecutorService(ExecutorService service) {
         ExecutorService old = defaultExecutorService;
         defaultExecutorService = service;
         return old;
     }
-    
+
     private final ExecutorService service;
     private final Generator generator;
     private final int bufferSize;
@@ -66,7 +65,7 @@ public class ConcurrentGeneratorResource extends Resource {
     public ConcurrentGeneratorResource(Generator generator) {
         this(defaultExecutorService, generator, DEFAULT_BUFFER_SIZE);
     }
-    
+
     /**
      * Constructor.
      *
@@ -89,7 +88,7 @@ public class ConcurrentGeneratorResource extends Resource {
     public ConcurrentGeneratorResource(Generator generator, int bufferSize) {
         this(defaultExecutorService, generator, bufferSize);
     }
-    
+
     /**
      * Constructor.
      *

@@ -12,6 +12,7 @@ import java.io.StringReader;
  * {@link InputStream}s that reads the String contents.
  */
 public class StringResource extends Resource {
+
     private final String str;
 
     public StringResource(String str) {

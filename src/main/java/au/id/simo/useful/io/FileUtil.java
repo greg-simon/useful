@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- *
+ * Provides some helpful file related functions.
  */
 public class FileUtil {
 
@@ -39,13 +39,19 @@ public class FileUtil {
         Path parentDirPath = parentDir.toPath().toAbsolutePath();
         if (!Files.exists(parentDirPath)) {
             throw new IOException(
-                    "Parent directory does not exist: "
-                    + parentDirPath);
+                    String.format(
+                        "Parent directory does not exist: %s"
+                        ,parentDirPath
+                    )
+            );
         }
         if (!Files.isDirectory(parentDirPath)) {
             throw new IOException(
-                    "Parent directory is not a directory: "
-                    + parentDirPath);
+                    String.format(
+                        "Parent directory is not a directory: %s"
+                        ,parentDirPath
+                    )
+            );
         }
         Path newFilePath = Paths.get(path, more);
         Path resolvedPath = parentDirPath.resolve(newFilePath);
@@ -65,7 +71,7 @@ public class FileUtil {
     public static File currentWorkingDirectory() {
         return new File(System.getProperty("user.dir"));
     }
-    
+
     /**
      * Creates a new file representing the home directory of the user this
      * process is running as.
