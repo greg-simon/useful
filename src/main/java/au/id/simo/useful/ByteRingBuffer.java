@@ -1,65 +1,33 @@
 package au.id.simo.useful;
 
+import java.util.Objects;
+
 /**
- * Byte buffer for use with streams.
- * <p>
- * Allows writing to it forever without additional memory usage.
- * <p>
- * Usage Modes:
- * <ul>
- * <li>Writes overwrite old values silently: Use add and get</li>
- * <li>Writes throw error if no free space: Use put and read</li>
- * </ul>
+ * Byte focused implementation of RingBuffer with efficient methods for reading
+ * and writing bytes.
  */
-public class ByteRingBuffer {
+public class ByteRingBuffer extends RingBuffer<Byte> {
 
     private final byte[] buffer;
 
-    /**
-     * Add index. Points to next location to write to. Write then increment.
-     */
-    private int head;
-    /**
-     * Remove index. Points to oldest value to read from. Read then increment.
-     */
-    private int tail;
-
-    /**
-     * Represents the number of values stored in this buffer.
-     */
-    private int size;
-
-    public ByteRingBuffer(int maxSize) {
-        buffer = new byte[maxSize];
-        head = 0;
-        tail = 0;
-        size = 0;
+    public ByteRingBuffer(int capacity) {
+        super(capacity);
+        buffer = new byte[capacity];
     }
 
-    /**
-     * Logic for wrapping indexes on array length.
-     *
-     * @param index head or tail.
-     * @param incrementBy the number to increment the index by.
-     * @return new incremented value, possibly wrapped back to 0 if required.
-     * Will never be a number that causes an ArrayOutpfBoundsException on the
-     * buffer.
-     */
-    protected int incrementIndex(int index, int incrementBy) {
-        return (index + incrementBy) % buffer.length;
+    @Override
+    protected void setToArray(int index, Byte value) {
+        buffer[index] = value;
     }
 
-    /**
-     *
-     * @param i add value, overwriting oldest value if at capacity.
-     */
+    @Override
+    protected Byte getFromArray(int index) {
+        return buffer[index];
+    }
+
     public void add(int i) {
-        add((byte) i);
-    }
-
-    public void add(byte i) {
         // write
-        buffer[head] = i;
+        buffer[head] = (byte)i;
         // then increment
         head = incrementIndex(head, 1);
 
@@ -72,88 +40,8 @@ public class ByteRingBuffer {
     }
 
     /**
-     * Same as {@link add} except an exception will be thrown if there is no
-     * space.
-     * @param i the byte to put on the buffer.
-     * @throws ArrayIndexOutOfBoundsException if there is no free space left on
-     * the buffer for this byte.
-     */
-    public void put(int i) {
-        if (isFull()) {
-            throw new ArrayIndexOutOfBoundsException("Buffer is full");
-        }
-        add(i);
-    }
-
-    /**
-     * Same as {@link add} except an exception will be thrown if there is no
-     * space.
-     * @param i the byte to put on the buffer.
-     * @throws ArrayIndexOutOfBoundsException if there is no free space left on
-     * the buffer for this byte.
-     */
-    public void put(byte i) {
-        if (isFull()) {
-            throw new ArrayIndexOutOfBoundsException("Buffer is full");
-        }
-        add(i);
-    }
-
-    /**
-     *
-     * @return oldest value or throws ArrayIndexOutOfBounds exception if empty.
-     */
-    public byte peek() {
-        if (isEmpty()) {
-            throw new ArrayIndexOutOfBoundsException("Buffer is empty");
-        }
-        return buffer[tail];
-    }
-
-    /**
-     * Returns a value relative to the oldest value in the buffer.
-     * <p>
-     * This method as no side effects. No indexes are updated with this call, no
-     * extra space is freed in the buffer.
-     *
-     * @param index where 0 means the oldest item in the collection.
-     * @return the value that is {@code index} positions from the oldest item in
-     * the collection.
-     */
-    public byte peek(int index) {
-        if (index >= size) {
-            throw new ArrayIndexOutOfBoundsException(
-                    String.format("Index value %s is larger than the number of elements %s.",
-                            index,
-                            size
-                    )
-            );
-        }
-        int relindex = incrementIndex(tail, index);
-        return buffer[relindex];
-    }
-
-    /**
-     * Read and removed oldest value from the buffer.
-     *
-     * @return oldest value or throws ArrayIndexOutOfBounds exception if empty.
-     */
-    public byte read() {
-        if (isEmpty()) {
-            throw new ArrayIndexOutOfBoundsException("RingBuffer is empty");
-        }
-        // read
-        byte t = buffer[tail];
-
-        // then increment
-        tail = incrementIndex(tail, 1);
-        size--;
-
-        return t;
-    }
-
-    /**
      * Copies bytes into the provided array.
+     *
      * @param dest destination array to copy values into
      * @param start the index of the destination array to start copying values
      * into
@@ -168,26 +56,29 @@ public class ByteRingBuffer {
     }
 
     /**
-     * Copies buffer contents into the provided array, without consuming values.
-     * <p>
-     * No indexes will be adjusted, no side effects will occur.
+     * More efficient implementation of {@code peek(Byte[], int, int) }.
      *
-     * @param dest destination array to copy values into
-     * @param start the index of the destination array to start copying values
-     * into
-     * @param length the number of values to copy.
-     * @return the number of values copied into the provided array.
+     * @param dest destination byte array to copy bytes to
+     * @param start the start index of the destination array
+     * @param length the number of bytes to copy into the destination array
+     * @return the number of bytes actually copied. Which could be different to
+     * the length argument.
      */
     public int peek(byte[] dest, int start, int length) {
-        int readLength = Math.min(size, length);
-
         // buffer array could have two segments to copy out of order. One at
         // start of the buffer and one at the end.
         // (h is head index, t is tail index)
-        //[0,0,h, , ,t,0]
-        //[^s1 ^]   [^ ^]  <- seg2
-        // segment two to start of newArray, as seg two will be the oldest
-        // values
+        // [0,0,0,0,h, , ,t,0,0,0,0]
+        // [^ seg1  ^]   [^ seg2  ^]
+        // Steps: Copy segment two to start of dest array, as seg two will be
+        // the oldest values, then copy segment to the dest array after segment
+        // one.
+        // Ending with:
+        // [t,0,0,0,0,0,0,0,0,h]
+        // [^ seg2  ^][^ seg1 ^]
+        int readLength = Math.min(size, length);
+
+        // segment two to the start of the destination.
         int segTwoLength = buffer.length - tail;
         int segTwoReadLength = Math.min(readLength, segTwoLength);
         System.arraycopy(buffer, tail, dest, start, segTwoReadLength);
@@ -199,34 +90,6 @@ public class ByteRingBuffer {
         // sum segment lengths and return
         int totalReadLength = segTwoReadLength + segOneReadLength;
         return totalReadLength;
-    }
-
-    public int size() {
-        return size;
-    }
-
-    public int maxSize() {
-        return buffer.length;
-    }
-
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    public boolean isNotEmpty() {
-        return !isEmpty();
-    }
-
-    public boolean isFull() {
-        return size == buffer.length;
-    }
-
-    public boolean isNotFull() {
-        return !isFull();
-    }
-
-    public int getFreeSpace() {
-        return maxSize() - size();
     }
 
     public byte[] toArray() {
@@ -263,32 +126,43 @@ public class ByteRingBuffer {
         sb.append("]");
         return sb.toString();
     }
-
-    private boolean isData(int index) {
-        if (size == 0) {
+    
+    public boolean contains(byte[] byteArray) {
+        Objects.requireNonNull(byteArray);
+        if (byteArray.length > size) {
             return false;
         }
-        if (head > tail) {
-            return index >= tail && index < head;
+        
+        if (byteArray.length == 0) {
+            return size == 0;
         }
-        return index >= tail || index < head;
-    }
-
-    public boolean containsArray(byte[] array) {
-        if (array.length > size()) {
+        
+        // look for first element
+        int offset = -1;
+        byte firstItem = byteArray[0];
+        for (int i = 0; i < byteArray.length; i++) {
+            int relIndex = incrementIndex(tail, i);
+            if (buffer[relIndex] == firstItem) {
+                offset = i;
+                break;
+            }
+        }
+        if (offset < 0) {
+            // no first item found in buffer
             return false;
         }
-        for (int i = 0; i < array.length; i++) {
-            if (this.peek(i) != array[i]) {
+        // does the rest of the buffer match the array?
+        if ((size - offset) < byteArray.length) {
+            // not enough elements left to match.
+            return false;
+        }
+
+        for (int i = 0; i < byteArray.length; i++) {
+            int relIndex = incrementIndex(tail, offset + i);
+            if (buffer[relIndex] != byteArray[i]) {
                 return false;
             }
         }
         return true;
-    }
-
-    public void clear() {
-        head = 0;
-        tail = 0;
-        size = 0;
     }
 }

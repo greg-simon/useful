@@ -49,7 +49,7 @@ public class DetectionInputStream extends InputStream {
         }
 
         // check for prompt if not matched
-        if (!matched && buffer.isFull() && buffer.containsArray(detectBytes)) {
+        if (!matched && buffer.isFull() && buffer.contains(detectBytes)) {
             matched = true;
             for (MatchListener listener : listeners) {
                 listener.match(detectBytes);

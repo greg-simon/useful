@@ -1,42 +1,58 @@
 package au.id.simo.useful;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * Allows adding to it forever without additional memory usage.
  * <p>
  * Usage Modes:
  * <ul>
- * <li>Writes overwrite old values silently: Use add and get</li>
- * <li>Writes throw error if no free space: Use put and read</li>
+ * <li>Writes overwrite old values silently: Use add methods</li>
+ * <li>Writes throw error if no free space: Use put methods</li>
  * </ul>
  *
  * @param <T> The types contained within the buffer.
  */
-public class RingBuffer<T> implements Iterable<T> {
-
-    private final Object[] buffer;
-
+public abstract class RingBuffer<T> implements Iterable<T> {
+    
+    /**
+     * The maximum capacity of this RingBuffer.
+     */
+    protected final int capacity;
     /**
      * Add index. Points to next location to write to. Write then increment.
      */
-    private int head;
+    protected int head;
     /**
      * Remove index. Points to oldest value to read from. Read then increment.
      */
-    private int tail;
+    protected int tail;
 
     /**
      * Represents the number of values stored in this buffer.
      */
-    private int size;
+    protected int size;
 
-    public RingBuffer(int maxSize) {
-        buffer = new Object[maxSize];
-        head = 0;
-        tail = 0;
-        size = 0;
+    
+    public RingBuffer(int capacity) {
+        this.capacity = capacity;
     }
+
+    /**
+     * Set a value to the underlying data store of this buffer.
+     * @param index the index of the underlying store of values. Not the
+     * relative index.
+     * @param value the value to set in the specified index.
+     */
+    protected abstract void setToArray(int index, T value);
+    
+    /**
+     * Obtain a value from the underlying data store of this buffer.
+     * @param index the index of the underlying data store.
+     * @return the value in that storage slot
+     */
+    protected abstract T getFromArray(int index);
 
     /**
      * Logic for wrapping indexes on array length.
@@ -48,16 +64,16 @@ public class RingBuffer<T> implements Iterable<T> {
      * buffer.
      */
     protected int incrementIndex(int index, int incrementBy) {
-        return (index + incrementBy) % buffer.length;
+        return (index + incrementBy) % capacity;
     }
-
+    
     /**
      *
      * @param i add value, overwriting oldest value if at capacity.
      */
     public void add(T i) {
         // write
-        buffer[head] = i;
+        setToArray(head, i);
         // then increment
         head = incrementIndex(head, 1);
 
@@ -87,12 +103,11 @@ public class RingBuffer<T> implements Iterable<T> {
      *
      * @return oldest value or throws ArrayIndexOutOfBounds exception if empty.
      */
-    @SuppressWarnings("unchecked")
     public T peek() {
         if (isEmpty()) {
             throw new ArrayIndexOutOfBoundsException("RingBuffer is empty");
         }
-        return (T) buffer[tail];
+        return getFromArray(tail);
     }
 
     /**
@@ -105,7 +120,6 @@ public class RingBuffer<T> implements Iterable<T> {
      * @return the value that is {@code index} positions from the oldest item in
      * the collection.
      */
-    @SuppressWarnings("unchecked")
     public T peek(int index) {
         if (index >= size) {
             throw new ArrayIndexOutOfBoundsException(
@@ -117,7 +131,7 @@ public class RingBuffer<T> implements Iterable<T> {
             );
         }
         int relindex = incrementIndex(tail, index);
-        return (T) buffer[relindex];
+        return getFromArray(relindex);
     }
 
     /**
@@ -130,8 +144,7 @@ public class RingBuffer<T> implements Iterable<T> {
             throw new ArrayIndexOutOfBoundsException("RingBuffer is empty");
         }
         // read
-        @SuppressWarnings("unchecked")
-        T t = (T) buffer[tail];
+        T t = getFromArray(tail);
 
         // then increment
         tail = incrementIndex(tail, 1);
@@ -167,26 +180,12 @@ public class RingBuffer<T> implements Iterable<T> {
      * @return the number of values copied into the provided array.
      */
     public int peek(T[] dest, int start, int length) {
+        Objects.checkFromIndexSize(start, length, dest.length);
         int readLength = Math.min(size, length);
-
-        // buffer array could have two segments to copy out of order. One at
-        // start of the buffer and one at the end.
-        // (h is head index, t is tail index)
-        //[0,0,h, , ,t,0]
-        //[^s1 ^]   [^ ^]  <- seg2
-        // segment two to start of newArray, as seg two will be the oldest
-        // values
-        int segTwoLength = buffer.length - tail;
-        int segTwoReadLength = Math.min(readLength, segTwoLength);
-        System.arraycopy(buffer, tail, dest, start, segTwoReadLength);
-
-        // segment one to end of newArray
-        int segOneReadLength = Math.min(head + 1, readLength - segTwoReadLength);
-        System.arraycopy(buffer, 0, dest, start + segTwoReadLength, segOneReadLength);
-
-        // sum segment lengths and return
-        int totalReadLength = segTwoReadLength + segOneReadLength;
-        return totalReadLength;
+        for (int i = 0; i < readLength; i++) {
+            dest[start + i] = peek(i);
+        }
+        return readLength;
     }
 
     public int size() {
@@ -194,7 +193,7 @@ public class RingBuffer<T> implements Iterable<T> {
     }
 
     public int maxSize() {
-        return buffer.length;
+        return capacity;
     }
 
     public boolean isEmpty() {
@@ -202,26 +201,19 @@ public class RingBuffer<T> implements Iterable<T> {
     }
 
     public boolean isNotEmpty() {
-        return !isEmpty();
+        return size > 0;
     }
 
     public boolean isFull() {
-        return size == buffer.length;
+        return size == capacity;
     }
 
     public boolean isNotFull() {
-        return !isFull();
+        return size < capacity;
     }
 
     public int getFreeSpace() {
-        return maxSize() - size();
-    }
-
-    public T[] toArray() {
-        @SuppressWarnings("unchecked")
-        T[] array = (T[]) new Object[size];
-        peek(array, 0, size);
-        return array;
+        return capacity - size;
     }
 
     @Override
@@ -229,7 +221,7 @@ public class RingBuffer<T> implements Iterable<T> {
         StringBuilder sb = new StringBuilder();
         sb.append("RingBuffer");
         sb.append('[');
-        int maxLoop = Math.min(buffer.length, 10);
+        int maxLoop = Math.min(capacity, 10);
         for (int i = 0; i < maxLoop; i++) {
             if (head == i) {
                 sb.append('+');
@@ -239,21 +231,21 @@ public class RingBuffer<T> implements Iterable<T> {
             }
             // is this byte actual data or uncleared noise?
             if (isData(i)) {
-                sb.append(String.valueOf(buffer[i]));
+                sb.append(String.valueOf(getFromArray(i)));
             } else {
                 sb.append(" ");
             }
             sb.append(',');
         }
         sb.deleteCharAt(sb.length() - 1);
-        if (maxLoop < buffer.length) {
+        if (maxLoop < capacity) {
             sb.append("...");
         }
         sb.append("]");
         return sb.toString();
     }
 
-    private boolean isData(int index) {
+    protected boolean isData(int index) {
         if (size == 0) {
             return false;
         }
@@ -264,11 +256,30 @@ public class RingBuffer<T> implements Iterable<T> {
     }
 
     public boolean containsArray(T[] array) {
-        if (array.length > size()) {
+        if (array.length > size) {
             return false;
         }
+        // look for first element
+        int offset = -1;
+        T firstItem = array[0];
         for (int i = 0; i < array.length; i++) {
-            if (this.peek(i) != array[i]) {
+            if (Objects.equals(peek(i),firstItem)) {
+                offset = i;
+                break;
+            }
+        }
+        if (offset < 0) {
+            // no first item found in buffer
+            return false;
+        }
+        // does the rest of the buffer match the array?
+        if ((size - offset) < array.length) {
+            // not enough elements left to match.
+            return false;
+        }
+
+        for (int i = 0; i < array.length; i++) {
+            if (!Objects.equals(peek(offset + i), array[i])) {
                 return false;
             }
         }

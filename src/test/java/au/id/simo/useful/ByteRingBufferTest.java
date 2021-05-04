@@ -44,7 +44,7 @@ public class ByteRingBufferTest {
         assertFalse(rb.isFull());
         assertTrue(rb.isNotFull());
         assertTrue(rb.isNotEmpty());
-        assertEquals(1, rb.peek());
+        assertEquals((byte)1, rb.peek());
         assertArrayEquals(new byte[]{1}, rb.toArray());
 
         rb.add(2);
@@ -53,7 +53,7 @@ public class ByteRingBufferTest {
         assertFalse(rb.isFull());
         assertTrue(rb.isNotFull());
         assertTrue(rb.isNotEmpty());
-        assertEquals(1, rb.peek());
+        assertEquals((byte)1, rb.peek());
         assertArrayEquals(new byte[]{1, 2}, rb.toArray());
 
         rb.add(3);
@@ -62,7 +62,7 @@ public class ByteRingBufferTest {
         assertTrue(rb.isFull());
         assertFalse(rb.isNotFull());
         assertTrue(rb.isNotEmpty());
-        assertEquals(1, rb.peek());
+        assertEquals((byte)1, rb.peek());
         assertArrayEquals(new byte[]{1, 2, 3}, rb.toArray());
 
         rb.add(4);
@@ -71,7 +71,7 @@ public class ByteRingBufferTest {
         assertTrue(rb.isNotEmpty());
         assertTrue(rb.isFull());
         assertFalse(rb.isNotFull());
-        assertEquals(2, rb.peek());
+        assertEquals((byte)2, rb.peek());
         assertArrayEquals(new byte[]{2, 3, 4}, rb.toArray());
 
         rb.add(5);
@@ -80,11 +80,11 @@ public class ByteRingBufferTest {
         assertTrue(rb.isNotEmpty());
         assertTrue(rb.isFull());
         assertFalse(rb.isNotFull());
-        assertEquals(3, rb.peek());
+        assertEquals((byte)3, rb.peek());
         assertArrayEquals(new byte[]{3, 4, 5}, rb.toArray());
 
         // removing values
-        assertEquals(3, rb.read());
+        assertEquals((byte)3, rb.read());
         assertEquals(2, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
@@ -92,7 +92,7 @@ public class ByteRingBufferTest {
         assertTrue(rb.isNotFull());
         assertArrayEquals(new byte[]{4, 5}, rb.toArray());
 
-        assertEquals(4, rb.read());
+        assertEquals((byte)4, rb.read());
         assertEquals(1, rb.size());
         assertFalse(rb.isEmpty());
         assertTrue(rb.isNotEmpty());
@@ -100,7 +100,7 @@ public class ByteRingBufferTest {
         assertTrue(rb.isNotFull());
         assertArrayEquals(new byte[]{5}, rb.toArray());
 
-        assertEquals(5, rb.read());
+        assertEquals((byte)5, rb.read());
         assertEquals(0, rb.size());
         assertTrue(rb.isEmpty());
         assertFalse(rb.isNotEmpty());
@@ -120,12 +120,12 @@ public class ByteRingBufferTest {
         buf.add(4);
         buf.add(5);
         assertEquals(5, buf.size());
-        assertTrue(buf.containsArray(new byte[]{1, 2, 3, 4, 5}));
+        assertTrue(buf.contains(new byte[]{1, 2, 3, 4, 5}));
 
         buf.clear();
         assertEquals(0, buf.size());
         assertTrue(buf.isEmpty());
-        assertTrue(buf.containsArray(new byte[]{}));
+        assertTrue(buf.contains(new byte[]{}));
 
         buf.add(6);
         buf.add(7);
@@ -134,11 +134,11 @@ public class ByteRingBufferTest {
         buf.add(0);
         assertTrue(buf.isFull());
         assertFalse(buf.isEmpty());
-        assertEquals(6, buf.read());
-        assertEquals(7, buf.read());
-        assertEquals(8, buf.read());
-        assertEquals(9, buf.read());
-        assertEquals(0, buf.read());
+        assertEquals((byte)6, buf.read());
+        assertEquals((byte)7, buf.read());
+        assertEquals((byte)8, buf.read());
+        assertEquals((byte)9, buf.read());
+        assertEquals((byte)0, buf.read());
         assertTrue(buf.isEmpty());
 
         assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
@@ -152,9 +152,9 @@ public class ByteRingBufferTest {
         rb.add(1);
         rb.add(2);
         rb.add(3);
-        assertEquals(1, rb.peek(0));
-        assertEquals(2, rb.peek(1));
-        assertEquals(3, rb.peek(2));
+        assertEquals((byte)1, rb.peek(0));
+        assertEquals((byte)2, rb.peek(1));
+        assertEquals((byte)3, rb.peek(2));
 
         assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
             rb.peek(3);
@@ -162,9 +162,9 @@ public class ByteRingBufferTest {
 
         rb.add(4);
         rb.add(5);
-        assertEquals(3, rb.peek(0));
-        assertEquals(4, rb.peek(1));
-        assertEquals(5, rb.peek(2));
+        assertEquals((byte)3, rb.peek(0));
+        assertEquals((byte)4, rb.peek(1));
+        assertEquals((byte)5, rb.peek(2));
 
         assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
             rb.peek(3);
@@ -177,10 +177,10 @@ public class ByteRingBufferTest {
         byte[] testArray = testStr.getBytes();
         ByteRingBuffer rb = new ByteRingBuffer(testArray.length + 1);
         for (byte b : testArray) {
-            assertFalse(rb.containsArray(testArray));
+            assertFalse(rb.contains(testArray));
             rb.add(b);
         }
-        assertTrue(rb.containsArray(testArray));
+        assertTrue(rb.contains(testArray));
     }
     
     @Test
@@ -190,7 +190,7 @@ public class ByteRingBufferTest {
         rb.add(2);
         rb.add(3);
         assertTrue(rb.isFull());
-        assertEquals(1,rb.read());
+        assertEquals((byte)1,rb.read());
         assertFalse(rb.isFull());
         assertEquals(2, rb.size());
     }

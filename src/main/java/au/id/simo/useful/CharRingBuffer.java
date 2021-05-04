@@ -1,58 +1,30 @@
 package au.id.simo.useful;
 
+import java.util.Objects;
+
 /**
- * Char buffer for use with readers and writers.
- * <p>
- * Allows writing to it forever without additional memory usage.
- * <p>
- * Usage Modes:
- * <ul>
- * <li>Writes overwrite old values silently: Use add and get</li>
- * <li>Writes throw error if no free space: Use put and read</li>
- * </ul>
+ * Character focused implementation of RingBuffer with efficient methods for
+ * reading and writing bytes.
  */
-public class CharRingBuffer {
+public class CharRingBuffer extends RingBuffer<Character> implements CharSequence {
 
     private final char[] buffer;
 
-    /**
-     * Add index. Points to next location to write to. Write then increment.
-     */
-    private int head;
-    /**
-     * Remove index. Points to oldest value to read from. Read then increment.
-     */
-    private int tail;
-
-    /**
-     * Represents the number of values stored in this buffer.
-     */
-    private int size;
-
-    public CharRingBuffer(int maxSize) {
-        buffer = new char[maxSize];
-        head = 0;
-        tail = 0;
-        size = 0;
+    public CharRingBuffer(int capacity) {
+        super(capacity);
+        buffer = new char[capacity];
     }
 
-    /**
-     * Logic for wrapping indexes on array length.
-     *
-     * @param index head or tail.
-     * @param incrementBy the number to increment the index by.
-     * @return new incremented value, possibly wrapped back to 0 if required.
-     * Will never be a number that causes an ArrayOutpfBoundsException on the
-     * buffer.
-     */
-    protected int incrementIndex(int index, int incrementBy) {
-        return (index + incrementBy) % buffer.length;
+    @Override
+    protected void setToArray(int index, Character value) {
+        buffer[index] = value;
     }
 
-    /**
-     *
-     * @param i add value, overwriting oldest value if at capacity.
-     */
+    @Override
+    protected Character getFromArray(int index) {
+        return buffer[index];
+    }
+
     public void add(char i) {
         // write
         buffer[head] = i;
@@ -76,85 +48,22 @@ public class CharRingBuffer {
     /**
      * Same as {@link add} except an exception will be thrown if there is no
      * space.
-     * @param i the char to put on the buffer.
-     * @throws ArrayIndexOutOfBoundsException if there is no free space left on
-     * the buffer for this char.
-     */
-    public void put(char i) {
-        if (isFull()) {
-            throw new ArrayIndexOutOfBoundsException("Buffer is full");
-        }
-        add(i);
-    }
-
-    /**
-     * Same as {@link add} except an exception will be thrown if there is no
-     * space.
      * @param chars the sequence of chars to put on the buffer.
      * @throws ArrayIndexOutOfBoundsException if there is no free space left on
      * the buffer for all of the chars in the sequence.
      */
     public void put(CharSequence chars) {
+        if (chars.length() > getFreeSpace()) {
+            throw new ArrayIndexOutOfBoundsException("Not enough free space to add all chars.");
+        }
         for (int i = 0; i < chars.length(); i++) {
             put(chars.charAt(i));
         }
     }
 
     /**
-     *
-     * @return oldest value or throws ArrayIndexOutOfBounds exception if empty.
-     */
-    public char peek() {
-        if (isEmpty()) {
-            throw new ArrayIndexOutOfBoundsException("Buffer is empty");
-        }
-        return buffer[tail];
-    }
-
-    /**
-     * Returns a value relative to the oldest value in the buffer.
-     * <p>
-     * This method as no side effects. No indexes are updated with this call, no
-     * extra space is freed in the buffer.
-     *
-     * @param index where 0 means the oldest item in the collection.
-     * @return the value that is {@code index} positions from the oldest item in
-     * the collection.
-     */
-    public char peek(int index) {
-        if (index >= size) {
-            throw new ArrayIndexOutOfBoundsException(
-                    String.format("Index value %s is larger than the number of elements %s.",
-                            index,
-                            size
-                    )
-            );
-        }
-        int relindex = incrementIndex(tail, index);
-        return buffer[relindex];
-    }
-
-    /**
-     * Read and removed oldest value from the buffer.
-     *
-     * @return oldest value or throws ArrayIndexOutOfBounds exception if empty.
-     */
-    public char read() {
-        if (isEmpty()) {
-            throw new ArrayIndexOutOfBoundsException("RingBuffer is empty");
-        }
-        // read
-        char t = buffer[tail];
-
-        // then increment
-        tail = incrementIndex(tail, 1);
-        size--;
-
-        return t;
-    }
-
-    /**
      * Copies chars into the provided array.
+     *
      * @param dest destination array to copy values into
      * @param start the index of the destination array to start copying values
      * into
@@ -169,9 +78,7 @@ public class CharRingBuffer {
     }
 
     /**
-     * Copies buffer contents into the provided array, without consuming values.
-     * <p>
-     * No indexes will be adjusted, no side effects will occur.
+     * More efficient implementation of {@code peek(Byte[], int, int) }.
      *
      * @param dest destination array to copy values into
      * @param start the index of the destination array to start copying values
@@ -180,15 +87,20 @@ public class CharRingBuffer {
      * @return the number of values copied into the provided array.
      */
     public int peek(char[] dest, int start, int length) {
-        int readLength = Math.min(size, length);
-
         // buffer array could have two segments to copy out of order. One at
         // start of the buffer and one at the end.
         // (h is head index, t is tail index)
-        //[0,0,h, , ,t,0]
-        //[^s1 ^]   [^ ^]  <- seg2
-        // segment two to start of newArray, as seg two will be the oldest
-        // values
+        // [0,0,0,0,h, , ,t,0,0,0,0]
+        // [^ seg1  ^]   [^ seg2  ^]
+        // Steps: Copy segment two to start of dest array, as seg two will be
+        // the oldest values, then copy segment to the dest array after segment
+        // one.
+        // Ending with:
+        // [t,0,0,0,0,0,0,0,0,h]
+        // [^ seg2  ^][^ seg1 ^]
+        int readLength = Math.min(size, length);
+
+        // segment two to the start of the destination.
         int segTwoLength = buffer.length - tail;
         int segTwoReadLength = Math.min(readLength, segTwoLength);
         System.arraycopy(buffer, tail, dest, start, segTwoReadLength);
@@ -200,34 +112,6 @@ public class CharRingBuffer {
         // sum segment lengths and return
         int totalReadLength = segTwoReadLength + segOneReadLength;
         return totalReadLength;
-    }
-
-    public int size() {
-        return size;
-    }
-
-    public int maxSize() {
-        return buffer.length;
-    }
-
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    public boolean isNotEmpty() {
-        return !isEmpty();
-    }
-
-    public boolean isFull() {
-        return size == buffer.length;
-    }
-
-    public boolean isNotFull() {
-        return !isFull();
-    }
-
-    public int getFreeSpace() {
-        return maxSize() - size();
     }
 
     public char[] toArray() {
@@ -265,43 +149,28 @@ public class CharRingBuffer {
         return sb.toString();
     }
 
-    private boolean isData(int index) {
-        if (size == 0) {
-            return false;
-        }
-        if (head > tail) {
-            return index >= tail && index < head;
-        }
-        return index >= tail || index < head;
-    }
-
-    public boolean startsWith(CharSequence charSeq) {
-        int seqLength = charSeq.length();
-        if (seqLength > size) {
-            return false;
-        }
-        for (int i = 0; i < seqLength; i++) {
-            if (peek(i) != charSeq.charAt(i)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public boolean contains(CharSequence charSeq) {
+        Objects.requireNonNull(charSeq);
         if (charSeq.length() > size) {
             return false;
         }
+        
+        if (charSeq.length() == 0) {
+            return size == 0;
+        }
+        
+        // look for first element
         int offset = -1;
-        char firstChar = charSeq.charAt(0);
+        char firstItem = charSeq.charAt(0);
         for (int i = 0; i < charSeq.length(); i++) {
-            if (this.peek(i) == firstChar) {
+            int relIndex = incrementIndex(tail, i);
+            if (buffer[relIndex] == firstItem) {
                 offset = i;
                 break;
             }
         }
         if (offset < 0) {
-            // no first char found in buffer
+            // no first item found in buffer
             return false;
         }
         // does the rest of the buffer match the charSeq?
@@ -311,28 +180,29 @@ public class CharRingBuffer {
         }
 
         for (int i = 0; i < charSeq.length(); i++) {
-            if (this.peek(offset + i) != charSeq.charAt(i)) {
+            int relIndex = incrementIndex(tail, offset + i);
+            if (buffer[relIndex] != charSeq.charAt(i)) {
                 return false;
             }
         }
         return true;
     }
 
-    public boolean containsArray(char[] array) {
-        if (array.length > size) {
-            return false;
-        }
-        for (int i = 0; i < array.length; i++) {
-            if (this.peek(i) != array[i]) {
-                return false;
-            }
-        }
-        return true;
+    @Override
+    public int length() {
+        return size;
     }
 
-    public void clear() {
-        head = 0;
-        tail = 0;
-        size = 0;
+    @Override
+    public char charAt(int index) {
+        return peek(index);
+    }
+
+    @Override
+    public CharSequence subSequence(int start, int end) {
+        Objects.checkFromToIndex(start, end, size);
+        char[] buf = new char[(end - start)];
+        peek(buf, start, end);
+        return new String(buf);
     }
 }
