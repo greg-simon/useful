@@ -17,7 +17,7 @@ public class Stopwatch {
         return new Stopwatch();
     }
 
-    private final Long startTime;
+    private final long startTime;
 
     public Stopwatch() {
         this(System.currentTimeMillis());
@@ -26,20 +26,24 @@ public class Stopwatch {
     public Stopwatch(long startTime) {
         this.startTime = startTime;
     }
+    
+    public long startTime() {
+        return startTime;
+    }
 
-    public Long result() {
+    public long result() {
         return System.currentTimeMillis() - startTime;
     }
 
-    public Double resultSec() {
-        Double secs = result() / 1000d;
+    public double resultSec() {
+        double secs = result() / 1000d;
         BigDecimal bd = new BigDecimal(secs);
         BigDecimal rounded = bd.setScale(3, RoundingMode.HALF_UP);
         return rounded.doubleValue();
     }
 
     public String resultHuman() {
-        Double secs = resultSec();
+        double secs = resultSec();
         int mins = 0;
         int hours = 0;
         int days = 0;
