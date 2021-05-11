@@ -1,4 +1,4 @@
-package au.id.simo.useful;
+package au.id.simo.useful.xml;
 
 /**
  * String Utilities for modifying String and escaping XML characters.

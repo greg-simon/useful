@@ -1,6 +1,7 @@
-package au.id.simo.useful;
+package au.id.simo.useful.text;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

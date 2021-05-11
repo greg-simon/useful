@@ -1,4 +1,4 @@
-package au.id.simo.useful;
+package au.id.simo.useful.text;
 
 import java.util.Iterator;
 import java.util.List;

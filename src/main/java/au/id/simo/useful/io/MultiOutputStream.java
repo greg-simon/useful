@@ -2,6 +2,7 @@ package au.id.simo.useful.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 
 /**
  * Write bytes to an arbitrary number of {@link OutputStream}s.
@@ -14,7 +15,7 @@ public class MultiOutputStream extends OutputStream {
     private final OutputStream[] outputStreams;
 
     public MultiOutputStream(OutputStream... streams) {
-        this.outputStreams = streams;
+        this.outputStreams = Objects.requireNonNull(streams);
     }
 
     @Override

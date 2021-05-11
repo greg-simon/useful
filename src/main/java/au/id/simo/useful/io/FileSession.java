@@ -32,7 +32,7 @@ public class FileSession implements URLSession {
     private final Resources resources;
     private final List<Path> createdFileList;
     private final List<Path> createdDirList;
-    private volatile boolean closed;
+    private final CloseStatus closeStatus;
 
     /**
      * Creates a new FileSession backed by an auto generated temporary directory
@@ -48,7 +48,7 @@ public class FileSession implements URLSession {
         resources = new FileResources(baseDir);
         createdFileList = new ArrayList<>();
         createdDirList = new ArrayList<>();
-        closed = false;
+        closeStatus = new CloseStatus(SESSION_CLOSE_MSG);
 
         createdDirList.add(basePath);
     }
@@ -68,7 +68,7 @@ public class FileSession implements URLSession {
         resources = new FileResources(baseDir);
         createdFileList = new ArrayList<>();
         createdDirList = new ArrayList<>();
-        closed = false;
+        closeStatus = new CloseStatus(SESSION_CLOSE_MSG);
     }
 
     /**
@@ -166,11 +166,8 @@ public class FileSession implements URLSession {
     }
 
     @Override
-    public String register(String urlPath, Generator product)
-            throws IOException {
-        if (isClosed()) {
-            throw new IOException(SESSION_CLOSE_MSG);
-        }
+    public String register(String urlPath, Generator product) throws IOException {
+        closeStatus.throwIfClosed();
         File outFile = getFile(urlPath);
         createDirectories(outFile);
         FileOutputStream fout = new FileOutputStream(outFile);
@@ -189,9 +186,7 @@ public class FileSession implements URLSession {
 
     @Override
     public String register(String path, File resource) throws IOException {
-        if (isClosed()) {
-            throw new IOException(SESSION_CLOSE_MSG);
-        }
+        closeStatus.throwIfClosed();
         Path source = resource.toPath();
         File target = getFile(path);
         createDirectories(target);
@@ -205,9 +200,7 @@ public class FileSession implements URLSession {
 
     @Override
     public Resource getResource(String path) throws IOException {
-        if (isClosed()) {
-            throw new IOException(SESSION_CLOSE_MSG);
-        }
+        closeStatus.throwIfClosed();
         return resources.get(path);
     }
 
@@ -242,7 +235,7 @@ public class FileSession implements URLSession {
 
     @Override
     public boolean isClosed() {
-        return closed;
+        return closeStatus.isClosed();
     }
 
     /**
@@ -259,7 +252,7 @@ public class FileSession implements URLSession {
         if (isClosed()) {
             return;
         }
-        closed = true;
+        closeStatus.close();
         for (Path filePath : createdFileList) {
             Files.deleteIfExists(filePath);
         }

@@ -3,7 +3,7 @@ package au.id.simo.useful.experimental;
 import java.io.IOException;
 import java.io.Writer;
 
-import au.id.simo.useful.StringUtil;
+import au.id.simo.useful.xml.StringUtil;
 import au.id.simo.useful.xml.Tag;
 import au.id.simo.useful.xml.XmlHandler;
 import org.xml.sax.Attributes;

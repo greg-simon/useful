@@ -18,9 +18,7 @@ public class LimitedOutputStream extends CountingOutputStream {
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        long byteCount = getByteCount();
-
-        long remaining = byteLimit - byteCount;
+        long remaining = byteLimit - getByteCount();
         int newLen = (int) Math.min((long) len, remaining);
         super.write(b, off, newLen);
     }
@@ -30,5 +28,13 @@ public class LimitedOutputStream extends CountingOutputStream {
         if (getByteCount() < byteLimit) {
             super.write(b);
         }
+    }
+    
+    /**
+     * Has the limit been reached.
+     * @return true if the byte limit has been reached, otherwise false.
+     */
+    public boolean isLimitMet() {
+        return getByteCount() >= byteLimit;
     }
 }

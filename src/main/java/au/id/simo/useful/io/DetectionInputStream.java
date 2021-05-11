@@ -17,7 +17,7 @@ public class DetectionInputStream extends InputStream {
     private final MatchListener[] listeners;
     private final ByteRingBuffer buffer;
     private final byte[] detectBytes;
-    private boolean isClosed = false;
+    private final CloseStatus closeStatus;
     private boolean matched = false;
 
     public DetectionInputStream(InputStream in, byte[] detectBytes, MatchListener... listeners) {
@@ -25,15 +25,20 @@ public class DetectionInputStream extends InputStream {
         this.detectBytes = detectBytes;
         this.listeners = listeners;
         this.buffer = new ByteRingBuffer(detectBytes.length);
+        this.closeStatus = new CloseStatus();
     }
 
     private void fillBuffer() throws IOException {
         int byt = -2; // -2 is an arbitary out-of-band init marker.
-        while (!isClosed && !buffer.isFull() && (byt = in.read()) != -1) {
+        while (
+                closeStatus.isOpen() &&
+                buffer.isNotFull() &&
+                (byt = in.read()) != -1
+        ) {
             buffer.add(byt);
         }
         if (byt == -1) {
-            isClosed = true;
+            closeStatus.close();
         }
     }
 

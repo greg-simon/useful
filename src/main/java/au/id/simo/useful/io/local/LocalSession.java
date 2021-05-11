@@ -12,6 +12,7 @@ import au.id.simo.useful.io.FileResource;
 import au.id.simo.useful.io.Generator;
 import au.id.simo.useful.io.Resource;
 import au.id.simo.useful.io.URLSession;
+import au.id.simo.useful.io.CloseStatus;
 
 /**
  * An implementation of the URLSession that uses the local protocol
@@ -26,7 +27,10 @@ public class LocalSession implements URLSession {
 
     private final String id;
     private final Map<String, Resource> resourceMap;
-    private boolean closed;
+    /**
+     * Tracks session close status.
+     */
+    private final CloseStatus closeStatus;
 
     /**
      * Only the LocalProtocol class should create LocalSession instances.
@@ -37,7 +41,7 @@ public class LocalSession implements URLSession {
     protected LocalSession(String id) {
         this.id = id;
         resourceMap = new HashMap<>();
-        closed = false;
+        closeStatus = new CloseStatus(SESSION_CLOSE_MSG);
     }
 
     /**
@@ -90,9 +94,7 @@ public class LocalSession implements URLSession {
 
     @Override
     public String register(String urlPath, Resource resource) throws IOException {
-        if (closed) {
-            throw new IOException(SESSION_CLOSE_MSG);
-        }
+        closeStatus.throwIfClosed();
         String normalisedPath = normalisePath(urlPath);
         resourceMap.put(normalisedPath, resource);
         return urlFromPath(normalisedPath);
@@ -105,9 +107,7 @@ public class LocalSession implements URLSession {
 
     @Override
     public Resource getResource(String path) throws IOException {
-        if (closed) {
-            throw new IOException(SESSION_CLOSE_MSG);
-        }
+        closeStatus.throwIfClosed();
         return resourceMap.get(normalisePath(path));
     }
 
@@ -118,7 +118,7 @@ public class LocalSession implements URLSession {
 
     @Override
     public boolean isClosed() {
-        return closed;
+        return closeStatus.isClosed();
     }
 
     /**
@@ -126,7 +126,7 @@ public class LocalSession implements URLSession {
      * Exception just for setting a flag.
      */
     protected void closeLocalSession() {
-        closed = true;
+        closeStatus.close();
     }
 
     @Override

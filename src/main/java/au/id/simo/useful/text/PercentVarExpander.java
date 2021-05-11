@@ -1,36 +1,24 @@
-package au.id.simo.useful;
+package au.id.simo.useful.text;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Expands variables found in provided {@code String} formatted like
- * {@code $VAR} or {@code ${VAR}}.
+ * Expands variables in a format like {@code %var}.
  *
- * And variables with no found value will be simply removed.
+ * To return an actual '%' char, two '%' chars must be used. e.g. '%%'
  */
-public class EnvVarExpander implements VarExpander {
+public class PercentVarExpander implements VarExpander {
 
     private final Map<String, String> varMap;
 
-    public EnvVarExpander() {
+    public PercentVarExpander() {
         varMap = new HashMap<>();
     }
 
-    public EnvVarExpander(Map<String, String> varMap) {
-        this.varMap = varMap;
-    }
-
-    /**
-     * Builder style method for populating variable mappings.
-     *
-     * @param key variable name
-     * @param value variable value
-     * @return this EnvVarExpander for further method chaining.
-     */
     @Override
-    public EnvVarExpander put(String key, String value) {
-        varMap.put(key, value);
+    public VarExpander put(String varName, String varValue) {
+        this.varMap.put(varName, varValue);
         return this;
     }
 
@@ -43,37 +31,23 @@ public class EnvVarExpander implements VarExpander {
         for (int index = 0; index < sourceStr.length(); index++) {
             char c = sourceStr.charAt(index);
             switch (state) {
-                case BRACE_VARNAME:
-                    if (c == '}') {
-                        // end the variable name reading
-                        // and don't add the closing brace to the output.
-                        output.append(expandVar(varName));
-                        state = State.NORMAL;
-                    } else {
-                        varName.append(c);
-                    }
-                    break;
                 case VARNAME:
                     if (isAcceptableVarNameChar(c)) {
                         varName.append(c);
                     } else {
                         // end the variable name reading and lookup the value
                         output.append(expandVar(varName));
-                        // dont forget to add the whitespace to the output
+                        // dont forget to add the non varname char to the output
                         output.append(c);
                         state = State.NORMAL;
                     }
                     break;
                 case NORMAL:
                     switch (c) {
-                        case '$':
-                            if (isNextChar('$', sourceStr, index)) {
-                                // ecscaped $, add one and skip the next.
+                        case '%':
+                            if (isNextChar('%', sourceStr, index)) {
+                                // ecscaped %, add one and skip the next.
                                 output.append(c);
-                                index++;
-                            } else if (isNextChar('{', sourceStr, index)) {
-                                state = State.BRACE_VARNAME;
-                                // skip adding the brace char to the output
                                 index++;
                             } else {
                                 state = State.VARNAME;
@@ -106,6 +80,6 @@ public class EnvVarExpander implements VarExpander {
     }
 
     private enum State {
-        NORMAL, VARNAME, BRACE_VARNAME
+        NORMAL, VARNAME
     }
 }
