@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
 
 /**
  * An {@link InputStream} factory. Providing unified access to a source of bytes
@@ -22,6 +23,8 @@ import java.io.Reader;
  */
 public abstract class Resource {
 
+    private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+
     /**
      * Loads the contents of the resource as a String.
      * <p>
@@ -32,7 +35,19 @@ public abstract class Resource {
      * resource.
      */
     public String getString() throws IOException {
-        return new String(getBytes(), "UTF-8");
+        return getString(DEFAULT_CHARSET);
+    }
+
+    /**
+     * Loads the contents of the resource as a String.
+     *
+     * @param charset The character set to use in decoding the characters.
+     * @return the full contents of the resource, as a String. Cannot be null.
+     * @throws IOException if there is any errors in finding or reading the
+     * resource.
+     */
+    public String getString(Charset charset) throws IOException {
+        return new String(getBytes(), charset);
     }
 
     /**
@@ -45,7 +60,19 @@ public abstract class Resource {
      * resource.
      */
     public Reader getReader() throws IOException {
-        return new InputStreamReader(inputStream(), "UTF-8");
+        return getReader(DEFAULT_CHARSET);
+    }
+
+    /**
+     * Creates a Reader to read the resources contents.
+     *
+     * @param charset The character set to use in decoding the characters.
+     * @return a Reader which will read the contents of the resource
+     * @throws IOException if there is any errors in creating a Reader of the
+     * resource.
+     */
+    public Reader getReader(Charset charset) throws IOException {
+        return new InputStreamReader(inputStream(), charset);
     }
 
     /**
