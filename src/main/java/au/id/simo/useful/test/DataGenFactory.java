@@ -14,8 +14,8 @@ import au.id.simo.useful.io.LimitedReader;
  */
 public class DataGenFactory {
     
-    private static final String STREAM_MSG = "Stream Closed";
-    private static final String READER_MSG = "Reader Closed";
+    public static final String STREAM_MSG = "Stream Closed";
+    public static final String READER_MSG = "Reader Closed";
     
     /**
      * 

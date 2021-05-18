@@ -54,6 +54,20 @@ public class ByteRingBuffer extends RingBuffer<Byte> {
         size -= totalReadLength;
         return totalReadLength;
     }
+    
+    /**
+     * Skips reading the next count of bytes.
+     * 
+     * @param count Moves the ring buffer tail forward @{code count} times, and
+     * reduces the same amount from the size.
+     */
+    public void skip(int count) {
+        if (count > size) {
+            throw new ArrayIndexOutOfBoundsException("Can't skip more bytes that is already contained.");
+        }
+        tail = incrementIndex(tail, count);
+        size -= count;
+    }
 
     /**
      * More efficient implementation of {@code peek(Byte[], int, int) }.
@@ -128,19 +142,28 @@ public class ByteRingBuffer extends RingBuffer<Byte> {
     }
     
     public boolean contains(byte[] byteArray) {
+        return indexOf(byteArray) > -1;
+    }
+    
+    public int indexOf(byte[] byteArray) {
         Objects.requireNonNull(byteArray);
         if (byteArray.length > size) {
-            return false;
+            return -1;
         }
         
         if (byteArray.length == 0) {
-            return size == 0;
+            if (size == 0) {
+                return 0;
+            } else {
+                // not found
+                return -1;
+            }
         }
         
         // look for first element
         int offset = -1;
         byte firstItem = byteArray[0];
-        for (int i = 0; i < byteArray.length; i++) {
+        for (int i = 0; i < size; i++) {
             int relIndex = incrementIndex(tail, i);
             if (buffer[relIndex] == firstItem) {
                 offset = i;
@@ -149,20 +172,20 @@ public class ByteRingBuffer extends RingBuffer<Byte> {
         }
         if (offset < 0) {
             // no first item found in buffer
-            return false;
+            return -1;
         }
         // does the rest of the buffer match the array?
         if ((size - offset) < byteArray.length) {
             // not enough elements left to match.
-            return false;
+            return -1;
         }
 
         for (int i = 0; i < byteArray.length; i++) {
             int relIndex = incrementIndex(tail, offset + i);
             if (buffer[relIndex] != byteArray[i]) {
-                return false;
+                return -1;
             }
         }
-        return true;
+        return offset;
     }
 }

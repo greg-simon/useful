@@ -124,8 +124,9 @@ public interface FilterInputStreamTest {
         FilterInputStream fin = create(DataGenFactory.incrementingBytes(20));
         assertEquals(10, fin.skip(10)); // 10 bytes remaining
         assertEquals(10, fin.read());   //  9 bytes remaining
-        assertEquals(7, fin.skip(7));   //  2 byets remaining
+        assertEquals(7, fin.skip(7));   //  2 bytes remaining
         assertEquals(2, fin.skip(10));  //  end of stream after first 2 bytes
+        assertEquals(-1, fin.read()); // verify end of stream
     }
     
     @Test
@@ -137,18 +138,18 @@ public interface FilterInputStreamTest {
         ioe = assertThrows(IOException.class, () -> {
             fin.read();
         });
-        assertEquals("Stream Closed", ioe.getMessage());
+        assertEquals(DataGenFactory.STREAM_MSG, ioe.getMessage());
         ioe = assertThrows(IOException.class, () -> {
             fin.read(new byte[2]);
         });
-        assertEquals("Stream Closed", ioe.getMessage());
+        assertEquals(DataGenFactory.STREAM_MSG, ioe.getMessage());
         ioe = assertThrows(IOException.class, () -> {
             fin.read(new byte[2],0,2);
         });
-        assertEquals("Stream Closed", ioe.getMessage());
+        assertEquals(DataGenFactory.STREAM_MSG, ioe.getMessage());
         ioe = assertThrows(IOException.class, () -> {
             fin.skip(10);
         });
-        assertEquals("Stream Closed", ioe.getMessage());
+        assertEquals(DataGenFactory.STREAM_MSG, ioe.getMessage());
     }
 }

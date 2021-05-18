@@ -1,7 +1,9 @@
 package au.id.simo.useful.io;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 import au.id.simo.useful.ByteRingBuffer;
 
@@ -11,88 +13,122 @@ import au.id.simo.useful.ByteRingBuffer;
  *
  * Detected bytes are discarded and not provided to the consumer of this stream.
  */
-public class DetectionInputStream extends InputStream {
+public class DetectionInputStream extends FilterInputStream {
 
-    private final InputStream in;
-    private final MatchListener[] listeners;
+    private static final int MIN_BUFFER_SIZE = 10;
+    /**
+     * Match constant that will have no modifying behavior, and not match
+     * anything.
+     */
+    private static final Match NO_OP = new Match(new byte[0], (byte[] bytes) -> false);
+    private final Match match;
+    
     private final ByteRingBuffer buffer;
-    private final byte[] detectBytes;
-    private final CloseStatus closeStatus;
-    private boolean matched = false;
+    private final CloseStatus inStream;
 
-    public DetectionInputStream(InputStream in, byte[] detectBytes, MatchListener... listeners) {
-        this.in = in;
-        this.detectBytes = detectBytes;
-        this.listeners = listeners;
-        this.buffer = new ByteRingBuffer(detectBytes.length);
-        this.closeStatus = new CloseStatus();
+    public DetectionInputStream(InputStream in) {
+        this(in, null);
+    }
+    
+    public DetectionInputStream(InputStream in, Match match) {
+        super(in);
+        this.match = Objects.requireNonNullElse(match, NO_OP);
+        // ensure buffer is never zero
+        int maxBufferRequired = Math.max(MIN_BUFFER_SIZE, match.matchBytes.length);
+        this.buffer = new ByteRingBuffer(maxBufferRequired);
+        this.inStream = new CloseStatus();
     }
 
     private void fillBuffer() throws IOException {
+        if(inStream.isClosed()) {
+            // no more in the underlying input stream, no need to read any more.
+            return;
+        }
         int byt = -2; // -2 is an arbitary out-of-band init marker.
-        while (
-                closeStatus.isOpen() &&
-                buffer.isNotFull() &&
-                (byt = in.read()) != -1
-        ) {
-            buffer.add(byt);
+        while (buffer.isNotFull() && (byt = in.read()) != -1) {
+            byte b = (byte) byt;
+            buffer.add(b);
         }
         if (byt == -1) {
-            closeStatus.close();
+            inStream.close();
         }
+    }
+    
+    /**
+     * Only works if checked each byte read from underlying stream.
+     * 
+     * @return true if some bytes have been skipped in the buffer. False if none
+     * have.
+     * @throws IOException if there is any error in running a MatchListener.
+     */
+    private boolean checkMatch() throws IOException {
+        int matchIndex = buffer.indexOf(match.matchBytes);
+        if (matchIndex != 0) {
+            return false;
+        }
+        if (match.onMatch.filter(match.matchBytes)) {
+            buffer.skip(match.matchBytes.length);
+            return true;
+        }
+        return false;
     }
 
     @Override
     public int read() throws IOException {
-        if (matched && buffer.isEmpty()) {
-            return in.read();
-        }
-
-        // try to fill buffer
-        if (!buffer.isFull()) {
+        while(inStream.isOpen() && buffer.isNotFull()) {
             fillBuffer();
         }
-
-        // check for prompt if not matched
-        if (!matched && buffer.isFull() && buffer.contains(detectBytes)) {
-            matched = true;
-            for (MatchListener listener : listeners) {
-                listener.match(detectBytes);
-            }
-            // buffer contents is the prompt
-            // clear the buffer and refill.
-            buffer.clear();
+        
+        while (checkMatch()) {
             fillBuffer();
         }
-
-        if (buffer.isEmpty()) {
+        
+        if(buffer.isEmpty()) {
             return -1;
-        } else {
-            return buffer.read();
         }
+        
+        return buffer.read();
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        if (matched) {
-            return in.read(b, off, len);
-        } else {
-            return super.read(b, off, len);
+    public long skip(long n) throws IOException {
+        long skipped = 0;
+        while (skipped < n) {
+            int readByte = this.read();
+            if (readByte == -1) {
+                return skipped;
+            }
+            skipped++;
+        }
+        return skipped;
+    }
+    
+    
+
+    public static class Match {
+        private final byte[] matchBytes;
+        private final OnMatch onMatch;
+
+        public Match(byte[] matchBytes, OnMatch matchAction) {
+            this.matchBytes = matchBytes;
+            this.onMatch = matchAction;
         }
     }
-
-    @Override
-    public int read(byte[] b) throws IOException {
-        if (matched) {
-            return in.read(b);
-        } else {
-            return super.read(b);
-        }
-    }
-
+    
     @FunctionalInterface
-    public interface MatchListener {
-
-        void match(byte[] detected) throws IOException;
+    public interface OnMatch {
+        /**
+         * Executed when the associated bytes have been detected in the
+         * underlying InputStream.
+         *
+         * @param detect the bytes that were matched on.
+         * @return true if matched bytes are to be filtered from the InputStream
+         * and not be read by the consumer code of this stream. false is to be
+         * returned if the matched bytes are to be readable by the consumer code
+         * of this stream.
+         * @throws IOException if there is a problem in performing work after
+         * matching some bytes.
+         */
+        boolean filter(byte[] detect) throws IOException;
     }
 }
