@@ -20,7 +20,7 @@ public class DetectionInputStream extends FilterInputStream {
      * Match constant that will have no modifying behavior, and not match
      * anything.
      */
-    private static final Match NO_OP = new Match(new byte[0], (byte[] bytes) -> false);
+    private static final Match NO_OP = new Match(new byte[0], (byte[] bytes) -> {return false;});
     private final Match match;
     
     private final ByteRingBuffer buffer;
@@ -34,7 +34,7 @@ public class DetectionInputStream extends FilterInputStream {
         super(in);
         this.match = Objects.requireNonNullElse(match, NO_OP);
         // ensure buffer is never zero
-        int maxBufferRequired = Math.max(MIN_BUFFER_SIZE, match.matchBytes.length);
+        int maxBufferRequired = Math.max(MIN_BUFFER_SIZE, this.match.matchBytes.length);
         this.buffer = new ByteRingBuffer(maxBufferRequired);
         this.inStream = new CloseStatus();
     }
