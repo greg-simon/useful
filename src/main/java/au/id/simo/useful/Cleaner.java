@@ -1,22 +1,20 @@
 package au.id.simo.useful;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 /**
  * Used to help ensure resources are cleaned up when required.
  * <p>
  * Cleaner is conceptually a collection of {@link Runnable} instances that are
- * executed when {@link #clean() } is called.
+ * executed when {@link #clean()} is called.
  * <p>
  * Cleanup tasks are performed in reverse added order (LIFO), consistent with
- * try-with-resources behavior.
+ * try-with-resources behavior for {@link AutoClosable}s.
  * <p>
  * Cleaner implements Runnable and AutoCloseable for convenience to enable it to
  * be used easily in try-with-resources blocks and
@@ -36,12 +34,12 @@ import java.util.function.Consumer;
  *
  * Cleaner also has two static instances:
  * <ol>
- * <li>{@code onShutdown}: This instance is registered with
+ * <li>{@link #onShutdown()}: This instance is registered with
  * {@link Runtime#addShutdownHook(java.lang.Thread) } to be executed on JVM
  * shutdown. This allows any stand alone application code to add resources to be
  * cleaned up on shutdown from anywhere.
  *
- * <li>{@code onDemand}: This instance is never executed unless
+ * <li>{@link #onDemand()}: This instance is never executed unless
  * {@link #onDemandClean()} is called. This is a better option for applications
  * requiring more control over when resources are cleaned up, such as within
  * Servlet containers or regularly scheduled cleanups. It's singleton like
@@ -50,10 +48,10 @@ import java.util.function.Consumer;
  * </ol>
  * <p>
  * {@link Runnable}s added to the Cleaner list are only ever run once before
- * being discarded. This makes repeat calls to an instances {@link #clean() }
+ * being discarded. This makes repeat calls to an instances {@link #clean()}
  * safe.
  */
-public class Cleaner implements AutoCloseable, Runnable, Iterable<Runnable> {
+public class Cleaner implements AutoCloseable, Runnable {
 
     private static Cleaner onShutdownInstance;
     private static Cleaner onDemandInstance;
@@ -90,8 +88,8 @@ public class Cleaner implements AutoCloseable, Runnable, Iterable<Runnable> {
     }
 
     /**
-     * Executes the onDemand instance. Cleaning all resources registered with
-     * it.
+     * Executes {@link #clean()} for the onDemand instance. Cleaning all
+     * resources registered with it.
      */
     public static void onDemandClean() {
         onDemand().clean();
@@ -107,20 +105,13 @@ public class Cleaner implements AutoCloseable, Runnable, Iterable<Runnable> {
     }
 
     /**
-     * Iterates over all registered {@link Runnable}s.
-     *
-     * @return An iterator allowing access to all registered {@link Runnable}s
-     */
-    @Override
-    public Iterator<Runnable> iterator() {
-        return runnables.iterator();
-    }
-
-    /**
      * Performs all cleanup tasks that have been registered.
      * <p>
      * Any cleanup task performed is removed from the list to ensure
      * one-run-only policy.
+     * <p>
+     * Tasks are performed in reverse order they were added in (LIFO), to ensure
+     * the behavior matches try-with-resources behavior.
      * <p>
      * Any exception thrown by any cleanup task is ignored.
      */
