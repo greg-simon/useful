@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -12,12 +13,10 @@ import java.util.function.Consumer;
  * Used to help ensure resources are cleaned up when required.
  * <p>
  * Cleaner is conceptually a collection of {@link Runnable} instances that are
- * executed when {@link #execute() } is called.
+ * executed when {@link #clean() } is called.
  * <p>
- * Any {@link AutoCloseable} added will be executed in reverse order in of
- * addition, with respect to other {@link AutoCloseable}s, consistent with the
- * try-with-resources contract. Other items should not rely on order of
- * execution, as their order is undefined.
+ * Cleanup tasks are performed in reverse added order (LIFO), consistent with
+ * try-with-resources behavior.
  * <p>
  * Cleaner implements Runnable and AutoCloseable for convenience to enable it to
  * be used easily in try-with-resources blocks and
@@ -26,7 +25,7 @@ import java.util.function.Consumer;
  * Example of simple instance usage:
  * <pre>
  * try (Cleaner cleaner = new Cleaner()) {
- *    ExecutorService service = cleaner.executorService(Executors.newCachedThreadPool());
+ *    ExecutorService service = cleaner.shutdown(Executors.newCachedThreadPool());
  *    cleaner.add(() -&gt; {
  *       System.out.println("This will be printed at the end of the try block");
  *    });
@@ -51,34 +50,10 @@ import java.util.function.Consumer;
  * </ol>
  * <p>
  * {@link Runnable}s added to the Cleaner list are only ever run once before
- * being discarded. This makes repeat calls to an instances {@link #execute() }
+ * being discarded. This makes repeat calls to an instances {@link #clean() }
  * safe.
  */
 public class Cleaner implements AutoCloseable, Runnable, Iterable<Runnable> {
-
-    /**
-     * Utility for use in adapting any cleanup function into a
-     * try-with-resources block.
-     * <p>
-     * No item is added to any Cleaner instance.
-     * <p>
-     * Usage example of clearing a {@link java.util.List}:
-     * <pre>
-     * try (AutoClosable ac = Cleaner.autoClose(list, (l) -&gt; {l.clear()})) {
-     *    ...
-     * } // list cleared here even if exception thrown in try block
-     * </pre>
-     *
-     * @param <T> The object type to be passed to the close Consumer
-     * @param obj The object instance to be passed to the close Consumer
-     * @param closeOp The closing function
-     * @return an instance of AutoClosable for use in a try-with-resources block
-     */
-    public static <T> AutoCloseable autoClose(T obj, Consumer<T> closeOp) {
-        return () -> {
-            closeOp.accept(obj);
-        };
-    }
 
     private static Cleaner onShutdownInstance;
     private static Cleaner onDemandInstance;
@@ -119,22 +94,16 @@ public class Cleaner implements AutoCloseable, Runnable, Iterable<Runnable> {
      * it.
      */
     public static void onDemandClean() {
-        onDemand().execute();
+        onDemand().clean();
     }
 
     /**
-     * Cleaned up in added order: FIFO.
-     */
-    private final List<Runnable> runnables;
-    
-    /**
      * Cleaned up in stack order: LIFO.
      */
-    private final List<AutoCloseable> closables;
+    private final List<Runnable> runnables;
 
     public Cleaner() {
         this.runnables = new ArrayList<>();
-        this.closables = new ArrayList<>();
     }
 
     /**
@@ -148,29 +117,20 @@ public class Cleaner implements AutoCloseable, Runnable, Iterable<Runnable> {
     }
 
     /**
-     * Runs all the {@link Runnable}s added to the Cleaner list.
+     * Performs all cleanup tasks that have been registered.
      * <p>
-     * Any {@link Runnable} that is run is removed from the list to ensure
+     * Any cleanup task performed is removed from the list to ensure
      * one-run-only policy.
      * <p>
-     * Any exception thrown by any {@link Runnable} is ignored.
+     * Any exception thrown by any cleanup task is ignored.
      */
-    public synchronized void execute() {
-        // Close closables in reverse order.
-        ListIterator<AutoCloseable> closeableItr = closables.listIterator();
-        while (closeableItr.hasPrevious()) {
+    public synchronized void clean() {
+        // Cleanup in reverse order.
+        ListIterator<Runnable> listItr = runnables.listIterator();
+        while (listItr.hasPrevious()) {
             try {
-                closeableItr.previous().close();
-            } catch (Throwable t) {
-                // ignore and continue
-                // TODO: configurable cleaner error handling
-            }
-        }
-        closables.clear();
-        
-        for (Runnable r : runnables) {
-            try {
-                r.run();
+                Runnable runnable = listItr.previous();
+                runnable.run();
             } catch (Throwable t) {
                 // ignore and continue
                 // TODO: configurable cleaner error handling
@@ -180,51 +140,50 @@ public class Cleaner implements AutoCloseable, Runnable, Iterable<Runnable> {
     }
 
     /**
-     * {@link Runnable#run()} implementation that calls {@link #execute()}.
+     * {@link Runnable#run()} implementation that calls {@link #clean()}.
      */
     @Override
     public void run() {
-        execute();
+        clean();
     }
 
     /**
      * {@link AutoCloseable#close()} implementation that calls
-     * {@link #execute()}.
+     * {@link #clean()}.
      */
     @Override
     public void close() {
-        execute();
+        clean();
     }
 
     /**
-     * Registers a task to be cleaned up.
+     * Registers a {@link Runnable} for later running.
      *
-     * @param cleanupTask executed when this Cleaner instance is executed.
+     * @param cleanupTask executed when this instances {@link Cleaner#clean()}
+     * method is run.
      */
-    public void add(Runnable cleanupTask) {
-        runnables.add(cleanupTask);
+    public void exec(Runnable cleanupTask) {
+        runnables.add(Objects.requireNonNull(cleanupTask));
     }
 
     // specialised helper methods below
     /**
-     * Convenience method to make registering ExecutorServices easier.
+     * Registers an ExecutorServices for later shutdown.
      * <p>
      * Usage example:
      * <pre>
-     * ExecutorService service = cleaner.executorService(Executors.newCachedThreadPool());
+     * ExecutorService service = cleaner.shutdown(Executors.newCachedThreadPool());
      * </pre>
      *
      * @param <S> The exact type passed as an argument.
-     * @param service The ExecutorService instance to shutdown when this Cleaner
-     * instance is executed.
+     * @param service The ExecutorService instance to shutdown when this
+     * Cleaners clean method is executed.
      * @return the same service instance passed as an argument, to allow this
      * method to be used inline with ExecutorService declaration.
      */
-    public <S extends ExecutorService> S executorService(S service) {
+    public <S extends ExecutorService> S shutdown(S service) {
+        Objects.requireNonNull(service);
         runnables.add(() -> {
-            if (service == null) {
-                return;
-            }
             try {
                 service.shutdownNow();
                 service.awaitTermination(1, TimeUnit.SECONDS);
@@ -236,28 +195,37 @@ public class Cleaner implements AutoCloseable, Runnable, Iterable<Runnable> {
     }
 
     /**
-     * Convenience method to make registering AutoClosable easier.
+     * Registers an AutoClosable for later closing.
      * <p>
-     * When the Cleanup instance is closed, all AutoClosables added with this
-     * method will be closed in reverse order they are added in (LIFO).
+     * When the Cleaner instance is closed, all AutoClosables added with this
+     * method will be closed in reverse order they are added in (LIFO),
+     * consistent with try-with-resources behavior.
      * <p>
      * Usage example:
      * <pre>
-     * try (Cleaner clean = new Cleaner()) {
-     *    InputStream in = clean.closable(new FileInputStream("in.txt"));
-     *    OutputStream out = clean.closable(new FileInputStream("out.txt"));
+     * try (Cleaner cleaner = new Cleaner()) {
+     *    InputStream in = cleaner.close(new FileInputStream("in.txt"));
+     *    OutputStream out = cleaner.close(new FileInputStream("out.txt"));
      *    ...
-     * } // streams closed here
+     * } // streams closed here, 'out' first then 'in'
      * </pre>
      *
      * @param <C> The exact type passed as an argument.
      * @param closable The AutoClosable instance to shutdown when this Cleaner
-     * instance is executed.
+     * instances clean method is executed.
      * @return the same service instance passed as an argument, to allow this
      * method to be used inline with AutoClosable declaration.
      */
-    public <C extends AutoCloseable> C closable(C closable) {
-        closables.add(closable);
+    public <C extends AutoCloseable> C close(C closable) {
+        AutoCloseable notNullAC = Objects.requireNonNull(closable);
+        runnables.add(() -> {
+            try {
+                notNullAC.close();
+            } catch (Throwable t) {
+                // ignore
+                // TODO: implement error policy.
+            }
+        });
         return closable;
     }
 }
