@@ -92,7 +92,7 @@ public class ResourceTest {
         }
     }
 
-    public class ResourceImpl extends Resource {
+    public class ResourceImpl implements Resource {
 
         private final byte[] underlyingData;
 

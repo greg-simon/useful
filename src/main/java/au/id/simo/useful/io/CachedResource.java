@@ -11,7 +11,7 @@ import java.io.InputStream;
  * first read then caching is disabled and will not used for subsequent reads.
  * Instead the underlying Resource will be read again.
  */
-public class CachedResource extends Resource {
+public class CachedResource implements Resource {
 
     private final Resource resource;
     private final int maxCacheSize;

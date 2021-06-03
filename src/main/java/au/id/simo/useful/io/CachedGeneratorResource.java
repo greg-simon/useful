@@ -11,7 +11,7 @@ import java.io.InputStream;
  * <p>
  * The usual byte array size limitation of 2GB for the Generator output applies.
  */
-public class CachedGeneratorResource extends Resource {
+public class CachedGeneratorResource implements Resource {
 
     private final Generator generator;
     private byte[] generatedData;

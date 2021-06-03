@@ -67,7 +67,7 @@ public class CachedResourceTest {
         assertEquals(3, rcr.counter);
     }
     
-    private class ReadCountResource extends Resource {
+    private class ReadCountResource implements Resource {
         int counter=0;
         @Override
         public InputStream inputStream() throws IOException {

@@ -21,9 +21,9 @@ import java.nio.charset.Charset;
  * All character related methods ({@code getString()}, {@code getReader()})
  * assume UTF-8 as the character encoding.
  */
-public abstract class Resource {
+public interface Resource {
 
-    private static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+    public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
 
     /**
      * Loads the contents of the resource as a String.
@@ -34,7 +34,7 @@ public abstract class Resource {
      * @throws IOException if there is any errors in finding or reading the
      * resource.
      */
-    public String getString() throws IOException {
+    default String getString() throws IOException {
         return getString(DEFAULT_CHARSET);
     }
 
@@ -46,7 +46,7 @@ public abstract class Resource {
      * @throws IOException if there is any errors in finding or reading the
      * resource.
      */
-    public String getString(Charset charset) throws IOException {
+    default String getString(Charset charset) throws IOException {
         return new String(getBytes(), charset);
     }
 
@@ -59,7 +59,7 @@ public abstract class Resource {
      * @throws IOException if there is any errors in creating a Reader of the
      * resource.
      */
-    public Reader getReader() throws IOException {
+    default Reader getReader() throws IOException {
         return getReader(DEFAULT_CHARSET);
     }
 
@@ -71,7 +71,7 @@ public abstract class Resource {
      * @throws IOException if there is any errors in creating a Reader of the
      * resource.
      */
-    public Reader getReader(Charset charset) throws IOException {
+    default Reader getReader(Charset charset) throws IOException {
         return new InputStreamReader(inputStream(), charset);
     }
 
@@ -81,7 +81,7 @@ public abstract class Resource {
      * @return the full contents of the resource, as a byte array.
      * @throws IOException if there is any errors in reading the resource.
      */
-    public byte[] getBytes() throws IOException {
+    default byte[] getBytes() throws IOException {
         try (InputStream in = inputStream()) {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             copy(in, bout);
@@ -98,7 +98,7 @@ public abstract class Resource {
      * @return the number of bytes that have been copied
      * @throws IOException if an I/O error occurs
      */
-    private static long copy(InputStream input, OutputStream output) throws IOException {
+    public static long copy(InputStream input, OutputStream output) throws IOException {
         byte[] buffer = new byte[4096];
         long count = 0;
         int n = 0;
@@ -122,7 +122,7 @@ public abstract class Resource {
      * @throws IOException if there was an issue in reading from this resource's
      * bytes, or writing to the provided OutputStream
      */
-    public long copyTo(OutputStream out) throws IOException {
+    default long copyTo(OutputStream out) throws IOException {
         try (InputStream in = inputStream()) {
             return copy(in, out);
         }
@@ -136,5 +136,5 @@ public abstract class Resource {
      * @throws IOException If the underlying resource is not found, or cannot be
      * accessed or any other problem with creating a valid InputStream.
      */
-    public abstract InputStream inputStream() throws IOException;
+    InputStream inputStream() throws IOException;
 }

@@ -6,7 +6,7 @@ import java.io.InputStream;
 /**
  *
  */
-public class ClasspathResource extends Resource {
+public class ClasspathResource implements Resource {
 
     private final String resourcePath;
 

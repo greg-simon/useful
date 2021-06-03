@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 /**
  * Allows repeated reads of a file.
  */
-public class FileResource extends Resource {
+public class FileResource implements Resource {
 
     private final File file;
 

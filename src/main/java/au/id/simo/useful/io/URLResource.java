@@ -12,7 +12,7 @@ import java.net.URL;
  * validated in any way until used. Repeated calls to {@link #inputStream()}
  * however will reuse the same {@link URL} instance created in the first call.
  */
-public class URLResource extends Resource {
+public class URLResource implements Resource {
 
     private final String urlString;
     private URL url;

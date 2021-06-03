@@ -25,7 +25,7 @@ import java.util.concurrent.TimeoutException;
  * {@link Executors#newCachedThreadPool() } is the default executor service used
  * for generating resources when no ExecutorService is passed in a constructor.
  */
-public class ConcurrentGeneratorResource extends Resource {
+public class ConcurrentGeneratorResource implements Resource {
 
     private static final int DEFAULT_BUFFER_SIZE = 1024;
 

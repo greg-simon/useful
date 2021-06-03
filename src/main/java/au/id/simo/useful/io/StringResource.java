@@ -12,7 +12,7 @@ import java.nio.charset.Charset;
  * A Resource implementation that holds a String and provides
  * {@link InputStream}s that reads the String contents.
  */
-public class StringResource extends Resource {
+public class StringResource implements Resource {
 
     private final String str;
     private final Charset charset;
