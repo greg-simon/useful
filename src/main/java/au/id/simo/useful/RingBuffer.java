@@ -2,13 +2,14 @@ package au.id.simo.useful;
 
 /**
  * Basic RingBuffer implementation for Objects.
+ *
  * @param <T> The type of Object type contained within.
  */
-public class SimpleRingBuffer<T> extends AbstractRingBuffer<T> {
+public class RingBuffer<T> extends AbstractRingBuffer<T> {
 
     private final Object[] buffer;
-    
-    public SimpleRingBuffer(int capacity) {
+
+    public RingBuffer(int capacity) {
         super(capacity);
         this.buffer = new Object[capacity];
     }
