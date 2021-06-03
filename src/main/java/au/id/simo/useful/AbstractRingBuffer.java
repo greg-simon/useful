@@ -14,10 +14,10 @@ import java.util.Objects;
  *
  * @param <T> The types contained within the buffer.
  */
-public abstract class RingBuffer<T> implements Iterable<T> {
+public abstract class AbstractRingBuffer<T> implements Iterable<T> {
     
     /**
-     * The maximum capacity of this RingBuffer.
+     * The maximum capacity of this ring buffer.
      */
     protected final int capacity;
     /**
@@ -35,7 +35,7 @@ public abstract class RingBuffer<T> implements Iterable<T> {
     protected int size;
 
     
-    public RingBuffer(int capacity) {
+    public AbstractRingBuffer(int capacity) {
         this.capacity = capacity;
     }
 

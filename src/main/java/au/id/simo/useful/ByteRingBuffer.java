@@ -6,7 +6,7 @@ import java.util.Objects;
  * Byte focused implementation of RingBuffer with efficient methods for reading
  * and writing bytes.
  */
-public class ByteRingBuffer extends RingBuffer<Byte> {
+public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
 
     private final byte[] buffer;
 

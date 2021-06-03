@@ -6,7 +6,7 @@ import java.util.Objects;
  * Character focused implementation of RingBuffer with efficient methods for
  * reading and writing bytes.
  */
-public class CharRingBuffer extends RingBuffer<Character> implements CharSequence {
+public class CharRingBuffer extends AbstractRingBuffer<Character> implements CharSequence {
 
     private final char[] buffer;
 
