@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Used to help ensure resources are cleaned up when required.
@@ -14,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  * executed when {@link #clean()} is called.
  * <p>
  * Cleanup tasks are performed in reverse added order (LIFO), consistent with
- * try-with-resources behavior for {@link AutoClosable}s.
+ * try-with-resources behavior for {@link AutoCloseable}s.
  * <p>
  * Cleaner implements Runnable and AutoCloseable for convenience to enable it to
  * be used easily in try-with-resources blocks and
@@ -52,6 +51,18 @@ import java.util.concurrent.TimeUnit;
  * safe.
  */
 public class Cleaner implements AutoCloseable, Runnable {
+
+    private static final CleanerErrorHandler NO_OP_POLICY = new CleanerErrorHandler() {
+        @Override
+        public void handle(Runnable runnable, Throwable throwable) {
+            // no op
+        }
+
+        @Override
+        public void handle(AutoCloseable runnable, Throwable throwable) {
+            // no op
+        }
+    };
 
     private static Cleaner onShutdownInstance;
     private static Cleaner onDemandInstance;
@@ -99,9 +110,19 @@ public class Cleaner implements AutoCloseable, Runnable {
      * Cleaned up in stack order: LIFO.
      */
     private final List<Runnable> runnables;
+    
+    /**
+     * The handler used to act on any cleanup task that throws an exception.
+     */
+    private CleanerErrorHandler handler;
 
     public Cleaner() {
         this.runnables = new ArrayList<>();
+        this.handler = NO_OP_POLICY;
+    }
+    
+    public synchronized void setErrorHandler(CleanerErrorHandler handler) {
+        this.handler = Objects.requireNonNull(handler);
     }
 
     /**
@@ -119,12 +140,11 @@ public class Cleaner implements AutoCloseable, Runnable {
         // Cleanup in reverse order.
         ListIterator<Runnable> listItr = runnables.listIterator();
         while (listItr.hasPrevious()) {
+            Runnable runnable = listItr.previous();
             try {
-                Runnable runnable = listItr.previous();
                 runnable.run();
             } catch (Throwable t) {
-                // ignore and continue
-                // TODO: configurable cleaner error handling
+                handler.handle(runnable, t);
             }
         }
         runnables.clear();
@@ -157,9 +177,11 @@ public class Cleaner implements AutoCloseable, Runnable {
         runnables.add(Objects.requireNonNull(cleanupTask));
     }
 
-    // specialised helper methods below
     /**
      * Registers an ExecutorServices for later shutdown.
+     * <p>
+     * On cleanup, {@link ExecutorService#shutdownNow()} will be called and any
+     * remaining Runnable tasks will be discarded.
      * <p>
      * Usage example:
      * <pre>
@@ -175,12 +197,7 @@ public class Cleaner implements AutoCloseable, Runnable {
     public <S extends ExecutorService> S shutdown(S service) {
         Objects.requireNonNull(service);
         runnables.add(() -> {
-            try {
-                service.shutdownNow();
-                service.awaitTermination(1, TimeUnit.SECONDS);
-            } catch (InterruptedException ex) {
-                // ignore
-            }
+            service.shutdownNow();
         });
         return service;
     }
@@ -213,8 +230,7 @@ public class Cleaner implements AutoCloseable, Runnable {
             try {
                 notNullAC.close();
             } catch (Throwable t) {
-                // ignore
-                // TODO: implement error policy.
+                handler.handle(notNullAC, t);
             }
         });
         return closable;
