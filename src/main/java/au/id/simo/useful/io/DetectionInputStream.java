@@ -32,7 +32,11 @@ public class DetectionInputStream extends FilterInputStream {
     
     public DetectionInputStream(InputStream in, Match match) {
         super(in);
-        this.match = Objects.requireNonNullElse(match, NO_OP);
+        if (match == null) {
+            this.match = NO_OP;
+        } else {
+            this.match = match;
+        }
         // ensure buffer is never zero
         int maxBufferRequired = Math.max(MIN_BUFFER_SIZE, this.match.matchBytes.length);
         this.buffer = new ByteRingBuffer(maxBufferRequired);

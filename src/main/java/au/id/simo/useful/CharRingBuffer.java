@@ -200,7 +200,7 @@ public class CharRingBuffer extends AbstractRingBuffer<Character> implements Cha
 
     @Override
     public CharSequence subSequence(int start, int end) {
-        Objects.checkFromToIndex(start, end, size);
+        // TODO: Verify args
         char[] buf = new char[(end - start)];
         peek(buf, start, end);
         return new String(buf);
