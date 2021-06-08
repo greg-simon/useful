@@ -23,7 +23,15 @@ import java.nio.charset.Charset;
  */
 public interface Resource {
 
-    public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+    /**
+     * This is the default {@link Charset} used for all bytes to chars
+     * conversions methods, unless another {@link Charset} is provided as an
+     * argument.
+     * 
+     * @see #getReader()
+     * @see #getString()
+     */
+    public static final Charset DEFAULT_CHARSET_UTF8 = Charset.forName("UTF-8");
 
     /**
      * Loads the contents of the resource as a String.
@@ -35,7 +43,7 @@ public interface Resource {
      * resource.
      */
     default String getString() throws IOException {
-        return getString(DEFAULT_CHARSET);
+        return getString(DEFAULT_CHARSET_UTF8);
     }
 
     /**
@@ -60,7 +68,7 @@ public interface Resource {
      * resource.
      */
     default Reader getReader() throws IOException {
-        return getReader(DEFAULT_CHARSET);
+        return getReader(DEFAULT_CHARSET_UTF8);
     }
 
     /**
