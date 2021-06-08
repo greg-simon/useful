@@ -3,7 +3,6 @@ package au.id.simo.useful.io;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 
 import au.id.simo.useful.ByteRingBuffer;
 
