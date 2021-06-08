@@ -2,9 +2,9 @@ package au.id.simo.useful.xml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -31,7 +31,7 @@ public abstract class XmlHandler extends DefaultHandler {
     protected Tag currentTag;
 
     public XmlHandler() {
-        this.tagStack = new LinkedList<>();
+        this.tagStack = new ArrayDeque<>();
         this.prefixMappings = new LinkedHashMap<>();
     }
 
