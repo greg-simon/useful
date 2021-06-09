@@ -12,8 +12,7 @@ import java.util.Set;
  * <p>
  * Usage Example:
  * <pre>
- * try (URLSession session = ...)
- * {
+ * try (URLSession session = ...) {
  *     session.register("index.html", new File("my-app.html"));
  *     session.register("scripts/app.js", new File("app.js"));
  *     session.register("images/logo.png", new File("bom_logo.png"));
@@ -52,10 +51,10 @@ public interface URLSession extends Closeable {
      * Obtains a full String URL of the provided path.
      * <p>
      * Example:
-     * <pre><code>
+     * <pre>
      * String fullUrlStr = session.getUrl("index.html");
      * URL url = new URL(fullUrlStr);
-     * </code></pre>
+     * </pre>
      *
      * The full URL spec provided is implementation specific, but will be usable
      * with {@link java.net.URL}.

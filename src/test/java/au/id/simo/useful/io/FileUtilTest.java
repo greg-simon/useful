@@ -52,11 +52,12 @@ public class FileUtilTest {
      * Using {@link java.io.File} alone will work with this case, where
      * FileUtils will throw an IOException.
      *
-     * <pre><code>
+     * <pre>
      * // works
      * File newFile = new File(parentDir, "/outsideFile");
-     * </code></pre>
+     * </pre>
      *
+     * @param testFolder the temp dir used to test with.
      * @throws Exception
      */
     @Test

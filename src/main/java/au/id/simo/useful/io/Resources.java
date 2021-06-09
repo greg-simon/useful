@@ -60,10 +60,10 @@ public abstract class Resources {
      * provided pattern.
      * <p>
      * Examples with identical behavior:
-     * <pre><code>
+     * <pre>
      * new Resources("path/to/resources/%s").get("name");
      * new Resources("path/to/resources/").get("name");
-     * </code></pre>
+     * </pre>
      *
      * @param pattern Can be null. The pattern to use with resource names when
      * loading resources.
