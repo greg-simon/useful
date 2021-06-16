@@ -43,7 +43,7 @@ public class FileSession implements URLSession {
      * @throws IOException if any errors occur in creating the temp directory.
      */
     public FileSession() throws IOException {
-        Path basePath = Files.createTempDirectory("FS_");
+        Path basePath = FileUtil.createTempDirectory("FS_");
         this.baseDir = basePath.toFile();
         resources = new FileResources(baseDir);
         createdFileList = new ArrayList<>();
