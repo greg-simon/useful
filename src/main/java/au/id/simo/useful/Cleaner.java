@@ -1,8 +1,7 @@
 package au.id.simo.useful;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
@@ -109,7 +108,7 @@ public class Cleaner implements AutoCloseable, Runnable {
     /**
      * Cleaned up in stack order: LIFO.
      */
-    private final List<Runnable> runnables;
+    private final Deque<Runnable> runnables;
     
     /**
      * The handler used to act on any cleanup task that throws an exception.
@@ -117,8 +116,16 @@ public class Cleaner implements AutoCloseable, Runnable {
     private CleanerErrorHandler handler;
 
     public Cleaner() {
-        this.runnables = new ArrayList<>();
+        this.runnables = new ArrayDeque<>();
         this.handler = NO_OP_POLICY;
+    }
+    
+    /**
+     * 
+     * @return the number of tasks to run on cleanup.
+     */
+    public int size() {
+        return runnables.size();
     }
     
     public synchronized void setErrorHandler(CleanerErrorHandler handler) {
@@ -138,16 +145,14 @@ public class Cleaner implements AutoCloseable, Runnable {
      */
     public synchronized void clean() {
         // Cleanup in reverse order.
-        ListIterator<Runnable> listItr = runnables.listIterator();
-        while (listItr.hasPrevious()) {
-            Runnable runnable = listItr.previous();
+        while (!runnables.isEmpty()) {
+            Runnable runnable = runnables.pop();
             try {
                 runnable.run();
             } catch (Throwable t) {
                 handler.handle(runnable, t);
             }
         }
-        runnables.clear();
     }
 
     /**
@@ -170,11 +175,18 @@ public class Cleaner implements AutoCloseable, Runnable {
     /**
      * Registers a {@link Runnable} for later running.
      *
+     * @param <R> The exact type passed as an argument.
      * @param cleanupTask executed when this instances {@link Cleaner#clean()}
      * method is run.
+     * @return the same runnable instance passed as an argument, to allow this
+     * method to be used inline with declaration and assignment.
      */
-    public void exec(Runnable cleanupTask) {
-        runnables.add(Objects.requireNonNull(cleanupTask));
+    public <R extends Runnable> R exec(R cleanupTask) {
+        if (cleanupTask == null) {
+            return null;
+        }
+        runnables.push(cleanupTask);
+        return cleanupTask;
     }
 
     /**
@@ -195,8 +207,11 @@ public class Cleaner implements AutoCloseable, Runnable {
      * method to be used inline with ExecutorService declaration.
      */
     public <S extends ExecutorService> S shutdown(S service) {
-        Objects.requireNonNull(service);
-        runnables.add(() -> {
+        if (service == null) {
+            return null;
+        }
+        
+        runnables.push(() -> {
             service.shutdownNow();
         });
         return service;
@@ -225,12 +240,14 @@ public class Cleaner implements AutoCloseable, Runnable {
      * method to be used inline with AutoClosable declaration.
      */
     public <C extends AutoCloseable> C close(C closable) {
-        AutoCloseable notNullAC = Objects.requireNonNull(closable);
-        runnables.add(() -> {
+        if (closable == null) {
+            return null;
+        }
+        runnables.push(() -> {
             try {
-                notNullAC.close();
+                closable.close();
             } catch (Throwable t) {
-                handler.handle(notNullAC, t);
+                handler.handle(closable, t);
             }
         });
         return closable;

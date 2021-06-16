@@ -6,7 +6,7 @@ import java.io.IOException;
  * Used to track an open/closed state and to reduce boiler plate code in
  * tracking it.
  */
-public class CloseStatus {
+public class CloseStatus implements AutoCloseable {
 
     private volatile boolean closed;
     private final IOException throwOnClosedCheck;
@@ -31,6 +31,7 @@ public class CloseStatus {
         }
     }
 
+    @Override
     public void close() {
         closed = true;
     }
