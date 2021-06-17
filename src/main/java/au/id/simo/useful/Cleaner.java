@@ -51,6 +51,7 @@ import java.util.concurrent.ExecutorService;
  */
 public class Cleaner implements AutoCloseable, Runnable {
 
+    private static final String SELF_ADD_ERROR_MSG = "Infinite loop detected, a Cleaner can not cleanup itself.";
     private static final CleanerErrorHandler NO_OP_POLICY = new CleanerErrorHandler() {
         @Override
         public void handle(Runnable runnable, Throwable throwable) {
@@ -63,6 +64,7 @@ public class Cleaner implements AutoCloseable, Runnable {
         }
     };
 
+    private static Thread onShutdownThread;
     private static Cleaner onShutdownInstance;
     private static Cleaner onDemandInstance;
 
@@ -75,7 +77,8 @@ public class Cleaner implements AutoCloseable, Runnable {
     public static synchronized Cleaner onShutdown() {
         if (onShutdownInstance == null) {
             onShutdownInstance = new Cleaner();
-            Runtime.getRuntime().addShutdownHook(new Thread(onShutdownInstance));
+            onShutdownThread = new Thread(onShutdownInstance);
+            Runtime.getRuntime().addShutdownHook(onShutdownThread);
         }
         return onShutdownInstance;
     }
@@ -181,10 +184,16 @@ public class Cleaner implements AutoCloseable, Runnable {
      * method is run.
      * @return the same runnable instance passed as an argument, to allow this
      * method to be used inline with declaration and assignment.
+     * @throws IllegalArgumentException if this Cleaner instance is added to
+     * itself via this method, otherwise it would result in an infinite loop on
+     * cleanup until a stack overflow exception is thrown.
      */
     public <R extends Runnable> R runOnClean(R cleanupTask) {
         if (cleanupTask == null) {
             return null;
+        }
+        if (cleanupTask == this) {
+            throw new IllegalArgumentException(SELF_ADD_ERROR_MSG);
         }
         runnables.push(cleanupTask);
         return cleanupTask;
@@ -239,10 +248,16 @@ public class Cleaner implements AutoCloseable, Runnable {
      * instances clean method is executed.
      * @return the same service instance passed as an argument, to allow this
      * method to be used inline with AutoClosable declaration.
+     * @throws IllegalArgumentException if this Cleaner instance is added to
+     * itself via this method, otherwise it would result in an infinite loop on
+     * cleanup until a stack overflow exception is thrown.
      */
     public <C extends AutoCloseable> C closeOnClean(C closable) {
         if (closable == null) {
             return null;
+        }
+        if (closable == this) {
+            throw new IllegalArgumentException(SELF_ADD_ERROR_MSG);
         }
         runnables.push(() -> {
             try {
