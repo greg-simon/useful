@@ -25,7 +25,7 @@ public class CleanerTest {
         assertEquals(0, cleaner.size());
         assertTrue(
             cleaner == Cleaner.onDemand(),
-            "Verify same instanceas second onDemand() call"
+            "Verify same instance is provided by the second onDemand() call"
         );
     }
 
@@ -35,7 +35,7 @@ public class CleanerTest {
         assertEquals(0, cleaner.size());
 
         CountRunnable countRunnable = new CountRunnable();
-        cleaner.exec(countRunnable);
+        cleaner.runOnClean(countRunnable);
         assertEquals(1, cleaner.size(), "Verify runnable was added");
         assertEquals(0, countRunnable.runCount(), "Verify countRunnable has not been run");
 
@@ -52,10 +52,10 @@ public class CleanerTest {
         assertEquals(0, errorHandler.getTotalCount());
         assertEquals(0, cleaner.size());
         
-        cleaner.exec(() -> {
+        cleaner.runOnClean(() -> {
             throw new RuntimeException();
         });
-        cleaner.close(() -> {
+        cleaner.closeOnClean(() -> {
             throw new RuntimeException();
         });
         
@@ -70,7 +70,7 @@ public class CleanerTest {
     public void testClean() {
         CountRunnable countRun = new CountRunnable();
         Cleaner cleaner = new Cleaner();
-        cleaner.exec(countRun);
+        cleaner.runOnClean(countRun);
         
         assertEquals(1, cleaner.size());
         cleaner.clean();
@@ -81,7 +81,7 @@ public class CleanerTest {
     @Test
     public void testRun() {
         Cleaner cleaner = new Cleaner();
-        CountRunnable countRun = cleaner.exec(new CountRunnable());
+        CountRunnable countRun = cleaner.runOnClean(new CountRunnable());
         
         assertEquals(1, cleaner.size());
         cleaner.run();
@@ -92,7 +92,7 @@ public class CleanerTest {
     @Test
     public void testClose_0args() {
         Cleaner cleaner = new Cleaner();
-        CountRunnable countRun = cleaner.exec(new CountRunnable());
+        CountRunnable countRun = cleaner.runOnClean(new CountRunnable());
         
         assertEquals(1, cleaner.size());
         cleaner.close();
@@ -103,15 +103,15 @@ public class CleanerTest {
     @Test
     public void testExecNull() {
         Cleaner cleaner = new Cleaner();
-        Runnable runnable = cleaner.exec(null);
+        Runnable runnable = cleaner.runOnClean(null);
         assertNull(runnable);
         assertEquals(0, cleaner.size());
     }
 
     @Test
-    public void testShutdown() {
+    public void testShutdownOnClean() {
         Cleaner cleaner = new Cleaner();
-        ExecutorService service = cleaner.shutdown(Executors.newCachedThreadPool());
+        ExecutorService service = cleaner.shutdownOnClean(Executors.newCachedThreadPool());
         assertEquals(1, cleaner.size());
         assertFalse(service.isShutdown());
         cleaner.clean();
@@ -122,15 +122,15 @@ public class CleanerTest {
     @Test
     public void testShutdownNull() {
         Cleaner cleaner = new Cleaner();
-        ExecutorService service = cleaner.shutdown(null);
+        ExecutorService service = cleaner.shutdownOnClean(null);
         assertNull(service);
         assertEquals(0, cleaner.size());
     }
 
     @Test
-    public void testClose_GenericType() {
+    public void testCloseOnClean() {
         Cleaner cleaner = new Cleaner();
-        CloseStatus closeStatus = cleaner.close(new CloseStatus());
+        CloseStatus closeStatus = cleaner.closeOnClean(new CloseStatus());
         assertEquals(1, cleaner.size());
         assertFalse(closeStatus.isClosed());
         cleaner.clean();
@@ -139,9 +139,9 @@ public class CleanerTest {
     }
     
     @Test
-    public void testClose_GenericTypeNull() {
+    public void testCloseOnCleanNull() {
         Cleaner cleaner = new Cleaner();
-        AutoCloseable closable = cleaner.close(null);
+        AutoCloseable closable = cleaner.closeOnClean(null);
         assertNull(closable);
         assertEquals(0, cleaner.size());
     }

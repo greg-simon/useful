@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
  * executed when {@link #clean()} is called.
  * <p>
  * Cleanup tasks are performed in reverse added order (LIFO), consistent with
- * try-with-resources behavior for {@link AutoCloseable}s.
+ * try-with-resources behavior for {@link AutoCloseable} implementations.
  * <p>
  * Cleaner implements Runnable and AutoCloseable for convenience to enable it to
  * be used easily in try-with-resources blocks and
@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutorService;
  * Example of simple instance usage:
  * <pre>
  * try (Cleaner cleaner = new Cleaner()) {
- *    ExecutorService service = cleaner.shutdown(Executors.newCachedThreadPool());
+ *    ExecutorService service = cleaner.shutdownOnClean(Executors.newCachedThreadPool());
  *    cleaner.add(() -&gt; {
  *       System.out.println("This will be printed at the end of the try block");
  *    });
@@ -136,12 +136,13 @@ public class Cleaner implements AutoCloseable, Runnable {
      * Performs all cleanup tasks that have been registered.
      * <p>
      * Any cleanup task performed is removed from the list to ensure
-     * one-run-only policy.
+     * one-run-only policy, even if an exception is thrown.
      * <p>
      * Tasks are performed in reverse order they were added in (LIFO), to ensure
      * the behavior matches try-with-resources behavior.
      * <p>
-     * Any exception thrown by any cleanup task is ignored.
+     * Any exception thrown by any cleanup task handled by a
+     * {@link CleanerErrorHandler} if provided, otherwise the exception is is ignored.
      */
     public synchronized void clean() {
         // Cleanup in reverse order.
@@ -181,7 +182,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * @return the same runnable instance passed as an argument, to allow this
      * method to be used inline with declaration and assignment.
      */
-    public <R extends Runnable> R exec(R cleanupTask) {
+    public <R extends Runnable> R runOnClean(R cleanupTask) {
         if (cleanupTask == null) {
             return null;
         }
@@ -197,7 +198,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * <p>
      * Usage example:
      * <pre>
-     * ExecutorService service = cleaner.shutdown(Executors.newCachedThreadPool());
+     * ExecutorService service = cleaner.shutdownOnClean(Executors.newCachedThreadPool());
      * </pre>
      *
      * @param <S> The exact type passed as an argument.
@@ -206,7 +207,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * @return the same service instance passed as an argument, to allow this
      * method to be used inline with ExecutorService declaration.
      */
-    public <S extends ExecutorService> S shutdown(S service) {
+    public <S extends ExecutorService> S shutdownOnClean(S service) {
         if (service == null) {
             return null;
         }
@@ -227,8 +228,8 @@ public class Cleaner implements AutoCloseable, Runnable {
      * Usage example:
      * <pre>
      * try (Cleaner cleaner = new Cleaner()) {
-     *    InputStream in = cleaner.close(new FileInputStream("in.txt"));
-     *    OutputStream out = cleaner.close(new FileInputStream("out.txt"));
+     *    InputStream in = cleaner.closeOnClean(new FileInputStream("in.txt"));
+     *    OutputStream out = cleaner.closeOnClean(new FileInputStream("out.txt"));
      *    ...
      * } // streams closed here, 'out' first then 'in'
      * </pre>
@@ -239,7 +240,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * @return the same service instance passed as an argument, to allow this
      * method to be used inline with AutoClosable declaration.
      */
-    public <C extends AutoCloseable> C close(C closable) {
+    public <C extends AutoCloseable> C closeOnClean(C closable) {
         if (closable == null) {
             return null;
         }
