@@ -54,12 +54,12 @@ public class Cleaner implements AutoCloseable, Runnable {
     private static final String SELF_ADD_ERROR_MSG = "Infinite loop detected, a Cleaner can not cleanup itself.";
     private static final CleanerErrorHandler NO_OP_POLICY = new CleanerErrorHandler() {
         @Override
-        public void handle(Runnable runnable, Throwable throwable) {
+        public void handle(Runnable runnable, Exception exception) {
             // no op
         }
 
         @Override
-        public void handle(AutoCloseable runnable, Throwable throwable) {
+        public void handle(AutoCloseable runnable, Exception exception) {
             // no op
         }
     };
@@ -144,7 +144,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * Tasks are performed in reverse order they were added in (LIFO), to ensure
      * the behavior matches try-with-resources behavior.
      * <p>
-     * Any exception thrown by any cleanup task handled by a
+     * Any Exception thrown by any cleanup task handled by a
      * {@link CleanerErrorHandler} if provided, otherwise the exception is is
      * ignored.
      */
@@ -154,7 +154,7 @@ public class Cleaner implements AutoCloseable, Runnable {
             Runnable runnable = runnables.pop();
             try {
                 runnable.run();
-            } catch (Throwable t) {
+            } catch (Exception t) {
                 handler.handle(runnable, t);
             }
         }
@@ -221,7 +221,6 @@ public class Cleaner implements AutoCloseable, Runnable {
         if (service == null) {
             return null;
         }
-        
         runnables.push(service::shutdownNow);
         return service;
     }
@@ -261,8 +260,8 @@ public class Cleaner implements AutoCloseable, Runnable {
         runnables.push(() -> {
             try {
                 closable.close();
-            } catch (Throwable t) {
-                handler.handle(closable, t);
+            } catch (Exception ex) {
+                handler.handle(closable, ex);
             }
         });
         return closable;

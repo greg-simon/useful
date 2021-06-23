@@ -11,16 +11,16 @@ public interface CleanerErrorHandler {
      * cleanup tasks.
      * 
      * @param runnable The Runnable instance that threw the exception.
-     * @param throwable The exception that was thrown.
+     * @param exception The exception that was thrown.
      */
-    public void handle(Runnable runnable, Throwable throwable);
+    public void handle(Runnable runnable, Exception exception);
 
     /**
      * Handles any exceptions from running {@link AutoCloseable#close()}.
      *
      * @param closable The AutoCloseable instance that caused the exception.
-     * @param throwable The exception thrown when attempting to close the
+     * @param exception The exception thrown when attempting to close the
      * AutoClosable.
      */
-    public void handle(AutoCloseable closable, Throwable throwable);
+    public void handle(AutoCloseable closable, Exception exception);
 }

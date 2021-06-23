@@ -244,12 +244,12 @@ public class CleanerTest {
         private final AtomicInteger closableCount = new AtomicInteger();
         
         @Override
-        public void handle(Runnable runnable, Throwable throwable) {
+        public void handle(Runnable runnable, Exception exception) {
             runnableCount.incrementAndGet();
         }
 
         @Override
-        public void handle(AutoCloseable closable, Throwable throwable) {
+        public void handle(AutoCloseable closable, Exception exception) {
             closableCount.incrementAndGet();
         }
 
