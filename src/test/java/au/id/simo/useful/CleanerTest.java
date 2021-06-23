@@ -80,7 +80,7 @@ public class CleanerTest {
         assertEquals(0, cleaner.size());
 
         CountRunnable countRunnable = new CountRunnable();
-        cleaner.runOnClean(countRunnable);
+        cleaner.runLater(countRunnable);
         assertEquals(1, cleaner.size(), "Verify runnable was added");
         assertEquals(0, countRunnable.runCount(), "Verify countRunnable has not been run");
 
@@ -97,10 +97,10 @@ public class CleanerTest {
         assertEquals(0, errorHandler.getTotalCount());
         assertEquals(0, cleaner.size());
         
-        cleaner.runOnClean(() -> {
+        cleaner.runLater(() -> {
             throw new RuntimeException();
         });
-        cleaner.closeOnClean(() -> {
+        cleaner.closeLater(() -> {
             throw new RuntimeException();
         });
         
@@ -115,7 +115,7 @@ public class CleanerTest {
     public void testClean() {
         CountRunnable countRun = new CountRunnable();
         Cleaner cleaner = new Cleaner();
-        cleaner.runOnClean(countRun);
+        cleaner.runLater(countRun);
         
         assertEquals(1, cleaner.size());
         cleaner.clean();
@@ -128,13 +128,13 @@ public class CleanerTest {
         CountRunnable countRun = new CountRunnable();
         
         Cleaner cleaner = new Cleaner();
-        cleaner.runOnClean(countRun);
-        cleaner.closeOnClean(() -> {throw new RuntimeException();});
-        cleaner.runOnClean(countRun);
-        cleaner.shutdownOnClean(new MockExecutorService());
-        cleaner.runOnClean(countRun);
-        cleaner.runOnClean(() -> {throw new RuntimeException();});
-        cleaner.runOnClean(countRun);
+        cleaner.runLater(countRun);
+        cleaner.closeLater(() -> {throw new RuntimeException();});
+        cleaner.runLater(countRun);
+        cleaner.shutdownLater(new MockExecutorService());
+        cleaner.runLater(countRun);
+        cleaner.runLater(() -> {throw new RuntimeException();});
+        cleaner.runLater(countRun);
         
         assertEquals(7, cleaner.size());
         cleaner.clean();
@@ -145,7 +145,7 @@ public class CleanerTest {
     @Test
     public void testRun() {
         Cleaner cleaner = new Cleaner();
-        CountRunnable countRun = cleaner.runOnClean(new CountRunnable());
+        CountRunnable countRun = cleaner.runLater(new CountRunnable());
         
         assertEquals(1, cleaner.size());
         cleaner.run();
@@ -156,7 +156,7 @@ public class CleanerTest {
     @Test
     public void testClose() {
         Cleaner cleaner = new Cleaner();
-        CountRunnable countRun = cleaner.runOnClean(new CountRunnable());
+        CountRunnable countRun = cleaner.runLater(new CountRunnable());
         
         assertEquals(1, cleaner.size());
         cleaner.close();
@@ -165,25 +165,25 @@ public class CleanerTest {
     }
     
     @Test
-    public void testRunOnCleanNull() {
+    public void testRunLaterNull() {
         Cleaner cleaner = new Cleaner();
-        Runnable runnable = cleaner.runOnClean(null);
+        Runnable runnable = cleaner.runLater(null);
         assertNull(runnable);
         assertEquals(0, cleaner.size());
     }
     
     @Test
-    public void testRunOnCleanSelf() {
+    public void testRunLaterSelf() {
         Cleaner cleaner = new Cleaner();
         assertThrows(IllegalArgumentException.class, ()-> {
-            cleaner.runOnClean(cleaner);
+            cleaner.runLater(cleaner);
         });
     }
 
     @Test
-    public void testShutdownOnClean() {
+    public void testShutdownLater() {
         Cleaner cleaner = new Cleaner();
-        ExecutorService service = cleaner.shutdownOnClean(Executors.newCachedThreadPool());
+        ExecutorService service = cleaner.shutdownLater(Executors.newCachedThreadPool());
         assertEquals(1, cleaner.size());
         assertFalse(service.isShutdown());
         cleaner.clean();
@@ -192,17 +192,17 @@ public class CleanerTest {
     }
     
     @Test
-    public void testShutdownNull() {
+    public void testShutdownLaterNull() {
         Cleaner cleaner = new Cleaner();
-        ExecutorService service = cleaner.shutdownOnClean(null);
+        ExecutorService service = cleaner.shutdownLater(null);
         assertNull(service);
         assertEquals(0, cleaner.size());
     }
 
     @Test
-    public void testCloseOnClean() {
+    public void testCloseLater() {
         Cleaner cleaner = new Cleaner();
-        CloseStatus closeStatus = cleaner.closeOnClean(new CloseStatus());
+        CloseStatus closeStatus = cleaner.closeLater(new CloseStatus());
         assertEquals(1, cleaner.size());
         assertFalse(closeStatus.isClosed());
         cleaner.clean();
@@ -211,18 +211,18 @@ public class CleanerTest {
     }
     
     @Test
-    public void testCloseOnCleanNull() {
+    public void testCloseLaterNull() {
         Cleaner cleaner = new Cleaner();
-        AutoCloseable closable = cleaner.closeOnClean(null);
+        AutoCloseable closable = cleaner.closeLater(null);
         assertNull(closable);
         assertEquals(0, cleaner.size());
     }
     
     @Test
-    public void testCloseOnCleanSelf() {
+    public void testCloseLaterSelf() {
         Cleaner cleaner = new Cleaner();
         assertThrows(IllegalArgumentException.class, ()-> {
-            cleaner.closeOnClean(cleaner);
+            cleaner.closeLater(cleaner);
         });
     }
     

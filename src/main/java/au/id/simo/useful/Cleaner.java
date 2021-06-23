@@ -21,13 +21,13 @@ import java.util.concurrent.ExecutorService;
  * Example of simple instance usage:
  * <pre>
  * try (Cleaner cleaner = new Cleaner()) {
- *    ExecutorService service = cleaner.shutdownOnClean(Executors.newCachedThreadPool());
- *    cleaner.add(() -&gt; {
+ *   ExecutorService service = cleaner.shutdownLater(Executors.newCachedThreadPool());
+ *   cleaner.add(() -&gt; {
  *       System.out.println("This will be printed at the end of the try block");
  *    });
  *    service.execute(...);
  *    ...
- * }
+ * } // service has shutdownNow() called here
  * </pre>
  *
  * Cleaner also has two static instances:
@@ -46,8 +46,8 @@ import java.util.concurrent.ExecutorService;
  * </ol>
  * <p>
  * {@link Runnable}s added to the Cleaner list are only ever run once before
- * being discarded. This makes repeat calls to an instances {@link #clean()}
- * safe.
+ * being discarded. This makes it safe to call an instances {@link #clean()}
+ * method multiple times.
  */
 public class Cleaner implements AutoCloseable, Runnable {
 
@@ -189,7 +189,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * itself via this method, otherwise it would result in an infinite loop on
      * cleanup until a stack overflow exception is thrown.
      */
-    public <R extends Runnable> R runOnClean(R cleanupTask) {
+    public <R extends Runnable> R runLater(R cleanupTask) {
         if (cleanupTask == null) {
             return null;
         }
@@ -208,7 +208,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * <p>
      * Usage example:
      * <pre>
-     * ExecutorService service = cleaner.shutdownOnClean(Executors.newCachedThreadPool());
+     * ExecutorService service = cleaner.shutdownLater(Executors.newCachedThreadPool());
      * </pre>
      *
      * @param <S> The exact type passed as an argument.
@@ -217,7 +217,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * @return the same service instance passed as an argument, to allow this
      * method to be used inline with ExecutorService declaration.
      */
-    public <S extends ExecutorService> S shutdownOnClean(S service) {
+    public <S extends ExecutorService> S shutdownLater(S service) {
         if (service == null) {
             return null;
         }
@@ -236,8 +236,8 @@ public class Cleaner implements AutoCloseable, Runnable {
      * Usage example:
      * <pre>
      * try (Cleaner cleaner = new Cleaner()) {
-     *    InputStream in = cleaner.closeOnClean(new FileInputStream("in.txt"));
-     *    OutputStream out = cleaner.closeOnClean(new FileInputStream("out.txt"));
+     *    InputStream in = cleaner.closeLater(new FileInputStream("in.txt"));
+     *    OutputStream out = cleaner.closelater(new FileInputStream("out.txt"));
      *    ...
      * } // streams closed here, 'out' first then 'in'
      * </pre>
@@ -251,7 +251,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * itself via this method, otherwise it would result in an infinite loop on
      * cleanup until a stack overflow exception is thrown.
      */
-    public <C extends AutoCloseable> C closeOnClean(C closable) {
+    public <C extends AutoCloseable> C closeLater(C closable) {
         if (closable == null) {
             return null;
         }

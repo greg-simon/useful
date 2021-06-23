@@ -49,8 +49,8 @@ public class HashInputStreamTest {
         String javaHash;
         String processHash;
         try (Cleaner c = new Cleaner()) {
-            OutputStream out = c.closeOnClean(sumProcess.getOutputStream());
-            HashInputStream hin = c.closeOnClean(new HashInputStream(TEST_DATA.inputStream(),hashAlgo));
+            OutputStream out = c.closeLater(sumProcess.getOutputStream());
+            HashInputStream hin = c.closeLater(new HashInputStream(TEST_DATA.inputStream(),hashAlgo));
             Resource.copy(hin, out);
             javaHash = hin.getHashString();
         }
