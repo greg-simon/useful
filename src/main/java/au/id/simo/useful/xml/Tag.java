@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
- * Class that represents an Xml tag.
+ * Class that represents an XML tag.
  */
 public class Tag implements Map<String, String> {
 
@@ -113,14 +114,26 @@ public class Tag implements Map<String, String> {
     }
 
     /**
-     * Check if tag has content with more than just whitespace.
+     * Check if tag has content with more than just white space.
      *
-     * @return if the text content of this tag is more than just whitespace.
+     * @return if the text content of this tag is more than just white space.
      */
     public boolean hasSignificantContent() {
         return significantContent;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + Objects.hashCode(this.name);
+        hash = 79 * hash + Objects.hashCode(this.content);
+        hash = 79 * hash + Objects.hashCode(this.attributes);
+        hash = 79 * hash + Objects.hashCode(this.parent);
+        hash = 79 * hash + Objects.hashCode(this.children);
+        hash = 79 * hash + (this.significantContent ? 1 : 0);
+        return hash;
+    }
+    
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Tag)) {
@@ -131,8 +144,11 @@ public class Tag implements Map<String, String> {
         if (this.attributes.size() != tObj.attributes.size()) {
             return false;
         }
-        for (String key : this.attributes.keySet()) {
-            if (!this.attributes.get(key).equals(tObj.attributes.get(key))) {
+        for (Entry<String,String> entrySet : this.attributes.entrySet()) {
+            String key = entrySet.getKey();
+            String thisValue = entrySet.getValue();
+            String tObjValue = tObj.attributes.get(key);
+            if (!thisValue.equals(tObjValue)) {
                 return false;
             }
         }

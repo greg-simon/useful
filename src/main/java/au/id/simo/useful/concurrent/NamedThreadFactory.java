@@ -23,11 +23,10 @@ public class NamedThreadFactory implements ThreadFactory {
     }
 
     private String getNextThreadName() {
-        String nextThreadName = String.format(
+        return String.format(
                 "%s-%02d",
                 namePrefix,
                 threadNum.getAndIncrement());
-        return nextThreadName;
     }
 
     @Override

@@ -35,10 +35,8 @@ public class ConcatReader extends Reader {
      * and no further Readers are available.
      */
     private Reader currentReader() {
-        if (currentReader == null) {
-            if (readerItr.hasNext()) {
+        if (currentReader == null && readerItr.hasNext()) {
                 currentReader = readerItr.next();
-            }
         }
         return currentReader;
     }

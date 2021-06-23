@@ -68,7 +68,7 @@ public abstract class Resources {
      * @param pattern Can be null. The pattern to use with resource names when
      * loading resources.
      */
-    public Resources(String pattern) {
+    protected Resources(String pattern) {
         String tempPat = pattern;
         if (pattern != null && !pattern.contains("%")) {
             tempPat = pattern + "%s";

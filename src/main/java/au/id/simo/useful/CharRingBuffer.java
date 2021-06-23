@@ -110,8 +110,7 @@ public class CharRingBuffer extends AbstractRingBuffer<Character> implements Cha
         System.arraycopy(buffer, 0, dest, start + segTwoReadLength, segOneReadLength);
 
         // sum segment lengths and return
-        int totalReadLength = segTwoReadLength + segOneReadLength;
-        return totalReadLength;
+        return segTwoReadLength + segOneReadLength; 
     }
 
     public char[] toArray() {

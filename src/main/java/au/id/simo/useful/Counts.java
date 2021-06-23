@@ -30,12 +30,10 @@ public class Counts {
      * @return the newly incremented value.
      */
     public static long increment(String countName) {
-        AtomicLong al = countsMap.get(countName);
-        if (al == null) {
-            al = new AtomicLong();
-            countsMap.put(countName, al);
-        }
-        return countsMap.get(countName).incrementAndGet();
+        AtomicLong al = countsMap.computeIfAbsent(countName, key -> {
+            return new AtomicLong();
+        });
+        return al.incrementAndGet();
     }
 
     /**

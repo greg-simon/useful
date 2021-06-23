@@ -27,6 +27,7 @@ import java.net.URLStreamHandler;
 public class Handler extends URLStreamHandler {
 
     protected static final String URL_HANDLER_PACKAGE = "au.id.simo.useful.io";
+    private static final String PROTOCOL_HANDLER_PKGS_PROPERTY = "java.protocol.handler.pkgs";
 
     @Override
     protected URLConnection openConnection(URL u) throws IOException {
@@ -41,16 +42,15 @@ public class Handler extends URLStreamHandler {
      * This is safe to call multiple times.
      */
     public static void registerHandlerIfRequired() {
-        String existingSearchPath = System.getProperty("java.protocol.handler.pkgs", "");
+        String existingSearchPath = System.getProperty(PROTOCOL_HANDLER_PKGS_PROPERTY, "");
         if (existingSearchPath.contains(URL_HANDLER_PACKAGE)) {
             return;
         }
         if (existingSearchPath.isEmpty()) {
-            System.setProperty("java.protocol.handler.pkgs", URL_HANDLER_PACKAGE);
+            System.setProperty(PROTOCOL_HANDLER_PKGS_PROPERTY, URL_HANDLER_PACKAGE);
         } else {
             // prepend local package on the handler search path
-            System.setProperty(
-                    "java.protocol.handler.pkgs",
+            System.setProperty(PROTOCOL_HANDLER_PKGS_PROPERTY,
                     String.join("", URL_HANDLER_PACKAGE, "|", existingSearchPath)
             );
         }

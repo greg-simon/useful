@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A Resource implementation that holds a String and provides
@@ -25,7 +26,7 @@ public class StringResource implements Resource {
      */
     public StringResource(String str) {
         this.str = str;
-        this.charset = Charset.forName("UTF-8");
+        this.charset = StandardCharsets.UTF_8;
     }
 
     /**

@@ -36,10 +36,8 @@ public class ConcatInputStream extends InputStream {
      * InputStream is not set and no further InputStreams are available.
      */
     private InputStream currentStream() {
-        if (currentStream == null) {
-            if (streamsItr.hasNext()) {
-                currentStream = streamsItr.next();
-            }
+        if (currentStream == null && streamsItr.hasNext()) {
+            currentStream = streamsItr.next();
         }
         return currentStream;
     }

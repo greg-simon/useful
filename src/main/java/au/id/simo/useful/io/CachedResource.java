@@ -36,9 +36,9 @@ public class CachedResource implements Resource {
         if (buffer == null) {
             InputStream in = resource.inputStream();
             RecorderInputStream rin = new RecorderInputStream(in, maxCacheSize);
-            rin.onEndStream((bytes) -> {
+            rin.onEndStream(bytes -> {
                 limitExceeded = rin.isExceededBuffer();
-                if (limitExceeded == false) {
+                if (!limitExceeded) {
                     buffer = bytes;
                 }
             });

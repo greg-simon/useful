@@ -127,7 +127,7 @@ public class CmdTokenizer implements Iterable<String> {
         }
     }
 
-    private static enum State {
+    private enum State {
         NORMAL, DOUBLE_QUOTE, SINGLE_QUOTE, BETWEEN_TOKENS
     }
 }

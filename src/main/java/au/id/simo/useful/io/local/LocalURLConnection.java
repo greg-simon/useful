@@ -34,7 +34,7 @@ public class LocalURLConnection extends URLConnection {
 
     @Override
     public InputStream getInputStream() throws IOException {
-        if (connected == false) {
+        if (!connected) {
             this.connect();
         }
         // sessionId is the host part of the url:

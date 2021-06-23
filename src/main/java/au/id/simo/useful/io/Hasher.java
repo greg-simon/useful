@@ -17,10 +17,7 @@ public interface Hasher {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < hash.length; i++) {
-            if ((0xff & hash[i]) < 0x10) {
-                sb.append("0");
-            }
-            sb.append(Integer.toHexString(0xFF & hash[i]));
+            sb.append(String.format("%02x", hash[i]));
         }
         return sb.toString();
     }

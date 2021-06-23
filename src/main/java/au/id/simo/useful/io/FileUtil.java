@@ -32,7 +32,7 @@ public class FileUtil {
      * Utility classes should not be constructed.
      */
     private FileUtil() {
-        ; // no op
+        // no op
     }
 
     /**

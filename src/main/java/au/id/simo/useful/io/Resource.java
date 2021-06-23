@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * An {@link InputStream} factory. Providing unified access to a source of bytes
@@ -31,7 +32,7 @@ public interface Resource {
      * @see #getReader()
      * @see #getString()
      */
-    public static final Charset DEFAULT_CHARSET_UTF8 = Charset.forName("UTF-8");
+    public static final Charset DEFAULT_CHARSET_UTF8 = StandardCharsets.UTF_8;
 
     /**
      * Loads the contents of the resource as a String.

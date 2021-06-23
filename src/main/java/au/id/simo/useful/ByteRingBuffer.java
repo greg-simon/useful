@@ -102,8 +102,7 @@ public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
         System.arraycopy(buffer, 0, dest, start + segTwoReadLength, segOneReadLength);
 
         // sum segment lengths and return
-        int totalReadLength = segTwoReadLength + segOneReadLength;
-        return totalReadLength;
+        return segTwoReadLength + segOneReadLength;
     }
 
     public byte[] toArray() {

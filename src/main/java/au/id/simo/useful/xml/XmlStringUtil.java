@@ -8,8 +8,6 @@ public class XmlStringUtil {
     private XmlStringUtil() {
         // no-op
     }
-
-    ;
     
     public static String escapeAttribute(String str) {
         StringBuilder sb = new StringBuilder(str);

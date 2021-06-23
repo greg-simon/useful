@@ -41,7 +41,7 @@ public class ConcurrentGeneratorResource implements Resource {
      * @return The existing ExecutorService so the caller can shut it down
      * cleanly.
      */
-    public synchronized static ExecutorService setDefaultExecutorService(ExecutorService service) {
+    public static synchronized ExecutorService setDefaultExecutorService(ExecutorService service) {
         ExecutorService old = defaultExecutorService;
         defaultExecutorService = service;
         return old;

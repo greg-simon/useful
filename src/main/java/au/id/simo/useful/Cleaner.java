@@ -131,7 +131,7 @@ public class Cleaner implements AutoCloseable, Runnable {
         return runnables.size();
     }
     
-    public synchronized void setErrorHandler(CleanerErrorHandler handler) {
+    public void setErrorHandler(CleanerErrorHandler handler) {
         this.handler = Objects.requireNonNull(handler);
     }
 
@@ -145,7 +145,8 @@ public class Cleaner implements AutoCloseable, Runnable {
      * the behavior matches try-with-resources behavior.
      * <p>
      * Any exception thrown by any cleanup task handled by a
-     * {@link CleanerErrorHandler} if provided, otherwise the exception is is ignored.
+     * {@link CleanerErrorHandler} if provided, otherwise the exception is is
+     * ignored.
      */
     public synchronized void clean() {
         // Cleanup in reverse order.
@@ -221,9 +222,7 @@ public class Cleaner implements AutoCloseable, Runnable {
             return null;
         }
         
-        runnables.push(() -> {
-            service.shutdownNow();
-        });
+        runnables.push(service::shutdownNow);
         return service;
     }
 

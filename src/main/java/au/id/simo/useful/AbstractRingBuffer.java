@@ -1,6 +1,7 @@
 package au.id.simo.useful;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -35,7 +36,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
     protected int size;
 
     
-    public AbstractRingBuffer(int capacity) {
+    protected AbstractRingBuffer(int capacity) {
         this.capacity = capacity;
     }
 
@@ -307,7 +308,10 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
         }
 
         @Override
-        public T next() {
+        public T next() throws NoSuchElementException {
+            if (index >= size()) {
+                throw new NoSuchElementException("No further elements exist.");
+            }
             return peek(index++);
         }
     }

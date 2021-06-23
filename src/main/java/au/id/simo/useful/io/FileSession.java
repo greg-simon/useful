@@ -154,8 +154,15 @@ public class FileSession implements URLSession {
         if (file.exists()) {
             return;
         }
-        Path ancestor = file.toPath().toAbsolutePath().getRoot();
-        for (Path pathSegment : file.toPath().getParent()) {
+        Path filePath = file.toPath();
+        Path ancestor = filePath.toAbsolutePath().getRoot();
+        Path parentPath = filePath.getParent();
+        if (parentPath == null) {
+            // file must not have a parent, so it must be at the root at the
+            // filesystem. So there is no directories to create.
+            return;
+        }
+        for (Path pathSegment : parentPath) {
             ancestor = ancestor.resolve(pathSegment);
             if (Files.exists(ancestor)) {
                 continue;
@@ -179,9 +186,7 @@ public class FileSession implements URLSession {
 
     @Override
     public String register(String urlPath, Resource resource) throws IOException {
-        return register(urlPath, (OutputStream out) -> {
-            resource.copyTo(out);
-        });
+        return register(urlPath, (OutputStream out) -> resource.copyTo(out));
     }
 
     @Override
@@ -226,7 +231,7 @@ public class FileSession implements URLSession {
     public Set<String> getRegisteredPaths() {
         Path basePath = baseDir.toPath();
         Set<String> paths = new TreeSet<>();
-        createdFileList.forEach((filePath) -> {
+        createdFileList.forEach(filePath -> {
             Path normPath = basePath.relativize(filePath);
             paths.add(normPath.toString());
         });
@@ -267,7 +272,6 @@ public class FileSession implements URLSession {
                 // ignore if the directory is not empty, as it
                 // means something added a file to a dir created
                 // by this session.
-                ;
             }
         }
     }

@@ -47,9 +47,4 @@ public class LimitedInputStream extends CountingInputStream {
         long skipAmount = Math.min(remaining, n);
         return super.skip(skipAmount);
     }
-
-    @Override
-    public void close() throws IOException {
-        super.close();
-    }
 }

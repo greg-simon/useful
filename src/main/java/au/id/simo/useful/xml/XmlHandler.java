@@ -7,6 +7,7 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -30,7 +31,7 @@ public abstract class XmlHandler extends DefaultHandler {
 
     protected Tag currentTag;
 
-    public XmlHandler() {
+    protected XmlHandler() {
         this.tagStack = new ArrayDeque<>();
         this.prefixMappings = new LinkedHashMap<>();
     }
@@ -130,6 +131,8 @@ public abstract class XmlHandler extends DefaultHandler {
             SAXParserFactory spf = SAXParserFactory.newInstance();
             spf.setNamespaceAware(true);
             SAXParser saxParser = spf.newSAXParser();
+            saxParser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            saxParser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             XMLReader xmlReader = saxParser.getXMLReader();
             xmlReader.setContentHandler(this);
             xmlReader.parse(new InputSource(in));
