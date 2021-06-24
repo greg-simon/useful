@@ -3,6 +3,7 @@ package au.id.simo.useful.xml;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class XmlHandlerTest {
             ;
     
     public static InputStream testStream() throws IOException {
-        return new ByteArrayInputStream(TEST_DOC.getBytes("UTF-8"));
+        return new ByteArrayInputStream(TEST_DOC.getBytes(StandardCharsets.UTF_8));
     }
 
     @Test

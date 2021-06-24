@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +28,7 @@ public class CountingInputStreamTest implements FilterInputStreamTest {
      */
     @Test
     public void testRead() throws IOException {
-        byte[] bytes = "This is a counting test.".getBytes("UTF-8");
+        byte[] bytes = "This is a counting test.".getBytes(StandardCharsets.UTF_8);
         CountingInputStream cin = new CountingInputStream(new ByteArrayInputStream(bytes));
         while (cin.read() >= 0) {}
         assertEquals(bytes.length, cin.getByteCount());
@@ -40,7 +41,7 @@ public class CountingInputStreamTest implements FilterInputStreamTest {
      */
     @Test
     public void testReadByteArray() throws IOException {
-        byte[] bytes = "This is a counting test.".getBytes("UTF-8");
+        byte[] bytes = "This is a counting test.".getBytes(StandardCharsets.UTF_8);
         CountingInputStream cin = new CountingInputStream(new ByteArrayInputStream(bytes));
         byte[] buffer = new byte[2];
         while (cin.read(buffer) >= 0) {}
@@ -49,7 +50,7 @@ public class CountingInputStreamTest implements FilterInputStreamTest {
     
     @Test
     public void testReadByteArrayIndexLength() throws IOException {
-        byte[] bytes = "This is a counting test.".getBytes("UTF-8");
+        byte[] bytes = "This is a counting test.".getBytes(StandardCharsets.UTF_8);
         CountingInputStream cin = new CountingInputStream(new ByteArrayInputStream(bytes));
         byte[] buffer = new byte[2];
         while (cin.read(buffer, 0, 2) >= 0) {}

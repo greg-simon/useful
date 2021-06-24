@@ -29,7 +29,7 @@ public class HashInputStreamTest {
     
     private static final Resource TEST_DATA = () -> {
         return new ByteArrayInputStream(
-                "This is some text that will be hashed.".getBytes("UTF-8")
+                "This is some text that will be hashed.".getBytes(StandardCharsets.UTF_8)
         );
     };
     

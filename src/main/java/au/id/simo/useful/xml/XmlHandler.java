@@ -2,6 +2,7 @@ package au.id.simo.useful.xml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashMap;
@@ -125,17 +126,44 @@ public abstract class XmlHandler extends DefaultHandler {
      * @throws ParserConfigurationException If there is an issue with the
      * configuration of the XML parser.
      */
-    public void parseStream(InputStream inputStream) throws IOException,
-            SAXException, ParserConfigurationException {
+    public void parseStream(InputStream inputStream) throws IOException, SAXException, ParserConfigurationException {
         try (InputStream in = inputStream) {
-            SAXParserFactory spf = SAXParserFactory.newInstance();
-            spf.setNamespaceAware(true);
-            SAXParser saxParser = spf.newSAXParser();
-            saxParser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            saxParser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-            XMLReader xmlReader = saxParser.getXMLReader();
-            xmlReader.setContentHandler(this);
-            xmlReader.parse(new InputSource(in));
+            parseStream(new InputSource(in));
         }
+    }
+    
+    /**
+     * Will close the provided reader.
+     *
+     * @param reader The Reader to read the XML from.
+     * @throws IOException If there is an issue in reading from the InputStream.
+     * @throws SAXException If there is a syntax issue in reading the XML.
+     * @throws ParserConfigurationException If there is an issue with the
+     * configuration of the XML parser.
+     */
+    public void parseStream(Reader reader) throws IOException, SAXException, ParserConfigurationException {
+        try (Reader r = reader) {
+            parseStream(new InputSource(r));
+        }
+    }
+    
+    /**
+     * Will not close any InputSource, the caller must do that.
+     * 
+     * @param inputSource The InputSource to read the XML from.
+     * @throws IOException If there is an issue in reading from the InputStream.
+     * @throws SAXException If there is a syntax issue in reading the XML.
+     * @throws ParserConfigurationException If there is an issue with the
+     * configuration of the XML parser.
+     */
+    public void parseStream(InputSource inputSource) throws IOException, SAXException, ParserConfigurationException {
+        SAXParserFactory spf = SAXParserFactory.newInstance();
+        spf.setNamespaceAware(true);
+        SAXParser saxParser = spf.newSAXParser();
+        saxParser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        saxParser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        XMLReader xmlReader = saxParser.getXMLReader();
+        xmlReader.setContentHandler(this);
+        xmlReader.parse(inputSource);
     }
 }
