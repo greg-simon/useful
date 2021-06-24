@@ -126,9 +126,9 @@ public abstract class XmlHandler extends DefaultHandler {
      * @throws ParserConfigurationException If there is an issue with the
      * configuration of the XML parser.
      */
-    public void parseStream(InputStream inputStream) throws IOException, SAXException, ParserConfigurationException {
+    public void parse(InputStream inputStream) throws IOException, SAXException, ParserConfigurationException {
         try (InputStream in = inputStream) {
-            parseStream(new InputSource(in));
+            parse(new InputSource(in));
         }
     }
     
@@ -141,9 +141,9 @@ public abstract class XmlHandler extends DefaultHandler {
      * @throws ParserConfigurationException If there is an issue with the
      * configuration of the XML parser.
      */
-    public void parseStream(Reader reader) throws IOException, SAXException, ParserConfigurationException {
+    public void parse(Reader reader) throws IOException, SAXException, ParserConfigurationException {
         try (Reader r = reader) {
-            parseStream(new InputSource(r));
+            parse(new InputSource(r));
         }
     }
     
@@ -156,7 +156,7 @@ public abstract class XmlHandler extends DefaultHandler {
      * @throws ParserConfigurationException If there is an issue with the
      * configuration of the XML parser.
      */
-    public void parseStream(InputSource inputSource) throws IOException, SAXException, ParserConfigurationException {
+    public void parse(InputSource inputSource) throws IOException, SAXException, ParserConfigurationException {
         SAXParserFactory spf = SAXParserFactory.newInstance();
         spf.setNamespaceAware(true);
         SAXParser saxParser = spf.newSAXParser();

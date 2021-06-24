@@ -2,14 +2,19 @@ package au.id.simo.useful.xml;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import au.id.simo.useful.io.CloseStatus;
+import au.id.simo.useful.io.StringResource;
+import au.id.simo.useful.io.URLSession;
+import au.id.simo.useful.io.local.LocalProtocol;
 import org.junit.jupiter.api.Test;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,22 +32,51 @@ public class XmlHandlerTest {
             + "  </onelevel>\n"
             + "</doc>"
             ;
-    
-    public static InputStream testStream() throws IOException {
-        return new ByteArrayInputStream(TEST_DOC.getBytes(StandardCharsets.UTF_8));
-    }
 
     @Test
-    public void testXmlHandler() throws IOException, SAXException, ParserConfigurationException {
-        List<Tag> tags = new ArrayList<>();
-        XmlHandler xmlHandler = new XmlHandler() {
+    public void testParseInputSourceUrl() throws IOException, SAXException, ParserConfigurationException {
+        TagListXmlHandler xmlHandler = new TagListXmlHandler();
+        try (URLSession session = LocalProtocol.newSession()) {
+            String url = session.register("doc", new StringResource(TEST_DOC));
+            xmlHandler.parse(new InputSource(url));
+        }
+        
+        testTags(xmlHandler.tagList);
+    }
+    
+    @Test
+    public void testParseInputStream() throws IOException, SAXException, ParserConfigurationException {
+        TagListXmlHandler xmlHandler = new TagListXmlHandler();
+        CloseStatus cs = new CloseStatus();
+        ByteArrayInputStream in = new ByteArrayInputStream(TEST_DOC.getBytes()) {
             @Override
-            public void endTag(Tag tag) {
-                tags.add(tag);
+            public void close() throws IOException {
+                super.close();
+                cs.close();
             }
         };
-        xmlHandler.parseStream(testStream());
-        
+        xmlHandler.parse(in);
+        testTags(xmlHandler.tagList);
+        assertTrue(cs.isClosed());
+    }
+    
+    @Test
+    public void testParseReader() throws IOException, SAXException, ParserConfigurationException {
+        TagListXmlHandler xmlHandler = new TagListXmlHandler();
+        CloseStatus cs = new CloseStatus();
+        Reader in = new StringReader(TEST_DOC) {
+            @Override
+            public void close() {
+                super.close();
+                cs.close();
+            }
+        };
+        xmlHandler.parse(in);
+        testTags(xmlHandler.tagList);
+        assertTrue(cs.isClosed());
+    }
+
+    private void testTags(List<Tag> tags) {
         // test tag count and ordering
         assertEquals(4, tags.size());
         Tag textTag = tags.get(0);
@@ -61,5 +95,14 @@ public class XmlHandlerTest {
         assertTrue(textTag.hasSignificantContent());
         
         assertEquals("This is text", textTag.getContent());
+    }
+    
+    private class TagListXmlHandler extends XmlHandler {
+        List<Tag> tagList = new ArrayList<>();
+        
+        @Override
+        public void endTag(Tag tag) {
+            tagList.add(tag);
+        }
     }
 }
