@@ -129,6 +129,54 @@ public interface InputStreamTest {
     }
     
     @Test
+    default void test_mark_reset() throws IOException {
+        InputStream in = create(DataGenFactory.incrementingBytes(20));
+        if (!in.markSupported()) {
+            // no point testing mark/reset if it's not supported.
+            return;
+        }
+        in.mark(10);
+        
+        byte[] firstReadBuf = new byte[10];
+        assertEquals(10, in.read(firstReadBuf));
+        in.reset();
+        
+        byte[] secondReadBuf = new byte[10];
+        assertEquals(10, in.read(secondReadBuf));
+        in.reset();
+        
+        assertEquals(firstReadBuf, secondReadBuf);
+        
+        byte[] thirdReadBuf = new byte[10];
+        assertEquals(10, in.read(thirdReadBuf));
+        
+        assertEquals(firstReadBuf, thirdReadBuf);
+    }
+    
+    @Test
+    default void test_mark_reset_tooMuchRead() throws IOException {
+        InputStream in = create(DataGenFactory.incrementingBytes(20));
+        if (!in.markSupported()) {
+            // no point testing mark/reset if it's not supported.
+            return;
+        }
+        in.mark(10);
+        
+        byte[] firstReadBuf = new byte[15];
+        assertEquals(15, in.read(firstReadBuf));
+        
+        // should have no effect, and not rewind the stream at all due to too
+        // many bytes being read.
+        in.reset();
+        
+        byte[] secondReadBuf = new byte[10];
+        assertEquals(5, in.read(secondReadBuf), "Verify only 5 bytes remaoning in the stream");
+        
+        assertEquals(new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}, firstReadBuf);
+        assertEquals(new byte[]{15,16,17,18,19}, secondReadBuf);
+    }
+    
+    @Test
     default void test_close() throws IOException {
         InputStream in = create(DataGenFactory.incrementingBytes(6));
         in.close();
