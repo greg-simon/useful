@@ -2,13 +2,11 @@ package au.id.simo.useful.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.stream.Stream;
 
 import au.id.simo.useful.io.DetectionInputStream.Match;
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,10 +18,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  *
  */
-public class DetectionInputStreamTest implements FilterInputStreamTest {
+public class DetectionInputStreamTest implements InputStreamTest {
 
     @Override
-    public FilterInputStream create(InputStream in) {
+    public InputStream create(InputStream in) {
         return new DetectionInputStream(in);
     }
     

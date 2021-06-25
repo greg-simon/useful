@@ -1,6 +1,5 @@
 package au.id.simo.useful.io;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.stream.Stream;
@@ -19,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Tests for the InputStream api, useful for InputStream implementations.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public interface FilterInputStreamTest {
+public interface InputStreamTest {
     
     /**
      * Used in unit tests to create the FilterInputStream implementation with
@@ -27,27 +26,27 @@ public interface FilterInputStreamTest {
      * @param in Source of known test data.
      * @return the FilterInputStream implementation to be tested.
      */
-    FilterInputStream create(InputStream in);
+    InputStream create(InputStream in);
     
     @Test
     default void test_read() throws IOException {
-        FilterInputStream fin = create(DataGenFactory.incrementingBytes(6));
-        assertEquals(0, fin.read());
-        assertEquals(1, fin.read());
-        assertEquals(2, fin.read());
-        assertEquals(3, fin.read());
-        assertEquals(4, fin.read());
-        assertEquals(5, fin.read());
-        assertEquals(-1, fin.read());
-        assertEquals(-1, fin.read());
-        assertEquals(-1, fin.read());
+        InputStream in = create(DataGenFactory.incrementingBytes(6));
+        assertEquals(0, in.read());
+        assertEquals(1, in.read());
+        assertEquals(2, in.read());
+        assertEquals(3, in.read());
+        assertEquals(4, in.read());
+        assertEquals(5, in.read());
+        assertEquals(-1, in.read());
+        assertEquals(-1, in.read());
+        assertEquals(-1, in.read());
     }
     
     @Test
     default void test_readByteArray() throws IOException {
-        FilterInputStream fin = create(DataGenFactory.incrementingBytes(6));
+        InputStream in = create(DataGenFactory.incrementingBytes(6));
         byte[] result = new byte[10];
-        assertEquals(6, fin.read(result), "expect to read all 6 bytes.");
+        assertEquals(6, in.read(result), "expect to read all 6 bytes.");
         
         assertEquals(0, result[0]);
         assertEquals(1, result[1]);
@@ -60,14 +59,14 @@ public interface FilterInputStreamTest {
         assertEquals(0, result[8]);
         assertEquals(0, result[9]);
         
-        assertEquals(-1, fin.read(result), "expect end of stream marker");
+        assertEquals(-1, in.read(result), "expect end of stream marker");
     }
     
     @Test
     default void test_readByteArrayOffsetLength() throws IOException {
-        FilterInputStream fin = create(DataGenFactory.incrementingBytes(6));
+        InputStream in = create(DataGenFactory.incrementingBytes(6));
         byte[] result = new byte[10];
-        assertEquals(6, fin.read(result,4,6), "expect to read all 6 bytes from 4th array slot.");
+        assertEquals(6, in.read(result,4,6), "expect to read all 6 bytes from 4th array slot.");
         
         assertEquals(0, result[0], "No data at start of array");
         assertEquals(0, result[1]);
@@ -80,17 +79,17 @@ public interface FilterInputStreamTest {
         assertEquals(4, result[8]);
         assertEquals(5, result[9]);
         
-        assertEquals(-1, fin.read(result), "expect end of stream marker");
+        assertEquals(-1, in.read(result), "expect end of stream marker");
     }
     
     @ParameterizedTest
     @MethodSource("readByteArrayOffsetLengthArgs")
     default <T extends Throwable> void test_readByteArrayOffsetLength(int bufLength, int offset, int readLength, long testDataLimit, Class<T> expectThrownException) throws IOException {
-        FilterInputStream fin = create(DataGenFactory.incrementingBytes(testDataLimit));
+        InputStream in = create(DataGenFactory.incrementingBytes(testDataLimit));
         if (expectThrownException != null) {
             assertThrows(expectThrownException, () -> {
                 byte[] bytBuf = new byte[bufLength];
-                fin.read(bytBuf, offset, readLength);
+                in.read(bytBuf, offset, readLength);
             });
             return;
         }
@@ -98,7 +97,7 @@ public interface FilterInputStreamTest {
         byte[] bytBuf = new byte[bufLength];
         long totalRead=0;
         int readCount;
-        while((readCount = fin.read(bytBuf, offset, readLength))!=-1) {
+        while((readCount = in.read(bytBuf, offset, readLength))!=-1) {
             // verify expected results
             for(int i=0; i<readCount;i++) {
                 assertEquals(bytBuf[i+offset], (byte)DataGenFactory.expectedByte(totalRead + i));
@@ -121,34 +120,34 @@ public interface FilterInputStreamTest {
     
     @Test
     default void test_skip() throws IOException {
-        FilterInputStream fin = create(DataGenFactory.incrementingBytes(20));
-        assertEquals(10, fin.skip(10)); // 10 bytes remaining
-        assertEquals(10, fin.read());   //  9 bytes remaining
-        assertEquals(7, fin.skip(7));   //  2 bytes remaining
-        assertEquals(2, fin.skip(10));  //  end of stream after first 2 bytes
-        assertEquals(-1, fin.read()); // verify end of stream
+        InputStream in = create(DataGenFactory.incrementingBytes(20));
+        assertEquals(10, in.skip(10)); // 10 bytes remaining
+        assertEquals(10, in.read());   //  9 bytes remaining
+        assertEquals(7, in.skip(7));   //  2 bytes remaining
+        assertEquals(2, in.skip(10));  //  end of stream after first 2 bytes
+        assertEquals(-1, in.read()); // verify end of stream
     }
     
     @Test
     default void test_close() throws IOException {
-        FilterInputStream fin = create(DataGenFactory.incrementingBytes(6));
-        fin.close();
+        InputStream in = create(DataGenFactory.incrementingBytes(6));
+        in.close();
         
         IOException ioe;
         ioe = assertThrows(IOException.class, () -> {
-            fin.read();
+            in.read();
         });
         assertEquals(DataGenFactory.STREAM_MSG, ioe.getMessage());
         ioe = assertThrows(IOException.class, () -> {
-            fin.read(new byte[2]);
+            in.read(new byte[2]);
         });
         assertEquals(DataGenFactory.STREAM_MSG, ioe.getMessage());
         ioe = assertThrows(IOException.class, () -> {
-            fin.read(new byte[2],0,2);
+            in.read(new byte[2],0,2);
         });
         assertEquals(DataGenFactory.STREAM_MSG, ioe.getMessage());
         ioe = assertThrows(IOException.class, () -> {
-            fin.skip(10);
+            in.skip(10);
         });
         assertEquals(DataGenFactory.STREAM_MSG, ioe.getMessage());
     }
