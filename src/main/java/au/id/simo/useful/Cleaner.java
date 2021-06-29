@@ -14,9 +14,8 @@ import java.util.concurrent.ExecutorService;
  * Cleanup tasks are performed in reverse added order (LIFO), consistent with
  * try-with-resources behavior for {@link AutoCloseable} implementations.
  * <p>
- * Cleaner implements Runnable and AutoCloseable for convenience to enable it to
- * be used easily in try-with-resources blocks and
- * {@link Runtime#addShutdownHook(java.lang.Thread) }
+ * Cleaner implements AutoCloseable for convenience to enable it to be used
+ * easily in try-with-resources blocks.
  * <p>
  * Example of simple instance usage:
  * <pre>
@@ -49,7 +48,7 @@ import java.util.concurrent.ExecutorService;
  * being discarded. This makes it safe to call an instances {@link #clean()}
  * method multiple times.
  */
-public class Cleaner implements AutoCloseable, Runnable {
+public class Cleaner implements AutoCloseable {
 
     private static final String SELF_ADD_ERROR_MSG = "Infinite loop detected, a Cleaner can not cleanup itself.";
     private static final CleanerErrorHandler NO_OP_POLICY = new CleanerErrorHandler() {
@@ -77,7 +76,7 @@ public class Cleaner implements AutoCloseable, Runnable {
     public static synchronized Cleaner onShutdown() {
         if (onShutdownInstance == null) {
             onShutdownInstance = new Cleaner();
-            onShutdownThread = new Thread(onShutdownInstance);
+            onShutdownThread = new Thread(onShutdownInstance::clean);
             Runtime.getRuntime().addShutdownHook(onShutdownThread);
         }
         return onShutdownInstance;
@@ -161,14 +160,6 @@ public class Cleaner implements AutoCloseable, Runnable {
     }
 
     /**
-     * {@link Runnable#run()} implementation that calls {@link #clean()}.
-     */
-    @Override
-    public void run() {
-        clean();
-    }
-
-    /**
      * {@link AutoCloseable#close()} implementation that calls
      * {@link #clean()}.
      */
@@ -185,16 +176,10 @@ public class Cleaner implements AutoCloseable, Runnable {
      * method is run.
      * @return the same runnable instance passed as an argument, to allow this
      * method to be used inline with declaration and assignment.
-     * @throws IllegalArgumentException if this Cleaner instance is added to
-     * itself via this method, otherwise it would result in an infinite loop on
-     * cleanup until a stack overflow exception is thrown.
      */
     public <R extends Runnable> R runLater(R cleanupTask) {
         if (cleanupTask == null) {
             return null;
-        }
-        if (cleanupTask == this) {
-            throw new IllegalArgumentException(SELF_ADD_ERROR_MSG);
         }
         runnables.push(cleanupTask);
         return cleanupTask;
@@ -236,7 +221,7 @@ public class Cleaner implements AutoCloseable, Runnable {
      * <pre>
      * try (Cleaner cleaner = new Cleaner()) {
      *    InputStream in = cleaner.closeLater(new FileInputStream("in.txt"));
-     *    OutputStream out = cleaner.closelater(new FileInputStream("out.txt"));
+     *    OutputStream out = cleaner.closeLater(new FileInputStream("out.txt"));
      *    ...
      * } // streams closed here, 'out' first then 'in'
      * </pre>

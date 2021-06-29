@@ -141,17 +141,6 @@ public class CleanerTest {
         assertEquals(0, cleaner.size());
         assertEquals(4, countRun.runCount(), "Verify countRun ran before and after each exception throwing task");
     }
-    
-    @Test
-    public void testRun() {
-        Cleaner cleaner = new Cleaner();
-        CountRunnable countRun = cleaner.runLater(new CountRunnable());
-        
-        assertEquals(1, cleaner.size());
-        cleaner.run();
-        assertEquals(0, cleaner.size());
-        assertEquals(1, countRun.runCount());
-    }
 
     @Test
     public void testClose() {
@@ -170,14 +159,6 @@ public class CleanerTest {
         Runnable runnable = cleaner.runLater(null);
         assertNull(runnable);
         assertEquals(0, cleaner.size());
-    }
-    
-    @Test
-    public void testRunLaterSelf() {
-        Cleaner cleaner = new Cleaner();
-        assertThrows(IllegalArgumentException.class, ()-> {
-            cleaner.runLater(cleaner);
-        });
     }
 
     @Test
