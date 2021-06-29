@@ -16,4 +16,9 @@
         <Class name="au.id.simo.useful.io.DetectionInputStream$Match" />
         <Bug code="EI2" />
     </Match>
+    <Match>
+        <!-- Essential part of the design, to avoid copying byte array. -->
+        <Class name="au.id.simo.useful.io.ByteArrayResource" />
+        <Bug code="EI2" />
+    </Match>
 </FindBugsFilter>

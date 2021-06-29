@@ -18,12 +18,27 @@ public class FileResource implements Resource {
         this.file = file;
     }
 
+    /**
+     * Paths will be normalized to follow relative references such as
+     * {@code ../}
+     *
+     * @param path the first or only part pf the path to the file to read.
+     * @param more optional subsequent segments of the file path.
+     */
     public FileResource(String path, String... more) {
-        this.file = Paths.get(path, more).toFile();
+        Path p = Paths.get(path);
+        for(String morePath: more) {
+            p = p.resolve(morePath);
+        }
+        this.file = p.normalize().toFile();
     }
 
     public FileResource(Path path) {
         this.file = path.toFile();
+    }
+    
+    protected File getFile() {
+        return file;
     }
 
     @Override

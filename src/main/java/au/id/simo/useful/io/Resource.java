@@ -20,7 +20,8 @@ import java.nio.charset.StandardCharsets;
  * or a subclass, being thrown.
  * <p>
  * All character related methods ({@code getString()}, {@code getReader()})
- * assume UTF-8 as the character encoding.
+ * assume UTF-8 as the character encoding, unless another {@link Charset} is
+ * provided.
  */
 public interface Resource {
 

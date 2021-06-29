@@ -1,32 +1,80 @@
 package au.id.simo.useful.io;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Stream;
 
+import au.id.simo.useful.Cleaner;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Only the abstract Resource class methods are tested here.
  */
-public class ResourceTest {
-
-    @Test
-    public void testGetString() throws Exception {
-        String testStr = "This is a test, I repeat, this is a test";
-        Resource r = new ResourceImpl(testStr.getBytes());
-        assertEquals(testStr, r.getString());
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public interface ResourceTest {
+    
+    Resource createResource(byte[] testData, Charset charset) throws IOException;
+    
+    default Resource createResource(byte[] testData) throws IOException {
+        return createResource(testData, StandardCharsets.UTF_8);
+    }
+    
+    default Stream<Arguments> charsets() {
+        return Stream.of(
+                Arguments.of(StandardCharsets.ISO_8859_1),
+                Arguments.of(StandardCharsets.US_ASCII),
+                Arguments.of(StandardCharsets.UTF_16),
+                Arguments.of(StandardCharsets.UTF_16BE),
+                Arguments.of(StandardCharsets.UTF_16LE),
+                Arguments.of(StandardCharsets.UTF_8)
+        );
     }
 
     @Test
-    public void testGetReader() throws Exception {
+    default void testGetString() throws Exception {
+        String testStr = "This is a test, I repeat, this is a test";
+        Resource r = createResource(testStr.getBytes());
+        assertEquals(testStr, r.getString());
+    }
+    
+    @ParameterizedTest
+    @MethodSource("charsets")
+    default void testGetString_Charset(Charset charset) throws Exception {
+        String testStr = "This is a test, I repeat, this is a test";
+        Resource r = createResource(testStr.getBytes(charset), charset);
+        assertEquals(testStr, r.getString(charset));
+    }
+
+    @Test
+    default void testGetReader() throws Exception {
         String testStr = "This is a test for the reader() method";
-        Resource r = new ResourceImpl(testStr.getBytes());
+        Resource r = createResource(testStr.getBytes());
         Reader reader = r.getReader();
+        for (int i = 0; i < testStr.length(); i++) {
+            assertEquals(
+                    testStr.charAt(i),
+                    (char) reader.read(),
+                    "Comparing char No. " + i
+            );
+        }
+    }
+    
+    @ParameterizedTest
+    @MethodSource("charsets")
+    default void testGetReader_Charset(Charset charset) throws Exception {
+        String testStr = "This is a test for the reader() method";
+        Resource r = createResource(testStr.getBytes(charset), charset);
+        Reader reader = r.getReader(charset);
         for (int i = 0; i < testStr.length(); i++) {
             assertEquals(
                     testStr.charAt(i),
@@ -37,9 +85,9 @@ public class ResourceTest {
     }
 
     @Test
-    public void testGetBytes() throws Exception {
+    default void testGetBytes() throws Exception {
         String testStr = "This is a test for the bytes() method";
-        Resource r = new ResourceImpl(testStr.getBytes());
+        Resource r = createResource(testStr.getBytes());
 
         byte[] testBytes = testStr.getBytes();
         byte[] resourceBytes = r.getBytes();
@@ -55,9 +103,9 @@ public class ResourceTest {
     }
 
     @Test
-    public void testCopyTo() throws Exception {
+    default void testCopyTo() throws Exception {
         String testStr = "This is some data to test copyTo()";
-        Resource r = new ResourceImpl(testStr.getBytes());
+        Resource r = createResource(testStr.getBytes());
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         long copyByteCount = r.copyTo(bout);
@@ -65,20 +113,13 @@ public class ResourceTest {
         byte[] copyBytes = bout.toByteArray();
 
         assertEquals(testBytes.length, copyByteCount);
-        assertEquals(testBytes.length, copyBytes.length);
-        for (int i = 0; i < testBytes.length; i++) {
-            assertEquals(
-                    testBytes[i],
-                    copyBytes[i],
-                    "Comparing byte index: " + i
-            );
-        }
+        assertArrayEquals(testBytes, copyBytes);
     }
 
     @Test
-    public void testInputStream() throws Exception {
+    default void testInputStream() throws Exception {
         String testStr = "This is a test for the inputStream() method";
-        Resource r = new ResourceImpl(testStr.getBytes());
+        Resource r = createResource(testStr.getBytes());
 
         byte[] testBytes = testStr.getBytes();
         InputStream in = r.inputStream();
@@ -91,18 +132,29 @@ public class ResourceTest {
             );
         }
     }
+    
+    @Test
+    default void testMultipleInputStreams() throws Exception {
+        String testStr = "This is a test for the inputStream() method";
+        Resource r = createResource(testStr.getBytes());
 
-    public class ResourceImpl implements Resource {
+        byte[] testBytes = testStr.getBytes();
+        try (Cleaner c = new Cleaner()) {
+            InputStream in1 = c.closeLater(r.inputStream());
+            InputStream in2 = c.closeLater(r.inputStream());
 
-        private final byte[] underlyingData;
-
-        public ResourceImpl(byte[] underlyingData) {
-            this.underlyingData = underlyingData;
-        }
-
-        @Override
-        public InputStream inputStream() throws IOException {
-            return new ByteArrayInputStream(underlyingData);
+            for (int i = 0; i < testBytes.length; i++) {
+                assertEquals(
+                        testBytes[i],
+                        (byte) in1.read(),
+                        "Comparing in1, index: " + i
+                );
+                assertEquals(
+                        testBytes[i],
+                        (byte) in2.read(),
+                        "Comparing in2, index: " + i
+                );
+            }
         }
     }
 }

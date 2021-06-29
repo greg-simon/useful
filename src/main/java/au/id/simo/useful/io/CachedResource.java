@@ -11,30 +11,47 @@ import java.io.InputStream;
  * first read then caching is disabled and will not used for subsequent reads.
  * Instead the underlying Resource will be read again.
  */
-public class CachedResource implements Resource {
+public class CachedResource extends FilterResource {
 
-    private final Resource resource;
     private final int maxCacheSize;
+    
     private byte[] buffer;
     private boolean limitExceeded;
+    private long cacheHits;
+    private long cacheMisses;
 
     public CachedResource(Resource resource) {
         this(resource, Integer.MAX_VALUE - 8);
     }
 
     public CachedResource(Resource resource, int maxCacheSize) {
-        this.resource = resource;
+        super(resource);
         this.maxCacheSize = maxCacheSize;
         limitExceeded = false;
+    }
+    
+    public long cacheHits() {
+        return cacheHits;
+    }
+    
+    public long cacheMisses() {
+        return cacheMisses;
+    }
+    
+    public void resetStats() {
+        cacheHits = 0;
+        cacheMisses = 0;
     }
 
     @Override
     public InputStream inputStream() throws IOException {
         if (limitExceeded) {
-            return resource.inputStream();
+            cacheMisses++;
+            return super.inputStream();
         }
         if (buffer == null) {
-            InputStream in = resource.inputStream();
+            cacheMisses++;
+            InputStream in = super.inputStream();
             RecorderInputStream rin = new RecorderInputStream(in, maxCacheSize);
             rin.onEndStream(bytes -> {
                 limitExceeded = rin.isExceededBuffer();
@@ -44,6 +61,7 @@ public class CachedResource implements Resource {
             });
             return rin;
         }
+        cacheHits++;
         return new ByteArrayInputStream(buffer);
     }
 
