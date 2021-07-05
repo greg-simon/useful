@@ -6,7 +6,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
+import au.id.simo.useful.Cleaner;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -14,16 +19,27 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  *
  */
-public class ConcurrentGeneratorResourceTest {
+public class ConcurrentGeneratorResourceTest implements ResourceTest {
+
+    @Override
+    public Resource createResource(byte[] testData, Charset charset) throws IOException {
+        return new ConcurrentGeneratorResource((OutputStream out) -> {
+            out.write(testData);
+        });
+    }
 
     public void testLines(int loopLineCount, InputStream in) throws IOException {
-        try (BufferedReader br
-                = new BufferedReader(new InputStreamReader(in))) {
-            for (int i = 1; i <= loopLineCount; i++) {
-                String line = br.readLine();
-                assertEquals("This is line: " + i, line);
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
+            String line;
+            int lineNo = 1;
+            while((line = br.readLine())!=null) {
+                if (lineNo<loopLineCount) {
+                    assertEquals("This is line: " + lineNo, line);
+                    lineNo++;
+                } else {
+                    assertEquals("End", br.readLine());
+                }
             }
-            assertEquals("End", br.readLine());
         }
     }
 
@@ -39,43 +55,113 @@ public class ConcurrentGeneratorResourceTest {
     }
 
     @Test
-    public void testProducerConsumer_GeneratorException() throws Exception {
+    public void testProducerConsumer_GeneratorIOException() throws Exception {
         int lineCount = 100;
         Generator lineGen = new LineGenerator(lineCount, true);
 
-        ConcurrentGeneratorResource genRes
-                = new ConcurrentGeneratorResource(lineGen, 1);
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(lineGen, 1);
 
         assertThrows(IOException.class, () -> {
             testLines(lineCount, genRes.inputStream());
         });
     }
+    
+    @Test
+    public void testProducerConsumer_GeneratorRuntimeException() throws Exception {
+        int lineCount = 100;
+        Generator gen = (OutputStream out) -> {
+            throw new RuntimeException("runtime exception");
+        };
+
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(gen, 1);
+
+        assertThrows(RuntimeException.class, () -> {
+            testLines(lineCount, genRes.inputStream());
+        });
+    }
+    
+    @Test
+    public void testProducerConsumer_GeneratorOutOfMemoryException() throws Exception {
+        int lineCount = 100;
+        Generator gen = (OutputStream out) -> {
+            throw new OutOfMemoryError("fake oom");
+        };
+
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(gen, 1);
+
+        // expect OOM to be wrapped in IOException
+        IOException ioe = assertThrows(IOException.class, () -> {
+            testLines(lineCount, genRes.inputStream());
+        });
+        assertTrue(ioe.getCause() instanceof OutOfMemoryError);
+    }
+    
+    @Test
+    public void testProducerConsumer_GeneratorInteruptedException() throws Exception {
+        int lineCount = 100;
+        Generator gen = (OutputStream out) -> {
+            for(int i=0;i<1000;i++) {
+                out.write(i);
+            }
+        };
+
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(gen, 1);
+        Thread currentThread = Thread.currentThread();
+        InputStream in = genRes.inputStream();
+        currentThread.interrupt();
+        in.close();
+        assertTrue(currentThread.isInterrupted(), "Thread should still be interrupted");
+        assertThrows(InterruptedException.class, () -> {
+            // clean interupt flag by having an InterruptedException to be thrown.
+            Thread.sleep(0);
+        });
+    }
+    
+    @Test
+    public void testProducerConsumer_GeneratorRuntimeExceptionFromThread() throws Exception {
+        int lineCount = 100;
+        Generator gen = new LineGenerator(lineCount, false);
+
+        try (Cleaner c = new Cleaner()) {
+            ExecutorService es = Executors.newCachedThreadPool(new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                    throw new RuntimeException("Runtime exception from thread");
+                }
+            });
+            c.shutdownLater(es);
+            
+            ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(es, gen, 1);
+
+            assertThrows(RuntimeException.class, () -> {
+                InputStream in = genRes.inputStream();
+            });
+        }
+    }
 
     @Test
-    public void testProducerConsumer_CloseInputStream() throws Exception {
+    public void testProducerConsumer_CloseInputStreamFirst() throws Exception {
         // Start a generator thread.
-        ConcurrentGeneratorResource genRes
-                = new ConcurrentGeneratorResource(new Generator() {
-                    @Override
-                    public void writeTo(OutputStream out) throws IOException {
-                        try {
-                            // 5 ms is enough to cause the consumer
-                            // close to happen first.
-                            Thread.sleep(5);
-                        } catch (InterruptedException ex) {
-                            ex.printStackTrace();
-                        }
-                        // Consumer PipedInputstream should have closed
-                        // by now, so exception is thrown.
-                        out.write(0);
-                    }
-                });
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(new Generator() {
+            @Override
+            public void writeTo(OutputStream out) throws IOException {
+                for (int i=0;i<10000;i++) {
+                    // Consumer PipedInputstream should have closed
+                    // by now, so exception is thrown.
+                    out.write(i);
+                }
+            }
+        }, 1);
 
+        // open stream and read a little.
+        InputStream inputStream = genRes.inputStream();
+        assertEquals(0, inputStream.read());
+        assertEquals(1, inputStream.read());
+        assertEquals(2, inputStream.read());
+        assertEquals(3, inputStream.read());
         // close piped input stream before Generator has finished
-        // writing.
-        assertThrows(IOException.class, () -> {
-            genRes.inputStream().close();
-        }, "Piped closed");
+        // writing. Should not throw exception during close method.
+        inputStream.close();
     }
 
     /**
@@ -90,25 +176,25 @@ public class ConcurrentGeneratorResourceTest {
         ConcurrentGeneratorResource genRes01 = new ConcurrentGeneratorResource(lineGen, 1);
 
         ConcurrentGeneratorResource genRes02 = new ConcurrentGeneratorResource(new Generator() {
-                    @Override
-                    public void writeTo(OutputStream out) throws IOException {
-                        genRes01.copyTo(out);
-                    }
-                }, 1);
+            @Override
+            public void writeTo(OutputStream out) throws IOException {
+                genRes01.copyTo(out);
+            }
+        }, 1);
 
         ConcurrentGeneratorResource genRes03 = new ConcurrentGeneratorResource(new Generator() {
-                    @Override
-                    public void writeTo(OutputStream out) throws IOException {
-                        genRes02.copyTo(out);
-                    }
-                }, 1);
+            @Override
+            public void writeTo(OutputStream out) throws IOException {
+                genRes02.copyTo(out);
+            }
+        }, 1);
 
         ConcurrentGeneratorResource genRes04 = new ConcurrentGeneratorResource(new Generator() {
-                    @Override
-                    public void writeTo(OutputStream out) throws IOException {
-                        genRes03.copyTo(out);
-                    }
-                }, 1);
+            @Override
+            public void writeTo(OutputStream out) throws IOException {
+                genRes03.copyTo(out);
+            }
+        }, 1);
 
         assertThrows(IOException.class, () -> {
             testLines(lineCount, genRes04.inputStream());

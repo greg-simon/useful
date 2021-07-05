@@ -9,6 +9,8 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import au.id.simo.useful.backport.IOUtils;
+
 /**
  * An {@link InputStream} factory. Providing unified access to a source of bytes
  * that can be read repeatedly.
@@ -94,29 +96,9 @@ public interface Resource {
     default byte[] getBytes() throws IOException {
         try (InputStream in = inputStream()) {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            copy(in, bout);
+            IOUtils.copy(in, bout);
             return bout.toByteArray();
         }
-    }
-
-    /**
-     * Copies all the contents from the given input stream to the given output
-     * stream.
-     *
-     * @param input the input stream
-     * @param output the output stream
-     * @return the number of bytes that have been copied
-     * @throws IOException if an I/O error occurs
-     */
-    public static long copy(InputStream input, OutputStream output) throws IOException {
-        byte[] buffer = new byte[4096];
-        long count = 0;
-        int n = 0;
-        while (-1 != (n = input.read(buffer))) {
-            output.write(buffer, 0, n);
-            count += n;
-        }
-        return count;
     }
 
     /**
@@ -134,7 +116,7 @@ public interface Resource {
      */
     default long copyTo(OutputStream out) throws IOException {
         try (InputStream in = inputStream()) {
-            return copy(in, out);
+            return IOUtils.copy(in, out);
         }
     }
 

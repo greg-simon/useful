@@ -10,6 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.stream.Stream;
 
 import au.id.simo.useful.Cleaner;
+import au.id.simo.useful.backport.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -51,13 +52,13 @@ public class HashInputStreamTest {
         try (Cleaner c = new Cleaner()) {
             OutputStream out = c.closeLater(sumProcess.getOutputStream());
             HashInputStream hin = c.closeLater(new HashInputStream(TEST_DATA.inputStream(),hashAlgo));
-            Resource.copy(hin, out);
+            IOUtils.copy(hin, out);
             javaHash = hin.getHashString();
         }
         
         try (InputStream in = sumProcess.getInputStream()) {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            Resource.copy(in, bout);
+            IOUtils.copy(in, bout);
             // string is formatted as "<hash> -"
             processHash = new String(bout.toByteArray(), StandardCharsets.UTF_8);
             int spaceIndex = processHash.indexOf(" ");

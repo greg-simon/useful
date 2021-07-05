@@ -27,8 +27,16 @@ import java.util.concurrent.TimeoutException;
  */
 public class ConcurrentGeneratorResource implements Resource {
 
+    /**
+     * Size of the buffer used by PipedInputStream/PipedOutputStream in
+     * communicating between threads.
+     */
     private static final int DEFAULT_BUFFER_SIZE = 1024;
 
+    /**
+     * The ExecutorService used by Generator to produce the resource data, if
+     * one isn't specified in a constructor.
+     */
     private static ExecutorService defaultExecutorService = Executors.newCachedThreadPool();
 
     /**
@@ -50,11 +58,6 @@ public class ConcurrentGeneratorResource implements Resource {
     private final ExecutorService service;
     private final Generator generator;
     private final int bufferSize;
-
-    /**
-     * Used to obtain any exception thrown by the Generator.
-     */
-    private Future<Object> future;
 
     /**
      * Constructor.
@@ -120,9 +123,16 @@ public class ConcurrentGeneratorResource implements Resource {
     public InputStream inputStream() throws IOException {
         PipedInputStream in = new PipedInputStream(bufferSize);
         PipedOutputStream out = new PipedOutputStream(in);
-        Callable<Object> producer = new GeneratorCallable(out);
-        future = service.submit(producer);
-        return new SourceErrorInputStreamWrapper(in);
+        // use a callable so exceptions can be thrown by the generator thread.
+        // Runnable.run() doesn't throw Exception.
+        Callable<Object> producer = () -> {
+            try (OutputStream localOut = out) {
+                generator.writeTo(localOut);
+            }
+            return null;
+        };
+        Future<Object> future = service.submit(producer);
+        return new SourceErrorInputStreamWrapper(in, future);
     }
 
     /**
@@ -132,92 +142,77 @@ public class ConcurrentGeneratorResource implements Resource {
      * If the generator thread was never started, this method returns
      * immediately
      *
+     * @param future Represents the Generator running in another thread. Cannot
+     * be null.
      * @throws IOException If Generator threw one, otherwise throws
      * IllegalStateException.
      */
-    public void waitForGenerator() throws IOException {
-        if (future == null) {
-            return;
-        }
-
+    public void waitForGenerator(Future<Object> future) throws IOException {
         try {
-            future.get(20, TimeUnit.SECONDS);
-        } catch (InterruptedException | TimeoutException ex) {
-            throw new IOException(ex);
+            // throws any exceptions in the consumer thread that were thrown in
+            // the generator thread.
+            future.get(0, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            // this only occurs when the consumer thread is interupted while
+            // waiting <1ms for the future to complete. It's a very small window
+            // but still possible.
+            
+            // ensure interupt flag is reset, but otherwise ignore.
+            Thread.currentThread().interrupt();
+        } catch (TimeoutException ex) {
+            // This occurs when the consumer InputStream is closed before the
+            // Generator is finished.
+            // No need to throw an exception on the consumer thread. Just
+            // interupt the generator thread, as it's no longer being read from.
+            future.cancel(true);
         } catch (ExecutionException ex) {
-            // As ExecutorServices wraps Callable exceptions
-            // potentially several times.
-            // Rethrow any real IOExceptions or RuntimeExceptions
-            // Wrap others.
-            Throwable causedBy = ex;
-            while (causedBy instanceof ExecutionException) {
-                causedBy = causedBy.getCause();
-                if (causedBy == null) {
-                    break;
-                }
-                if (causedBy instanceof ExecutionException) {
-                    continue;
-                }
-                if (causedBy instanceof IOException) {
-                    throw (IOException) causedBy;
-                }
-                if (causedBy instanceof RuntimeException) {
-                    throw (RuntimeException) causedBy;
-                }
-                throw new IllegalStateException(
-                        "Exception from code run by ExecutorService. "
-                        + causedBy.getMessage(),
-                        causedBy);
+            // This occures when an exception is thrown in the Generator before
+            // the consumer is closed.
+            // Because ExecutorServices wraps Callable exceptions, unwrap and
+            // rethrow any IOExceptions or RuntimeExceptions, any thing else is
+            // wrapped in an IOException.
+            Throwable causedBy = ex.getCause();
+            if(causedBy == null) {
+                // this scenaro requires a custom ExecutorService to occur, but
+                // is still technically possible.
+                throw wrapIOE(ex);
             }
-
-            // Just throw IllegalStateException
-            throw new IllegalStateException(
-                    "Exception from code run by ExecutorService. "
-                    + ex.getMessage(),
-                    ex);
+            if (causedBy instanceof IOException) {
+                throw (IOException) causedBy;
+            }
+            if (causedBy instanceof RuntimeException) {
+                throw (RuntimeException) causedBy;
+            }
+            throw wrapIOE(causedBy);
         }
+    }
+    
+    private IOException wrapIOE(Throwable ex) {
+        return new IOException(String.format(
+            "Exception from Generator: %s",
+            ex.getMessage()
+        ), ex);
     }
 
     /**
-     * Call method will always return null.
+     * Causes any exceptions thrown by the Generator thread to be re-thrown
+     * when the input stream is closed.
      * <p>
-     * Callable interface was used instead of Runnable, because it allows
-     * Exceptions to be thrown.
-     */
-    private class GeneratorCallable implements Callable<Object> {
-
-        private final OutputStream out;
-
-        public GeneratorCallable(OutputStream out) {
-            this.out = out;
-        }
-
-        @Override
-        public Object call() throws Exception {
-            try (OutputStream localOS = this.out) {
-                generator.writeTo(localOS);
-            }
-            return null;
-        }
-    }
-
-    /**
-     * Wraps the PipedInputStream to cause any exceptions thrown by the
-     * Generator thread, to be thrown when this stream is closed.
-     * <p>
-     * This ensures any problems in the Generator must be dealt with instead of
-     * silently ignored.
+     * This ensures any exceptions thrown in the Generators Thread are exposed to
+     * the caller thread that is reading the InputStream.
      */
     private class SourceErrorInputStreamWrapper extends FilterInputStream {
-
-        public SourceErrorInputStreamWrapper(InputStream in) {
+        private final Future<Object> generatorFuture;
+        
+        public SourceErrorInputStreamWrapper(InputStream in, Future<Object> future) {
             super(in);
+            this.generatorFuture = future;
         }
 
         @Override
         public void close() throws IOException {
             super.close();
-            waitForGenerator();
+            waitForGenerator(generatorFuture);
         }
     }
 }
