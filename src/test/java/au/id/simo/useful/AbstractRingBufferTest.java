@@ -1,5 +1,8 @@
 package au.id.simo.useful;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -29,7 +32,8 @@ public interface AbstractRingBufferTest<T> {
             rb.add(testData1);
         }
         
-        assertEquals(testData.length, rb.size(), "Should not be more items than the testData");
+        assertEquals(testData.length, rb.size(),
+                "Should not be more items than the testData");
         
         for (int i=0;i<testData.length;i++) {
             assertEquals(testData[i], rb.peek(i), String.format("index: %s", i));
@@ -153,6 +157,7 @@ public interface AbstractRingBufferTest<T> {
     
     @Test
     default void testContainsArrayFailures() {
+        // TODO: Break up into individual tests, and expand error scenarios
         T[] testData = testData(5);
         AbstractRingBuffer<T> rb = createRingBuffer(testData.length);
         
@@ -188,5 +193,43 @@ public interface AbstractRingBufferTest<T> {
             rb.add(testData[i]);
         }
         assertFalse(rb.containsArray(testData));
+    }
+    
+    @Test
+    default void testIteratorInForLoop() {
+        T[] testData = testData(5);
+        AbstractRingBuffer<T> rb = createRingBuffer(testData.length);
+        // add test data
+        for(T element: testData) {
+            rb.add(element);
+        }
+        
+        // loop buffer as an Iterable
+        assertEquals(5, rb.size());
+        int i = 0;
+        for(T element: rb) {
+            assertEquals(testData[i], element);
+            i++;
+        }
+        assertEquals(5, i, "Verify for-each looped the expected number of times");
+    }
+    
+    @Test
+    default void testIterator() {
+        T[] testData = testData(3);
+        AbstractRingBuffer<T> rb = createRingBuffer(testData.length);
+        // add test data
+        for(T element: testData) {
+            rb.add(element);
+        }
+        
+        Iterator<T> itr = rb.iterator();
+        assertTrue(itr.hasNext());
+        assertEquals(testData[0], itr.next());
+        assertTrue(itr.hasNext());
+        assertEquals(testData[1], itr.next());
+        assertTrue(itr.hasNext());
+        assertEquals(testData[2], itr.next());
+        assertThrows(NoSuchElementException.class, itr::next);
     }
 }
