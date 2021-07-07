@@ -10,7 +10,7 @@ public class RingBuffer<T> extends AbstractRingBuffer<T> {
     private final Object[] buffer;
 
     public RingBuffer(int capacity) {
-        super(capacity);
+        super(capacity, null);
         this.buffer = new Object[capacity];
     }
 

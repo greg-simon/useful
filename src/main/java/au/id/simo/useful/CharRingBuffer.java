@@ -11,7 +11,8 @@ public class CharRingBuffer extends AbstractRingBuffer<Character> implements Cha
     private final char[] buffer;
 
     public CharRingBuffer(int capacity) {
-        super(capacity);
+        // use default char value '\u0000'
+        super(capacity, Character.MIN_VALUE);
         buffer = new char[capacity];
     }
 

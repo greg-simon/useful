@@ -22,6 +22,10 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
      */
     protected final int capacity;
     /**
+     * Used for zeroing out read elements in the buffer storage.
+     */
+    protected final T nullValue;
+    /**
      * Add index. Points to next location to write to. Write then increment.
      */
     protected int head;
@@ -36,8 +40,9 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
     protected int size;
 
     
-    protected AbstractRingBuffer(int capacity) {
+    protected AbstractRingBuffer(int capacity, T nullValue) {
         this.capacity = capacity;
+        this.nullValue = nullValue;
     }
 
     /**
@@ -146,7 +151,8 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
         }
         // read
         T t = getFromArray(tail);
-
+        // clear element
+        setToArray(tail, nullValue);
         // then increment
         tail = incrementIndex(tail, 1);
         size--;
@@ -160,13 +166,17 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
      * @param start the index of the destination array to start copying values
      * into
      * @param length the number of values to copy.
-     * @return the number of items copied into the destination array.
+     * @return the number of items copied into the destination array, which
+     * could be fewer than the provided length when the buffer contains fewer
+     * elements.
      */
     public int read(T[] dest, int start, int length) {
-        int totalReadLength = peek(dest, start, length);
-        tail = incrementIndex(tail, totalReadLength);
-        size -= totalReadLength;
-        return totalReadLength;
+        // TODO: verify args
+        int readLength = Math.min(size, length);
+        for (int i = 0; i < readLength; i++) {
+            dest[start + i] = read();
+        }
+        return readLength;
     }
 
     /**

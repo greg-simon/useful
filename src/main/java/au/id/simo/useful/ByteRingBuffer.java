@@ -11,7 +11,7 @@ public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
     private final byte[] buffer;
 
     public ByteRingBuffer(int capacity) {
-        super(capacity);
+        super(capacity, (byte)0);
         buffer = new byte[capacity];
     }
 
