@@ -2,9 +2,13 @@ package au.id.simo.useful;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,6 +20,13 @@ public interface AbstractRingBufferTest<T> {
     
     T[] testData(int arrayLength);
     AbstractRingBuffer<T> createRingBuffer(int capacity);
+    default T[] zeroedArray(int arrayLength, T nullValue) {
+        T[] array = testData(arrayLength);
+        for (int i = 0; i < array.length; i++) {
+            array[i] = nullValue;
+        }
+        return array;
+    }
     
     @Test
     default void testAdd() {
@@ -67,36 +78,77 @@ public interface AbstractRingBufferTest<T> {
         assertEquals(testData[0], rb.peek());
     }
     
-    @Test
-    default void testPeek_3args() {
-        T[] testData = testData(11);
-        
-        AbstractRingBuffer<T> rb = createRingBuffer(testData.length);
-        
-        // add all test data to ring buffer
-        for(T element: testData) {
-            rb.add(element);
+    public static Stream<Arguments> readAndPeek3ArgsSource() {
+        return Stream.of(
+            // testDataSize, destArraySize, destOffset, length, expectedReadLength, expectedException
+            // happy path
+            Arguments.of(10, 10, 0, 10, 10, null),
+            Arguments.of(15, 10, 0, 10, 10, null),
+            Arguments.of( 5, 10, 0, 10,  5, null),
+            // error causing args
+            Arguments.of(10,  5,  0, 10, 0, IndexOutOfBoundsException.class),
+            Arguments.of(10,  5,  5,  1, 0, IndexOutOfBoundsException.class),
+            Arguments.of(10,  5, -1,  1, 0, IndexOutOfBoundsException.class),
+            Arguments.of(10,  5,  1, -1, 0, IndexOutOfBoundsException.class)
+        );
+    }
+    
+    @ParameterizedTest
+    @MethodSource("readAndPeek3ArgsSource")
+    default void read3Arg(int testDataSize, int destArraySize, int destOffset, int length, int expectedReadLength, Class<? extends Throwable> expectedException) {
+        T[] testData = testData(testDataSize);
+        AbstractRingBuffer<T> rb = createRingBuffer(testDataSize);
+        for (int i = 0; i < testDataSize; i++) {
+            rb.add(testData[i]);
         }
-        
-        T[] buffer = testData(11);
-        // set all buffer elements to null
-        for (int i=0;i<buffer.length;i++) {
-            buffer[i] = null;
+        T[] destArray = zeroedArray(destArraySize, rb.nullValue);
+
+        if (expectedException != null) {
+            assertThrows(expectedException, () -> {
+                rb.read(destArray, destOffset, length);
+            });
+            return;
         }
-        
-        int peekCount = rb.peek(buffer, 0, buffer.length);
-        assertEquals(buffer.length, peekCount);
-        assertEquals(testData.length, rb.size());
-        assertArrayEquals(testData, buffer);
+        // no further exeptions expected
+        int readLength = rb.read(destArray, destOffset, length);
+        assertEquals(expectedReadLength, readLength, "readLength");
+        for (int i = 0; i < readLength; i++) {
+            assertEquals(testData[i], destArray[destOffset + i], String.format("destArray index: %s", i));
+        }
+        int remainingValues = testDataSize - expectedReadLength;
+        assertEquals(remainingValues, rb.size());
+    }
+
+    @ParameterizedTest
+    @MethodSource("readAndPeek3ArgsSource")
+    default void peek3Arg(int testDataSize, int destArraySize, int destOffset, int length, int expectedReadLength, Class<? extends Throwable> expectedException) {
+        T[] testData = testData(testDataSize);
+        AbstractRingBuffer<T> rb = createRingBuffer(testDataSize);
+        for (int i = 0; i < testDataSize; i++) {
+            rb.add(testData[i]);
+        }
+        T[] destArray = zeroedArray(destArraySize, rb.nullValue);
+
+        if (expectedException != null) {
+            assertThrows(expectedException, () -> {
+                rb.peek(destArray, destOffset, length);
+            });
+            return;
+        }
+        // no further exeptions expected
+        int peekLength = rb.peek(destArray, destOffset, length);
+        assertEquals(expectedReadLength, peekLength, "peekLength");
+        for (int i = 0; i < peekLength; i++) {
+            assertEquals(testData[i], destArray[destOffset + i], String.format("destArray index: %s", i));
+        }
+        assertEquals(testDataSize, rb.size());
     }
     
     @Test
     default void testRead() {
         T[] testData = testData(2);
         AbstractRingBuffer<T> rb = createRingBuffer(2);
-        assertThrows(ArrayIndexOutOfBoundsException.class, () -> {
-            rb.read();
-        });
+        assertThrows(ArrayIndexOutOfBoundsException.class, rb::read);
         rb.add(testData[0]);
         assertEquals(1, rb.size());
         assertEquals(testData[0], rb.read());
@@ -106,29 +158,6 @@ public interface AbstractRingBufferTest<T> {
         assertEquals(1, rb.size());
         assertEquals(testData[1], rb.read());
         assertEquals(0, rb.size());
-    }
-    
-    @Test
-    default void testRead_3args() {
-        T[] testData = testData(11);
-        
-        AbstractRingBuffer<T> rb = createRingBuffer(testData.length);
-        
-        // add all test data to ring buffer
-        for(T element: testData) {
-            rb.add(element);
-        }
-        
-        T[] buffer = testData(11);
-        // set all buffer elements to null
-        for (int i=0;i<buffer.length;i++) {
-            buffer[i] = null;
-        }
-        
-        int readCount = rb.read(buffer, 0, buffer.length);
-        assertEquals(buffer.length, readCount);
-        assertEquals(0, rb.size());
-        assertArrayEquals(testData, buffer);
     }
     
     @Test

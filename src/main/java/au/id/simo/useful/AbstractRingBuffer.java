@@ -171,7 +171,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
      * elements.
      */
     public int read(T[] dest, int start, int length) {
-        // TODO: verify args
+        CheckUtil.checkReadWriteArgs(dest.length, start, length);
         int readLength = Math.min(size, length);
         for (int i = 0; i < readLength; i++) {
             dest[start + i] = read();
@@ -191,7 +191,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
      * @return the number of values copied into the provided array.
      */
     public int peek(T[] dest, int start, int length) {
-        // TODO: Verify args
+        CheckUtil.checkReadWriteArgs(dest.length, start, length);
         int readLength = Math.min(size, length);
         for (int i = 0; i < readLength; i++) {
             dest[start + i] = peek(i);
