@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
+ * @param <T> the type this ring buffer stores
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public interface AbstractRingBufferTest<T> {
@@ -160,68 +161,55 @@ public interface AbstractRingBufferTest<T> {
         assertEquals(0, rb.size());
     }
     
-    @Test
-    default void testContainsArray() {
-        T[] testData = testData(11);
-        AbstractRingBuffer<T> rb = createRingBuffer(testData.length+2);
-        
-        // move index up by three, but leave ring buffer empty.
-        T firstElement = testData[0];
-        for (int i=0;i<3;i++) {
-            rb.add(firstElement);
-            rb.read();
-        }
-        
-        for (T element: testData) {
-            rb.add(element);
-        }
-        assertTrue(rb.containsArray(testData));
-        
-        // overwrite most elements and test again.
-        for (T element: testData) {
-            rb.add(element);
-        }
-        assertTrue(rb.containsArray(testData));
+    public static Stream<Arguments> containsArrayTests() {
+        return Stream.of(
+            // testDataSize, arrayOffset, arrayLength, nullLastXInArray, rbCapacity, expectedResult
+            // locate exect contents of the buffer.
+            Arguments.of(10, 0, 10, 0, 10, true),
+            // locate 2 elements near the middle of buffer.
+            Arguments.of(10, 5, 2, 0, 10, true),
+            // locate 5 elements that start near end of buffer array and wrap to start of it.
+            Arguments.of(15, 7, 5, 0, 10, true),
+            // locate some elements but not all of them.
+            Arguments.of(10, 5, 10, 0, 10, false),
+            // locate none of the desired elements.
+            Arguments.of(10, 20, 10, 0, 10, false),
+            // fail due to more desired elements than buffer contains.
+            Arguments.of(5, 0, 10, 0, 10, false),
+            // locate the start of the desired array, but not the 3 nulls at the end.
+            Arguments.of(10, 0, 10, 3, 10, false)
+        );
     }
     
-    @Test
-    default void testContainsArrayFailures() {
-        // TODO: Break up into individual tests, and expand error scenarios
-        T[] testData = testData(5);
-        AbstractRingBuffer<T> rb = createRingBuffer(testData.length);
-        
-        for (T element: testData) {
-            rb.add(element);
+    /**
+     * 
+     * @param testDataSize generates test data with this many elements, and adds
+     * it to the RingBuffer.
+     * @param arrayOffset the generated the array to locate, has test data
+     * starting from this offset.
+     * @param arrayLength the generated array to locate, has this many elements
+     * and is of the same length.
+     * @param nullLastXInArray the generated array to locate has this many
+     * elements at the end of it zeroed out using
+     * {@link AbstractRingBuffer#nullValue}.
+     * @param rbCapacity the capacity of the RingBuffer.
+     * @param expectedResult the expected result of
+     * {@link AbstractRingBuffer#containsArray(T[])}.
+     */
+    @ParameterizedTest
+    @MethodSource("containsArrayTests")
+    default void testContainsArray(int testDataSize, int arrayOffset, int arrayLength, int nullLastXInArray, int rbCapacity, boolean expectedResult) {
+        T[] testData = testData(testDataSize);
+        AbstractRingBuffer<T> rb = createRingBuffer(rbCapacity);
+        for(T e: testData) {
+            rb.add(e);
         }
-        assertTrue(rb.containsArray(testData));
+        // create array to locate
+        T[] locateTestData = testData(arrayOffset + arrayLength);
+        T[] locateArray = zeroedArray(arrayLength, rb.nullValue);
+        System.arraycopy(locateTestData, arrayOffset, locateArray, 0, arrayLength - nullLastXInArray);
         
-        T[] biggerTestData = testData(6);
-        assertFalse(rb.containsArray(biggerTestData));
-        
-        // remove oldest element and expect failure.
-        rb.read();
-        assertFalse(rb.containsArray(testData));
-        
-        // write all the same element and expect failure
-        for (int i=0;i<rb.maxSize();i++) {
-            rb.add(testData[0]);
-        }
-        assertFalse(rb.containsArray(testData));
-        assertFalse(rb.containsArray(biggerTestData));
-        
-        // write all the same second element and expect failure
-        for (int i=0;i<rb.maxSize();i++) {
-            rb.add(testData[1]);
-        }
-        assertFalse(rb.containsArray(testData));
-        assertFalse(rb.containsArray(biggerTestData));
-        
-        // clear and only write some elements and expect failure
-        rb.clear();
-        for (int i=0;i< testData.length - 2 ;i++) {
-            rb.add(testData[i]);
-        }
-        assertFalse(rb.containsArray(testData));
+        assertEquals(expectedResult, rb.containsArray(locateArray));
     }
     
     @Test
@@ -260,5 +248,51 @@ public interface AbstractRingBufferTest<T> {
         assertTrue(itr.hasNext());
         assertEquals(testData[2], itr.next());
         assertThrows(NoSuchElementException.class, itr::next);
+    }
+    
+    @Test
+    default void testToStringMoreThan10() {
+        T[] testData = testData(11);
+        AbstractRingBuffer<T> rb = createRingBuffer(11);
+        for (T e : testData) {
+            rb.add(e);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("RingBuffer[+-");
+        for (int i = 0; i < 10; i++) {
+            sb.append(testData[i]);
+            sb.append(",");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append("...]");
+
+        assertEquals(sb.toString(), rb.toString());
+    }
+
+    @Test
+    default void testToStringHalfFull() {
+        T[] testData = testData(5);
+        AbstractRingBuffer<T> rb = createRingBuffer(10);
+        for (T e : testData) {
+            rb.add(e);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("RingBuffer[-");
+        for (int i = 0; i < testData.length; i++) {
+            sb.append(testData[i]);
+            sb.append(",");
+        }
+        // head marker after added elements
+        sb.append("+");
+        int remaining = rb.maxSize() - testData.length;
+        for (int i = 0; i < remaining; i++) {
+            sb.append(" ,");
+        }
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append("]");
+
+        assertEquals(sb.toString(), rb.toString());
     }
 }

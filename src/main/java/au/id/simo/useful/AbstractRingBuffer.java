@@ -273,7 +273,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
         // look for first element
         int offset = -1;
         T firstItem = array[0];
-        for (int i = 0; i < array.length; i++) {
+        for (int i = 0; i < size; i++) {
             if (Objects.equals(peek(i),firstItem)) {
                 offset = i;
                 break;
