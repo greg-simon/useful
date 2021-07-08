@@ -122,31 +122,7 @@ public class CharRingBuffer extends AbstractRingBuffer<Character> implements Cha
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("CharRingBuffer");
-        sb.append('[');
-        int maxLoop = Math.min(buffer.length, 50);
-        for (int i = 0; i < maxLoop; i++) {
-            if (head == i) {
-                sb.append('+');
-            }
-            if (tail == i) {
-                sb.append('-');
-            }
-            // is this char actual data or uncleared noise?
-            if (isData(i)) {
-                sb.append(buffer[i]);
-            } else {
-                sb.append(" ");
-            }
-            sb.append(',');
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        if (maxLoop < buffer.length) {
-            sb.append("...");
-        }
-        sb.append("]");
-        return sb.toString();
+        return toString("CharRingBuffer", " ", 20);
     }
 
     public boolean contains(CharSequence charSeq) {

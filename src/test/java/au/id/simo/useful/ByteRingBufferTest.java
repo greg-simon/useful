@@ -17,7 +17,21 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  *
  */
-public class ByteRingBufferTest {
+public class ByteRingBufferTest implements AbstractRingBufferTest<Byte>{
+
+    @Override
+    public Byte[] testData(int arrayLength) {
+        Byte[] testData = new Byte[arrayLength];
+        for(int i=0;i<arrayLength;i++) {
+            testData[i] = (byte)DataGenFactory.expectedByte(i);
+        }
+        return testData;
+    }
+
+    @Override
+    public AbstractRingBuffer<Byte> createRingBuffer(int capacity) {
+        return new ByteRingBuffer(capacity);
+    }
 
     @Test
     public void testIncrementIndex() {

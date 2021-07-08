@@ -24,4 +24,9 @@ public class RingBuffer<T> extends AbstractRingBuffer<T> {
     protected T getFromArray(int index) {
         return (T) buffer[index];
     }
+
+    @Override
+    public String toString() {
+        return toString("RingBuffer", "null", 5);
+    }
 }

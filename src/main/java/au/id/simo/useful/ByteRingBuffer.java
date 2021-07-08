@@ -113,31 +113,7 @@ public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ByteRingBuffer");
-        sb.append('[');
-        int maxLoop = Math.min(buffer.length, 50);
-        for (int i = 0; i < maxLoop; i++) {
-            if (head == i) {
-                sb.append('+');
-            }
-            if (tail == i) {
-                sb.append('-');
-            }
-            // is this byte actual data or uncleared noise?
-            if (isData(i)) {
-                sb.append(buffer[i] & 0xff);
-            } else {
-                sb.append("0");
-            }
-            sb.append(',');
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        if (maxLoop < buffer.length) {
-            sb.append("...");
-        }
-        sb.append("]");
-        return sb.toString();
+        return toString("ByteRingBuffer", "0", 20);
     }
     
     public boolean contains(byte[] byteArray) {

@@ -227,12 +227,23 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
         return capacity - size;
     }
 
-    @Override
-    public String toString() {
+    /**
+     * {@code toString} helper for subclasses.
+     * <p>
+     * {@code className[+-showNullValue,showNullValue,showNullValue]}
+     * e.g. with className = "RingBuffer", showNullValue = "0" and maxPrint = 2
+     * {@code RingBuffer[+-0,0...]}
+     * 
+     * @param className The returned string prefix.
+     * @param showNullValue Any empty element is substituted for this string in the returned String.
+     * @param maxPrint the max number of elements to show before adding ellipses.
+     * @return A String showing the current state of the Ring Buffer.
+     */
+    protected String toString(String className, String showNullValue, int maxPrint) {
         StringBuilder sb = new StringBuilder();
-        sb.append("RingBuffer");
+        sb.append(className);
         sb.append('[');
-        int maxLoop = Math.min(capacity, 10);
+        int maxLoop = Math.min(capacity, maxPrint);
         for (int i = 0; i < maxLoop; i++) {
             if (head == i) {
                 sb.append('+');
@@ -244,12 +255,12 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
             if (isData(i)) {
                 sb.append(String.valueOf(getFromArray(i)));
             } else {
-                sb.append(" ");
+                sb.append(showNullValue);
             }
             sb.append(',');
         }
         sb.deleteCharAt(sb.length() - 1);
-        if (maxLoop < capacity) {
+        if (maxPrint < capacity) {
             sb.append("...");
         }
         sb.append("]");

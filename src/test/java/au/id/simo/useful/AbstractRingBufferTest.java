@@ -250,49 +250,52 @@ public interface AbstractRingBufferTest<T> {
         assertThrows(NoSuchElementException.class, itr::next);
     }
     
-    @Test
-    default void testToStringMoreThan10() {
-        T[] testData = testData(11);
-        AbstractRingBuffer<T> rb = createRingBuffer(11);
-        for (T e : testData) {
-            rb.add(e);
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("RingBuffer[+-");
-        for (int i = 0; i < 10; i++) {
-            sb.append(testData[i]);
-            sb.append(",");
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        sb.append("...]");
-
-        assertEquals(sb.toString(), rb.toString());
+    public static Stream<Arguments> toStringArgs() {
+        return Stream.of(
+            // testDataSize, bufferCapacity, className, showNullValue, maxPrint
+            Arguments.of(0, 10, "RingBuffer", " ", 2),
+            Arguments.of(10, 10, "RingBuffer", " ", 2),
+            Arguments.of(0, 10, "blahblah", "-", 2),
+            Arguments.of(1, 5, "blahblah", "-", 10),
+            Arguments.of(1, 5, "blahblah", "", 10)
+        );
     }
-
-    @Test
-    default void testToStringHalfFull() {
-        T[] testData = testData(5);
-        AbstractRingBuffer<T> rb = createRingBuffer(10);
+    
+    @ParameterizedTest
+    @MethodSource("toStringArgs")
+    default void testToString_3Args(int testDataSize, int bufferCapacity, String className, String showNullValue, int maxPrint) {
+        T[] testData = testData(testDataSize);
+        AbstractRingBuffer<T> rb = createRingBuffer(bufferCapacity);
         for (T e : testData) {
             rb.add(e);
         }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("RingBuffer[-");
-        for (int i = 0; i < testData.length; i++) {
-            sb.append(testData[i]);
-            sb.append(",");
+        
+        StringBuilder expectedSB = new StringBuilder();
+        expectedSB.append(className);
+        expectedSB.append("[");
+        int loopCount = Math.min(rb.capacity, maxPrint);
+        for (int i = 0; i < loopCount; i++) {
+            // head plus first
+            if (rb.head == i) {
+                expectedSB.append('+');
+            }
+            // then tail minus
+            if (rb.tail == i) {
+                expectedSB.append('-');
+            }
+            
+            if (i < testData.length) {
+                expectedSB.append(String.valueOf(testData[i]));
+            } else {
+                expectedSB.append(showNullValue);
+            }
+            expectedSB.append(",");
         }
-        // head marker after added elements
-        sb.append("+");
-        int remaining = rb.capacity() - testData.length;
-        for (int i = 0; i < remaining; i++) {
-            sb.append(" ,");
+        expectedSB.deleteCharAt(expectedSB.length()-1);
+        if (maxPrint < rb.capacity) {
+            expectedSB.append("...");
         }
-        sb.deleteCharAt(sb.length() - 1);
-        sb.append("]");
-
-        assertEquals(sb.toString(), rb.toString());
+        expectedSB.append(']');
+        assertEquals(expectedSB.toString(), rb.toString(className, showNullValue, maxPrint));
     }
 }
