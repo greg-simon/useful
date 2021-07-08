@@ -203,7 +203,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
         return size;
     }
 
-    public int maxSize() {
+    public int capacity() {
         return capacity;
     }
 

@@ -32,7 +32,7 @@ public class ByteRingBufferTest {
     public void testHappy() {
         ByteRingBuffer rb = new ByteRingBuffer(3);
         assertEquals(0, rb.size());
-        assertEquals(3, rb.maxSize());
+        assertEquals(3, rb.capacity());
         assertTrue(rb.isEmpty());
         assertFalse(rb.isNotEmpty());
         assertFalse(rb.isFull());

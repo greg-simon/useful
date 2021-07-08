@@ -286,7 +286,7 @@ public interface AbstractRingBufferTest<T> {
         }
         // head marker after added elements
         sb.append("+");
-        int remaining = rb.maxSize() - testData.length;
+        int remaining = rb.capacity() - testData.length;
         for (int i = 0; i < remaining; i++) {
             sb.append(" ,");
         }
