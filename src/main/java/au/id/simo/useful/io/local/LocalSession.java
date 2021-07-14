@@ -25,7 +25,7 @@ import au.id.simo.useful.io.CloseStatus;
  */
 public class LocalSession implements URLSession {
 
-    private final String id;
+    private final Integer id;
     private final Map<String, Resource> resourceMap;
     /**
      * Tracks session close status.
@@ -38,7 +38,7 @@ public class LocalSession implements URLSession {
      * @param id The assigned sessionId of this session. This is required to
      * build any full URL of this session.
      */
-    protected LocalSession(String id) {
+    protected LocalSession(Integer id) {
         this.id = id;
         resourceMap = new HashMap<>();
         closeStatus = new CloseStatus(SESSION_CLOSE_MSG);
@@ -49,7 +49,7 @@ public class LocalSession implements URLSession {
      *
      * @return this instances session id.
      */
-    public String getId() {
+    public Integer getId() {
         return id;
     }
 

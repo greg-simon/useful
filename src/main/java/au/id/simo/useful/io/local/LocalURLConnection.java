@@ -39,12 +39,13 @@ public class LocalURLConnection extends URLConnection {
         }
         // sessionId is the host part of the url:
         // local://sessionid/path
-        String sessionId = url.getHost();
+        String sessionIdStr = url.getHost();
+        Integer sessionId = LocalProtocol.parseIntOrNull(sessionIdStr);
         LocalSession session = LocalProtocol.getSession(sessionId);
         if (session == null) {
             throw new IOException(String.format(
                     "Unknown local session (Session may have been closed): %s"
-                    ,sessionId
+                    ,sessionIdStr
             ));
         }
         return session.getInputStream(url.getPath());

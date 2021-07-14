@@ -16,19 +16,22 @@ import au.id.simo.useful.io.Resource;
  * </pre>
  * Example:
  * <pre>
- * local://00001/index.html
+ * local://12345/index.html
  * </pre>
  * <p>
- * Each {@code sessionId} is a five digit incrementing number
- * assigned when the session is created. The {@code path} is provided by the
- * calling code when resources are registered to the session.
+ * Each {@code sessionId} is an Integer assigned when the session is created.
+ * The {@code path} is provided by the calling code when resources are
+ * registered to the session.
+ * <p>
+ * The Integer sessionId means the upper limits for active sessions at the same
+ * time is {@link Integer#MAX_VALUE}.
  * <p>
  * Usage:
  * <pre>
  * try (URLSession session = LocalProtocol.newSession()) {
  *     String url = session.register("index.html", new File("mypage.html"));
  *
- *     // url is "local://00001/index.html"
+ *     // url is "local://1/index.html"
  *     URL indexUrl = new URL(url);
  *     // code using indexUrl here
  * }
@@ -47,7 +50,7 @@ public class LocalProtocol {
      * The registry of all sessions in the current application. Indexed by
      * sessionId.
      */
-    private static final Map<String, LocalSession> SESSION_REGISTRY = new HashMap<>();
+    private static final Map<Integer, LocalSession> SESSION_REGISTRY = new HashMap<>();
     /**
      * Used to allocate new sessionIds.
      */
@@ -74,21 +77,34 @@ public class LocalProtocol {
         // in a syncblock to make the session 'generate' and 'add'
         // operations into a single atomic operation.
         synchronized (SESSION_REGISTRY) {
-            String sessionId = generateSessionId();
+            Integer sessionId = generateSessionId();
             LocalSession newSession = new LocalSession(sessionId);
             SESSION_REGISTRY.put(sessionId, newSession);
             return newSession;
         }
     }
-
+    
     /**
-     * Generates a String for use as a LocalSession id from the SESSION_COUNTER.
-     *
-     * @return An incrementing number as a string. It is zero padded to be five
-     * characters in length.
+     * Allocates an Integer for use as a LocalSession id.
+     * 
+     * @return An incrementing Integer.
      */
-    private static String generateSessionId() {
-        return String.format("%05d", SESSION_COUNTER.incrementAndGet());
+    private static Integer generateSessionId() {
+        return SESSION_COUNTER.incrementAndGet();
+    }
+    
+    /**
+     * Attempts to parse an Integer from the provided String.
+     *
+     * @param integerStr A string representation of an Integer.
+     * @return An Integer, or null of the string is not able to be parsed.
+     */
+    protected static Integer parseIntOrNull(String integerStr) {
+        try {
+            return Integer.parseInt(integerStr);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     /**
@@ -99,7 +115,10 @@ public class LocalProtocol {
      * @return a LocalSession identified by the sessionId, or null of no such
      * session exists.
      */
-    protected static LocalSession getSession(String sessionId) {
+    protected static LocalSession getSession(Integer sessionId) {
+        if (sessionId == null) {
+            return null;
+        }
         synchronized (SESSION_REGISTRY) {
             return SESSION_REGISTRY.get(sessionId);
         }
