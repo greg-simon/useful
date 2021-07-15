@@ -37,6 +37,10 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
+                <configuration>
+                    <!-- placeholder for large heap tests -->
+                    <!--argLine>-Xmx20000m -XX:+UseG1GC</argLine-->
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -81,6 +85,7 @@
                 <configuration>
                     <!--stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile-->
                     <show>public</show>
+                    <quiet>true</quiet>
                 </configuration>
                 <executions>
                     <execution>
