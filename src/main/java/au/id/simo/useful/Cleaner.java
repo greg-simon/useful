@@ -8,8 +8,13 @@ import java.util.concurrent.ExecutorService;
 /**
  * Used to help ensure resources are cleaned up when required.
  * <p>
- * Cleaner is conceptually a collection of {@link Runnable} instances that are
- * executed when {@link #clean()} is called.
+ * Cleaner is conceptually a collection of the following types that are cleaned
+ * up when {@link #clean()} is called:
+ * <ul>
+ * <li>{@link Runnable}: Has {@code run()} called</li>
+ * <li>{@link AutoCloseable}: Has {@code clean()} called</li>
+ * <li>{@link ExecutorService}: Has {@code shutdownNow()} called</li>
+ * </ul>
  * <p>
  * Cleanup tasks are performed in reverse added order (LIFO), consistent with
  * try-with-resources behavior for {@link AutoCloseable} implementations.
@@ -44,7 +49,7 @@ import java.util.concurrent.ExecutorService;
  * passing a Cleaner instance around manually.
  * </ol>
  * <p>
- * {@link Runnable}s added to the Cleaner list are only ever run once before
+ * Items added to the Cleaner list are only ever cleaned up once before
  * being discarded. This makes it safe to call an instances {@link #clean()}
  * method multiple times.
  */
@@ -58,7 +63,12 @@ public class Cleaner implements AutoCloseable {
         }
 
         @Override
-        public void handle(AutoCloseable runnable, Exception exception) {
+        public void handle(AutoCloseable closable, Exception exception) {
+            // no op
+        }
+        
+        @Override
+        public void handle(ExecutorService service, Exception exception) {
             // no op
         }
     };
@@ -80,6 +90,24 @@ public class Cleaner implements AutoCloseable {
             Runtime.getRuntime().addShutdownHook(onShutdownThread);
         }
         return onShutdownInstance;
+    }
+    
+    /**
+     * Unregisters the onShutdown instance and returns it if it exists.
+     * <p>
+     * Future calls to {@link #onShutdown()} will return and register a
+     * different instance.
+     * 
+     * @return The registered Cleaner instance, or null if it doesn't exist.
+     */
+    protected static synchronized Cleaner unregisterOnShutdown() {
+        if (onShutdownInstance == null) {
+            return null;
+        }
+        Runtime.getRuntime().removeShutdownHook(onShutdownThread);
+        Cleaner returnCleaner = onShutdownInstance;
+        onShutdownInstance = null;
+        return returnCleaner;
     }
 
     /**
@@ -109,8 +137,15 @@ public class Cleaner implements AutoCloseable {
 
     /**
      * Cleaned up in stack order: LIFO.
+     * <p>
+     * Could contain any of the following types:
+     * <ul>
+     * <li>{@link Runnable}</li>
+     * <li>{@link AutoCloseable}</li>
+     * <li>{@link ExecutorService}</li>
+     * </ul>
      */
-    private final Deque<Runnable> runnables;
+    private final Deque<Object> itemsToClean;
     
     /**
      * The handler used to act on any cleanup task that throws an exception.
@@ -118,7 +153,7 @@ public class Cleaner implements AutoCloseable {
     private CleanerErrorHandler handler;
 
     public Cleaner() {
-        this.runnables = new ArrayDeque<>();
+        this.itemsToClean = new ArrayDeque<>();
         this.handler = NO_OP_POLICY;
     }
     
@@ -127,7 +162,7 @@ public class Cleaner implements AutoCloseable {
      * @return the number of tasks to run on cleanup.
      */
     public int size() {
-        return runnables.size();
+        return itemsToClean.size();
     }
     
     public void setErrorHandler(CleanerErrorHandler handler) {
@@ -149,13 +184,40 @@ public class Cleaner implements AutoCloseable {
      */
     public synchronized void clean() {
         // Cleanup in reverse order.
-        while (!runnables.isEmpty()) {
-            Runnable runnable = runnables.pop();
-            try {
-                runnable.run();
-            } catch (Exception t) {
-                handler.handle(runnable, t);
+        while (!itemsToClean.isEmpty()) {
+            Object item = itemsToClean.pop();
+            if (item instanceof Runnable) {
+                cleanRunnable((Runnable) item);
+            } else if (item instanceof AutoCloseable) {
+                cleanClosable((AutoCloseable) item);
+            } else if (item instanceof ExecutorService) {
+                cleanExecutorService((ExecutorService) item);
             }
+            // unknown item: ignore
+        }
+    }
+    
+    private void cleanRunnable(Runnable runnable) {
+        try {
+            runnable.run();
+        } catch (Exception t) {
+            handler.handle(runnable, t);
+        }
+    }
+    
+    private void cleanClosable(AutoCloseable closable) {
+        try {
+            closable.close();
+        } catch (Exception ex) {
+            handler.handle(closable, ex);
+        }
+    }
+    
+    private void cleanExecutorService(ExecutorService service) {
+        try {
+            service.shutdownNow();
+        } catch (Exception ex) {
+            handler.handle(service, ex);
         }
     }
 
@@ -181,7 +243,7 @@ public class Cleaner implements AutoCloseable {
         if (cleanupTask == null) {
             return null;
         }
-        runnables.push(cleanupTask);
+        itemsToClean.push(cleanupTask);
         return cleanupTask;
     }
 
@@ -206,7 +268,7 @@ public class Cleaner implements AutoCloseable {
         if (service == null) {
             return null;
         }
-        runnables.push(service::shutdownNow);
+        itemsToClean.push(service);
         return service;
     }
 
@@ -242,13 +304,7 @@ public class Cleaner implements AutoCloseable {
         if (closable == this) {
             throw new IllegalArgumentException(SELF_ADD_ERROR_MSG);
         }
-        runnables.push(() -> {
-            try {
-                closable.close();
-            } catch (Exception ex) {
-                handler.handle(closable, ex);
-            }
-        });
+        itemsToClean.push(closable);
         return closable;
     }
 }

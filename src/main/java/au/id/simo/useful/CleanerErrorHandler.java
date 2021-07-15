@@ -1,5 +1,7 @@
 package au.id.simo.useful;
 
+import java.util.concurrent.ExecutorService;
+
 /**
  * A handler for cleaner tasks that throw an exception when attempting to clean
  * them up.
@@ -23,4 +25,13 @@ public interface CleanerErrorHandler {
      * AutoClosable.
      */
     public void handle(AutoCloseable closable, Exception exception);
+    
+    /**
+     * Handles any exceptions from running {@link ExecutorService#shutdownNow()}.
+     *
+     * @param service The ExecutorService instance that caused the exception.
+     * @param exception The exception thrown when attempting to shutdown the
+     * ExecutorService.
+     */
+    public void handle(ExecutorService service, Exception exception);
 }

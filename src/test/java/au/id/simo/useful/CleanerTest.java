@@ -1,6 +1,5 @@
 package au.id.simo.useful;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -39,28 +38,14 @@ public class CleanerTest {
                 "Verify multiple calls to onShutdown returns the same instance"
         );
         
-        // obtain the shutdown thread instance via reflection to verify it had
-        // been registered
-        Class<Cleaner> cc = Cleaner.class;
-        Field staticCleanerThread = cc.getDeclaredField("onShutdownThread");
-        staticCleanerThread.setAccessible(true);
-        // null because it's a static field requiring no instance to access.
-        Thread thread = (Thread) staticCleanerThread.get(null);
-        assertNotNull(thread);
+        Cleaner unregisteredCleaner = Cleaner.unregisterOnShutdown();
+        assertNotNull(unregisteredCleaner);
+        assertSame(cleaner, unregisteredCleaner);
         
-        // Short of creating and shutting down a JVM, this is the only test I
-        // can use to verify the Cleaner was registered.
-        // This will also break the onDemand functionallity as the Cleaner will
-        // not register itself again for the life of this JVM.
-        assertTrue(Runtime.getRuntime().removeShutdownHook(thread));
+        assertNull(Cleaner.unregisterOnShutdown());
         
-        // This will repair the breakage by resetting the state of the shutdown
-        // cleaner instance to null. Causing a new one to be created and
-        // registered next call to onShutdown().
-        Field onShutdownInstance = cc.getDeclaredField("onShutdownInstance");
-        onShutdownInstance.setAccessible(true);
-        onShutdownInstance.set(null, null);
-        staticCleanerThread.set(null, null);
+        assertNotSame(unregisteredCleaner, Cleaner.onShutdown());
+        assertNotNull(Cleaner.unregisterOnShutdown());
     }
 
     @Test
@@ -103,11 +88,13 @@ public class CleanerTest {
         cleaner.closeLater(() -> {
             throw new RuntimeException();
         });
+        cleaner.shutdownLater(new MockExecutorService());
         
         cleaner.clean();
         assertEquals(1, errorHandler.getRunnableCount());
         assertEquals(1, errorHandler.getClosableCount());
-        assertEquals(2, errorHandler.getTotalCount());
+        assertEquals(1, errorHandler.getServiceCount());
+        assertEquals(3, errorHandler.getTotalCount());
         assertEquals(0, cleaner.size());
     }
 
@@ -223,6 +210,7 @@ public class CleanerTest {
     public class CountErrorHandler implements CleanerErrorHandler {
         private final AtomicInteger runnableCount = new AtomicInteger();
         private final AtomicInteger closableCount = new AtomicInteger();
+        private final AtomicInteger serviceCount = new AtomicInteger();
         
         @Override
         public void handle(Runnable runnable, Exception exception) {
@@ -233,6 +221,11 @@ public class CleanerTest {
         public void handle(AutoCloseable closable, Exception exception) {
             closableCount.incrementAndGet();
         }
+        
+        @Override
+        public void handle(ExecutorService closable, Exception exception) {
+            serviceCount.incrementAndGet();
+        }
 
         public int getRunnableCount() {
             return runnableCount.get();
@@ -242,8 +235,12 @@ public class CleanerTest {
             return closableCount.get();
         }
         
+        public int getServiceCount() {
+            return serviceCount.get();
+        }
+        
         public int getTotalCount() {
-            return getRunnableCount() + getClosableCount();
+            return getRunnableCount() + getClosableCount() + getServiceCount();
         }
     }
     
