@@ -2,7 +2,6 @@ package au.id.simo.useful.io.local;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import au.id.simo.useful.io.Resource;
 
@@ -23,8 +22,10 @@ import au.id.simo.useful.io.Resource;
  * The {@code path} is provided by the calling code when resources are
  * registered to the session.
  * <p>
- * The Integer sessionId means the upper limits for active sessions at the same
- * time is {@link Integer#MAX_VALUE}.
+ * Sessions are limited to 100,000 active at any one time via the following
+ * constants: {@link #MAX_SESSION_ID}, {@link #MIN_SESSION_ID}. Attempting to
+ * create a new session after this limit will throw a
+ * {@link SessionLimitReachedException}
  * <p>
  * Usage:
  * <pre>
@@ -47,6 +48,14 @@ import au.id.simo.useful.io.Resource;
 public class LocalProtocol {
 
     /**
+     * Allocate session ids above or equal to this number.
+     */
+    protected static final int MIN_SESSION_ID = 0;
+    /**
+     * Allocate session ids below or equal to this number.
+     */
+    protected static final int MAX_SESSION_ID = 100_000;
+    /**
      * The registry of all sessions in the current application. Indexed by
      * sessionId.
      */
@@ -54,7 +63,7 @@ public class LocalProtocol {
     /**
      * Used to allocate new sessionIds.
      */
-    private static final AtomicInteger SESSION_COUNTER = new AtomicInteger();
+    private static int sessionCounter = MIN_SESSION_ID;
 
     /**
      * Utility class should not have a public default constructor.
@@ -71,13 +80,16 @@ public class LocalProtocol {
      *
      * @return a new LocalSession.
      * @see Handler#registerHandlerIfRequired()
+     * @throws SessionLimitReachedException if
+     * ({@link #MAX_SESSION_ID} - {@link #MIN_SESSION_ID}) active sessions
+     * already exist when this method is called.
      */
     public static LocalSession newSession() {
         Handler.registerHandlerIfRequired();
         // in a syncblock to make the session 'generate' and 'add'
         // operations into a single atomic operation.
         synchronized (SESSION_REGISTRY) {
-            Integer sessionId = generateSessionId();
+            Integer sessionId = allocateSessionId();
             LocalSession newSession = new LocalSession(sessionId);
             SESSION_REGISTRY.put(sessionId, newSession);
             return newSession;
@@ -85,12 +97,34 @@ public class LocalProtocol {
     }
     
     /**
-     * Allocates an Integer for use as a LocalSession id.
+     * Allocates an Integer for use as a LocalSession id, guaranteed to be
+     * unique among already allocated session ids.
      * 
      * @return An incrementing Integer.
+     * @throws SessionLimitReachedException if
+     * ({@link #MAX_SESSION_ID} - {@link #MIN_SESSION_ID}) active sessions
+     * already exist when this method is called.
      */
-    private static Integer generateSessionId() {
-        return SESSION_COUNTER.incrementAndGet();
+    private static Integer allocateSessionId() {
+        int sessionId;
+        // save starting value to detect a complete search for an unallocated id
+        int loopTerminator = sessionCounter;
+        do {
+            sessionCounter++;
+            if (sessionCounter >= MAX_SESSION_ID) {
+                sessionCounter = MIN_SESSION_ID;
+            }
+            sessionId = sessionCounter;
+            if (sessionId == loopTerminator) {
+                // by now we have looped through the full rage of the numbers
+                // and none are left to allocate
+                throw new SessionLimitReachedException(String.format(
+                        "Session limit reached: %s already exist",
+                        (MAX_SESSION_ID - MIN_SESSION_ID)
+                ));
+            }
+        } while (SESSION_REGISTRY.containsKey(sessionCounter));
+        return sessionId;
     }
     
     /**
