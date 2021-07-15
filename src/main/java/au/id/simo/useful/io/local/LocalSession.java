@@ -121,17 +121,10 @@ public class LocalSession implements URLSession {
         return closeStatus.isClosed();
     }
 
-    /**
-     * A close method for use by the Local Registry that doesn't throw an
-     * Exception just for setting a flag.
-     */
-    protected void closeLocalSession() {
-        closeStatus.close();
-    }
-
     @Override
     public void close() throws IOException {
-        LocalProtocol.closeSession(this);
+        closeStatus.close();
+        LocalProtocol.unregisterSession(this);
     }
 
     /**

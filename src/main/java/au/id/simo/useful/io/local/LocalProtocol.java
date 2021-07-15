@@ -159,16 +159,13 @@ public class LocalProtocol {
     }
 
     /**
-     * Cleans up all resources used for the provided Session.
+     * Removes the provided Session from the Session register.
      *
-     * @param session close this session and remove it from the registry.
+     * @param session removes this session from the registry.
      */
-    protected static void closeSession(LocalSession session) {
+    protected static void unregisterSession(LocalSession session) {
         synchronized (SESSION_REGISTRY) {
-            LocalSession sess = SESSION_REGISTRY.remove(session.getId());
-            if (sess != null) {
-                sess.closeLocalSession();
-            }
+            SESSION_REGISTRY.remove(session.getId());
         }
     }
 }
