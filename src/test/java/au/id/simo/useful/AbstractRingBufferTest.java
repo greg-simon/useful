@@ -51,6 +51,15 @@ public interface AbstractRingBufferTest<T> {
             assertEquals(testData[i], rb.peek(i), String.format("index: %s", i));
         }
     }
+
+    @Test
+    default void testIncrementIndex() {
+        AbstractRingBuffer rb = createRingBuffer(3);
+        assertEquals(1, rb.incrementIndex(0, 1));
+        assertEquals(2, rb.incrementIndex(1, 1));
+        assertEquals(0, rb.incrementIndex(2, 1));
+        assertEquals(1, rb.incrementIndex(3, 1));
+    }
     
     @Test
     default void testPut() {
@@ -297,5 +306,32 @@ public interface AbstractRingBufferTest<T> {
         }
         expectedSB.append(']');
         assertEquals(expectedSB.toString(), rb.toString(className, showNullValue, maxPrint));
+    }
+    
+    @Test
+    default void testClear_Size_Capacity_getFreeSpace() {
+        T[] testData = testData(3);
+        AbstractRingBuffer<T> rb = createRingBuffer(3);
+        assertEquals(0, rb.size());
+        assertEquals(3, rb.getFreeSpace());
+        assertEquals(3, rb.capacity());
+        
+        rb.add(testData[0]);
+        assertEquals(1, rb.size());
+        assertEquals(2, rb.getFreeSpace());
+        assertEquals(3, rb.capacity());
+        rb.add(testData[1]);
+        assertEquals(2, rb.size());
+        assertEquals(1, rb.getFreeSpace());
+        assertEquals(3, rb.capacity());
+        rb.add(testData[2]);
+        assertEquals(3, rb.size());
+        assertEquals(0, rb.getFreeSpace());
+        assertEquals(3, rb.capacity());
+        
+        rb.clear();
+        assertEquals(0, rb.size());
+        assertEquals(3, rb.getFreeSpace());
+        assertEquals(3, rb.capacity());
     }
 }

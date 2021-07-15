@@ -50,8 +50,8 @@ public class CheckUtil {
      * @param copyLength the number of elements to in the array to read or
      * write.
      * @exception IndexOutOfBoundsException If {@code arrayOffset} is negative,
-     * {@code arrayOffset} is negative, or {@code copyLength} is greater than
-     * {@code arrayOffset - arrayOffset}
+     * {@code copyLength} is negative, or {@code copyLength} is greater than
+     * {@code arrayLength - arrayOffset}
      */
     public static void checkReadWriteArgs(int arrayLength, int arrayOffset, int copyLength) {
         if (arrayOffset < 0 || copyLength < 0 || copyLength > arrayLength - arrayOffset) {

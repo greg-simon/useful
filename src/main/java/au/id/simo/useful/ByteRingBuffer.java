@@ -47,8 +47,12 @@ public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
      * into
      * @param length the number of values to copy.
      * @return the number of bytes copied into the destination array.
+     * @exception IndexOutOfBoundsException If {@code start} is negative,
+     * {@code length} is negative, or {@code length} is greater than
+     * {@code dest.length - start}
      */
     public int read(byte[] dest, int start, int length) {
+        CheckUtil.checkReadWriteArgs(dest.length, start, length);
         int totalReadLength = peek(dest, start, length);
         tail = incrementIndex(tail, totalReadLength);
         size -= totalReadLength;
@@ -77,8 +81,12 @@ public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
      * @param length the number of bytes to copy into the destination array
      * @return the number of bytes actually copied. Which could be different to
      * the length argument.
+     * @exception IndexOutOfBoundsException If {@code start} is negative,
+     * {@code length} is negative, or {@code length} is greater than
+     * {@code dest.length - start}
      */
     public int peek(byte[] dest, int start, int length) {
+        CheckUtil.checkReadWriteArgs(dest.length, start, length);
         // buffer array could have two segments to copy out of order. One at
         // start of the buffer and one at the end.
         // (h is head index, t is tail index)
