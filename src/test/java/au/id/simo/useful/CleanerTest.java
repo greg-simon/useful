@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import au.id.simo.useful.io.CloseStatus;
+import au.id.simo.useful.io.Latch;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -170,12 +170,12 @@ public class CleanerTest {
     @Test
     public void testCloseLater() {
         Cleaner cleaner = new Cleaner();
-        CloseStatus closeStatus = cleaner.closeLater(new CloseStatus());
+        Latch latch = cleaner.closeLater(new Latch());
         assertEquals(1, cleaner.size());
-        assertFalse(closeStatus.isClosed());
+        assertFalse(latch.isClosed());
         cleaner.clean();
         assertEquals(0, cleaner.size());
-        assertTrue(closeStatus.isClosed());
+        assertTrue(latch.isClosed());
     }
     
     @Test

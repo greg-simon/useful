@@ -18,6 +18,9 @@ import java.util.TreeSet;
  * An implementation of URLSession that uses the file system for the backing
  * store.
  * <p>
+ * It's also useful as a tool in managing temporary files as they are all
+ * deleted on closing the session.
+ * <p>
  * Any registered Resource, Generator or File will be written to a new file
  * within the session's base directory during registration.
  * <p>
@@ -32,7 +35,7 @@ public class FileSession implements URLSession {
     private final Resources resources;
     private final List<Path> createdFileList;
     private final List<Path> createdDirList;
-    private final CloseStatus closeStatus;
+    private final Latch latch;
 
     /**
      * Creates a new FileSession backed by an auto generated temporary directory
@@ -48,7 +51,7 @@ public class FileSession implements URLSession {
         resources = new FileResources(baseDir);
         createdFileList = new ArrayList<>();
         createdDirList = new ArrayList<>();
-        closeStatus = new CloseStatus(SESSION_CLOSE_MSG);
+        latch = new Latch(SESSION_CLOSE_MSG);
 
         createdDirList.add(basePath);
     }
@@ -68,7 +71,7 @@ public class FileSession implements URLSession {
         resources = new FileResources(baseDir);
         createdFileList = new ArrayList<>();
         createdDirList = new ArrayList<>();
-        closeStatus = new CloseStatus(SESSION_CLOSE_MSG);
+        latch = new Latch(SESSION_CLOSE_MSG);
     }
 
     /**
@@ -174,7 +177,7 @@ public class FileSession implements URLSession {
 
     @Override
     public String register(String urlPath, Generator product) throws IOException {
-        closeStatus.throwIfClosed();
+        latch.throwIfClosed();
         File outFile = getFile(urlPath);
         createDirectories(outFile);
         FileOutputStream fout = new FileOutputStream(outFile);
@@ -191,7 +194,7 @@ public class FileSession implements URLSession {
 
     @Override
     public String register(String path, File resource) throws IOException {
-        closeStatus.throwIfClosed();
+        latch.throwIfClosed();
         Path source = resource.toPath();
         File target = getFile(path);
         createDirectories(target);
@@ -205,7 +208,7 @@ public class FileSession implements URLSession {
 
     @Override
     public Resource getResource(String path) throws IOException {
-        closeStatus.throwIfClosed();
+        latch.throwIfClosed();
         return resources.get(path);
     }
 
@@ -240,7 +243,7 @@ public class FileSession implements URLSession {
 
     @Override
     public boolean isClosed() {
-        return closeStatus.isClosed();
+        return latch.isClosed();
     }
 
     /**
@@ -257,7 +260,7 @@ public class FileSession implements URLSession {
         if (isClosed()) {
             return;
         }
-        closeStatus.close();
+        latch.close();
         for (Path filePath : createdFileList) {
             Files.deleteIfExists(filePath);
         }

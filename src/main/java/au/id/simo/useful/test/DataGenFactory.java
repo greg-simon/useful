@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.Random;
 
-import au.id.simo.useful.io.CloseStatus;
+import au.id.simo.useful.io.Latch;
 import au.id.simo.useful.io.LimitedInputStream;
 import au.id.simo.useful.io.LimitedReader;
 
@@ -28,7 +28,7 @@ public class DataGenFactory {
     
     public static InputStream incrementingBytes(long limit) {
         return new LimitedInputStream(new InputStream() {
-            private final CloseStatus closeStatus = new CloseStatus(STREAM_MSG);
+            private final Latch closeStatus = new Latch(STREAM_MSG);
             private long counter=0;
             @Override
             public int read() throws IOException {
@@ -56,7 +56,7 @@ public class DataGenFactory {
     public static InputStream randomBytes(long limit) {
         Random random = new Random();
         return new LimitedInputStream(new InputStream() {
-            private final CloseStatus closeStatus = new CloseStatus(STREAM_MSG);
+            private final Latch closeStatus = new Latch(STREAM_MSG);
             @Override
             public int read() throws IOException {
                 closeStatus.throwIfClosed();
@@ -74,7 +74,7 @@ public class DataGenFactory {
     public static Reader ascendingChars(long limit) {
         return new LimitedReader(new Reader() {
             private static final String CHARS = "abcdefghijklmnopqrstuvwxyz ";
-            private final CloseStatus closeStatus = new CloseStatus(READER_MSG);
+            private final Latch closeStatus = new Latch(READER_MSG);
             private volatile int index = 0;
             
             @Override

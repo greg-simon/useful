@@ -9,7 +9,7 @@ import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import au.id.simo.useful.io.CloseStatus;
+import au.id.simo.useful.io.Latch;
 import au.id.simo.useful.io.StringResource;
 import au.id.simo.useful.io.URLSession;
 import au.id.simo.useful.io.local.LocalProtocol;
@@ -47,33 +47,33 @@ public class XmlHandlerTest {
     @Test
     public void testParseInputStream() throws IOException, SAXException, ParserConfigurationException {
         TagListXmlHandler xmlHandler = new TagListXmlHandler();
-        CloseStatus cs = new CloseStatus();
+        Latch latch = new Latch();
         ByteArrayInputStream in = new ByteArrayInputStream(TEST_DOC.getBytes()) {
             @Override
             public void close() throws IOException {
                 super.close();
-                cs.close();
+                latch.close();
             }
         };
         xmlHandler.parse(in);
         testTags(xmlHandler.tagList);
-        assertTrue(cs.isClosed());
+        assertTrue(latch.isClosed());
     }
     
     @Test
     public void testParseReader() throws IOException, SAXException, ParserConfigurationException {
         TagListXmlHandler xmlHandler = new TagListXmlHandler();
-        CloseStatus cs = new CloseStatus();
+        Latch latch = new Latch();
         Reader in = new StringReader(TEST_DOC) {
             @Override
             public void close() {
                 super.close();
-                cs.close();
+                latch.close();
             }
         };
         xmlHandler.parse(in);
         testTags(xmlHandler.tagList);
-        assertTrue(cs.isClosed());
+        assertTrue(latch.isClosed());
     }
 
     private void testTags(List<Tag> tags) {

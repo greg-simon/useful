@@ -12,7 +12,7 @@ import au.id.simo.useful.io.FileResource;
 import au.id.simo.useful.io.Generator;
 import au.id.simo.useful.io.Resource;
 import au.id.simo.useful.io.URLSession;
-import au.id.simo.useful.io.CloseStatus;
+import au.id.simo.useful.io.Latch;
 
 /**
  * An implementation of the URLSession that uses the local protocol
@@ -28,9 +28,9 @@ public class LocalSession implements URLSession {
     private final Integer id;
     private final Map<String, Resource> resourceMap;
     /**
-     * Tracks session close status.
+     * Tracks session open/close status.
      */
-    private final CloseStatus closeStatus;
+    private final Latch latch;
 
     /**
      * Only the LocalProtocol class should create LocalSession instances.
@@ -41,7 +41,7 @@ public class LocalSession implements URLSession {
     protected LocalSession(Integer id) {
         this.id = id;
         resourceMap = new HashMap<>();
-        closeStatus = new CloseStatus(SESSION_CLOSE_MSG);
+        latch = new Latch(SESSION_CLOSE_MSG);
     }
 
     /**
@@ -94,7 +94,7 @@ public class LocalSession implements URLSession {
 
     @Override
     public String register(String urlPath, Resource resource) throws IOException {
-        closeStatus.throwIfClosed();
+        latch.throwIfClosed();
         String normalisedPath = normalisePath(urlPath);
         resourceMap.put(normalisedPath, resource);
         return urlFromPath(normalisedPath);
@@ -107,7 +107,7 @@ public class LocalSession implements URLSession {
 
     @Override
     public Resource getResource(String path) throws IOException {
-        closeStatus.throwIfClosed();
+        latch.throwIfClosed();
         return resourceMap.get(normalisePath(path));
     }
 
@@ -118,12 +118,12 @@ public class LocalSession implements URLSession {
 
     @Override
     public boolean isClosed() {
-        return closeStatus.isClosed();
+        return latch.isClosed();
     }
 
     @Override
     public void close() throws IOException {
-        closeStatus.close();
+        latch.close();
         LocalProtocol.unregisterSession(this);
     }
 

@@ -4,18 +4,18 @@ import java.io.IOException;
 
 /**
  * Used to track an open/closed state and to reduce boiler plate code in
- * tracking it.
+ * throwing exceptions if closed.
  */
-public class CloseStatus implements AutoCloseable {
+public class Latch implements AutoCloseable {
 
     private volatile boolean closed;
     private final IOException throwOnClosedCheck;
 
-    public CloseStatus() {
+    public Latch() {
         this.throwOnClosedCheck = new IOException();
     }
     
-    public CloseStatus(String errorMessage) {
+    public Latch(String errorMessage) {
         this.throwOnClosedCheck = new IOException(errorMessage);
     }
 

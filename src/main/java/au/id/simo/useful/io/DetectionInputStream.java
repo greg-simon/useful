@@ -23,7 +23,7 @@ public class DetectionInputStream extends FilterInputStream {
     private final Match match;
     
     private final ByteRingBuffer buffer;
-    private final CloseStatus inStream;
+    private final Latch inStatus;
 
     public DetectionInputStream(InputStream in) {
         this(in, null);
@@ -39,11 +39,11 @@ public class DetectionInputStream extends FilterInputStream {
         // ensure buffer is never zero
         int maxBufferRequired = Math.max(MIN_BUFFER_SIZE, this.match.matchBytes.length);
         this.buffer = new ByteRingBuffer(maxBufferRequired);
-        this.inStream = new CloseStatus();
+        this.inStatus = new Latch();
     }
 
     private void fillBuffer() throws IOException {
-        if(inStream.isClosed()) {
+        if(inStatus.isClosed()) {
             // no more in the underlying input stream, no need to read any more.
             return;
         }
@@ -53,7 +53,7 @@ public class DetectionInputStream extends FilterInputStream {
             buffer.add(b);
         }
         if (byt == -1) {
-            inStream.close();
+            inStatus.close();
         }
     }
     
@@ -78,7 +78,7 @@ public class DetectionInputStream extends FilterInputStream {
 
     @Override
     public int read() throws IOException {
-        while(inStream.isOpen() && buffer.isNotFull()) {
+        while(inStatus.isOpen() && buffer.isNotFull()) {
             fillBuffer();
         }
         
