@@ -1,6 +1,9 @@
 package au.id.simo.useful.io.local;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import au.id.simo.useful.io.Resource;
@@ -50,26 +53,65 @@ public class LocalProtocol {
     /**
      * Allocate session ids above or equal to this number.
      */
-    protected static final int MIN_SESSION_ID = 0;
+    protected static final int MIN_SESSION_ID = 1;
     /**
      * Allocate session ids below or equal to this number.
      */
     protected static final int MAX_SESSION_ID = 100_000;
+    /**
+     * The maximum number of active sessions.
+     */
+    protected static final int MAX_SESSIONS = MAX_SESSION_ID - MIN_SESSION_ID + 1;
     /**
      * The registry of all sessions in the current application. Indexed by
      * sessionId.
      */
     private static final Map<Integer, LocalSession> SESSION_REGISTRY = new HashMap<>();
     /**
-     * Used to allocate new sessionIds.
+     * Used to allocate new sessionIds. Initialised to one less than min, as the
+     * allocator increments first then allocates.
      */
-    private static int sessionCounter = MIN_SESSION_ID;
+    private static int sessionCounter = MIN_SESSION_ID - 1;
 
     /**
      * Utility class should not have a public default constructor.
      */
     private LocalProtocol() {
         // no-op
+    }
+    
+    /**
+     * 
+     * @return The maximum number of active sessions.
+     */
+    public static int maxSessions() {
+        return MAX_SESSIONS;
+    }
+    
+    /**
+     * 
+     * @return The number of currently active sessions.
+     */
+    public static int sessionCount() {
+        return SESSION_REGISTRY.size();
+    }
+    
+    /**
+     * Closes all active sessions.
+     * 
+     * @return the number of sessions that were closed.
+     * @throws java.io.IOException if {@link LocalSession#close()} throws an
+     * exception.
+     */
+    public static int closeAllSessions() throws IOException {
+        // no synchronized required as the session.close() will unregister in a
+        // synchonised block anyway.
+        List<LocalSession> sessions = new ArrayList<>(SESSION_REGISTRY.values());
+        int returnValue = sessions.size();
+        for(LocalSession session: sessions) {
+            session.close();
+        }
+        return returnValue;
     }
 
     /**
@@ -80,9 +122,8 @@ public class LocalProtocol {
      *
      * @return a new LocalSession.
      * @see Handler#registerHandlerIfRequired()
-     * @throws SessionLimitReachedException if
-     * ({@link #MAX_SESSION_ID} - {@link #MIN_SESSION_ID}) active sessions
-     * already exist when this method is called.
+     * @throws SessionLimitReachedException if the number of active sessions
+     * equals {@link #maxSessions()} when this method is called.
      */
     public static LocalSession newSession() {
         Handler.registerHandlerIfRequired();
@@ -101,30 +142,34 @@ public class LocalProtocol {
      * unique among already allocated session ids.
      * 
      * @return An incrementing Integer.
-     * @throws SessionLimitReachedException if
-     * ({@link #MAX_SESSION_ID} - {@link #MIN_SESSION_ID}) active sessions
-     * already exist when this method is called.
+     * @throws SessionLimitReachedException if the number of active sessions
+     * equals {@link #maxSessions()} when this method is called.
      */
     private static Integer allocateSessionId() {
-        int sessionId;
-        // save starting value to detect a complete search for an unallocated id
-        int loopTerminator = sessionCounter;
-        do {
-            sessionCounter++;
-            if (sessionCounter >= MAX_SESSION_ID) {
-                sessionCounter = MIN_SESSION_ID;
-            }
-            sessionId = sessionCounter;
-            if (sessionId == loopTerminator) {
+        int sessionId = nextSessionId();
+        int loopCounter = 0;
+        while (SESSION_REGISTRY.containsKey(sessionId)) {
+            sessionId = nextSessionId();
+            
+            if (loopCounter == MAX_SESSIONS) {
                 // by now we have looped through the full rage of the numbers
                 // and none are left to allocate
                 throw new SessionLimitReachedException(String.format(
                         "Session limit reached: %s already exist",
-                        (MAX_SESSION_ID - MIN_SESSION_ID)
+                        MAX_SESSIONS
                 ));
             }
-        } while (SESSION_REGISTRY.containsKey(sessionCounter));
+            loopCounter++;
+        }
         return sessionId;
+    }
+    
+    private static int nextSessionId() {
+        sessionCounter++;
+        if (sessionCounter > MAX_SESSION_ID) {
+            sessionCounter = MIN_SESSION_ID;
+        }
+        return sessionCounter;
     }
     
     /**
