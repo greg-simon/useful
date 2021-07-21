@@ -57,7 +57,7 @@ public interface URLSession extends Closeable {
      * </pre>
      *
      * The full URL spec provided is implementation specific, but will be usable
-     * with {@link java.net.URL}.
+     * with {@link java.net.URL#URL(java.lang.String)}.
      *
      * @param path a relative path to a resource.
      * @return A string URL suitable for use with {@link java.net.URL} to point
