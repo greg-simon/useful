@@ -26,7 +26,7 @@ import java.util.concurrent.ExecutorService;
  * <pre>
  * try (Cleaner cleaner = new Cleaner()) {
  *   ExecutorService service = cleaner.shutdownLater(Executors.newCachedThreadPool());
- *   cleaner.add(() -&gt; {
+ *   cleaner.runLater(() -&gt; {
  *       System.out.println("This will be printed at the end of the try block");
  *    });
  *    service.execute(...);
