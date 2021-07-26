@@ -159,6 +159,7 @@ public abstract class XmlHandler extends DefaultHandler {
     public void parse(InputSource inputSource) throws IOException, SAXException, ParserConfigurationException {
         SAXParserFactory spf = SAXParserFactory.newInstance();
         spf.setNamespaceAware(true);
+        spf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         SAXParser saxParser = spf.newSAXParser();
         saxParser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
         saxParser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
