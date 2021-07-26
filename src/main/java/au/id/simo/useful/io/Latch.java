@@ -3,20 +3,31 @@ package au.id.simo.useful.io;
 import java.io.IOException;
 
 /**
- * Used to track an open/closed state and to reduce boiler plate code in
+ * Used to track an open/closed state and to reduce boiler plate code around
  * throwing exceptions if closed.
+ * <p>
+ * Useful in IO class implementations that should throw exceptions when data is
+ * read/written after being closed.
+ * <p>
+ * Example:
+ * <pre>
+ * public int read() throws IOException {
+ *    latch.throwIfClosed();
+ *    ...
+ * }
+ * </pre>
  */
 public class Latch implements AutoCloseable {
 
     private volatile boolean closed;
-    private final IOException throwOnClosedCheck;
+    private final String closedErrorMessage;
 
     public Latch() {
-        this.throwOnClosedCheck = new IOException();
+        closedErrorMessage = null;
     }
     
-    public Latch(String errorMessage) {
-        this.throwOnClosedCheck = new IOException(errorMessage);
+    public Latch(String closedErrorMessage) {
+        this.closedErrorMessage = closedErrorMessage;
     }
 
     public <T extends Throwable> void throwIfClosed(T throwable) throws T {
@@ -27,7 +38,7 @@ public class Latch implements AutoCloseable {
 
     public void throwIfClosed() throws IOException {
         if (closed) {
-            throw throwOnClosedCheck;
+            throw new IOException(closedErrorMessage);
         }
     }
 
