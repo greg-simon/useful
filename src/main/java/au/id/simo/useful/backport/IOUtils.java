@@ -10,6 +10,22 @@ import java.io.OutputStream;
 public class IOUtils {
     
     private static final int DEFAULT_BUFFER_SIZE = 4096;
+    
+    /**
+     * Discards all data written to it. Used in
+     * {@link #drain(java.io.InputStream)}
+     */
+    public static final OutputStream NULL_OS = new OutputStream() {
+        @Override
+        public void write(int b) throws IOException {
+            // discard
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            // discards
+        }
+    };
 
     private IOUtils() {}
     
@@ -34,5 +50,19 @@ public class IOUtils {
             count += n;
         }
         return count;
+    }
+    
+    /**
+     * Reads the provided InputStream and discards all data until end of stream
+     * is reached.
+     * 
+     * @param in The InputStream to read from.
+     * @return the number of bytes read from the InputStream before end of
+     * stream is reached.
+     * @throws java.io.IOException if there is any exception throw when reading
+     * from the InputStream.
+     */
+    public static long drain(InputStream in) throws IOException {
+        return copy(in, NULL_OS);
     }
 }
