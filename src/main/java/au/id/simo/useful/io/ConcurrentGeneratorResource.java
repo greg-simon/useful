@@ -136,8 +136,7 @@ public class ConcurrentGeneratorResource implements Resource {
     }
 
     /**
-     * Allows the caller to wait for the Generator running in another thread to
-     * complete.
+     * Allows the caller to close the Generator running in another thread.
      * <p>
      * If the generator thread was never started, this method returns
      * immediately
@@ -147,11 +146,15 @@ public class ConcurrentGeneratorResource implements Resource {
      * @throws IOException If Generator threw one, otherwise throws
      * IllegalStateException.
      */
-    public void waitForGenerator(Future<Object> future) throws IOException {
+    protected static void closeGenerator(Future<Object> future) throws IOException {
         try {
-            // throws any exceptions in the consumer thread that were thrown in
-            // the generator thread.
-            future.get(0, TimeUnit.MILLISECONDS);
+            if (future.isDone()) {
+                // throws any exceptions in the consumer thread that were thrown
+                // in the generator thread.
+                future.get(0, TimeUnit.MILLISECONDS);
+            } else {
+                future.cancel(true);
+            }
         } catch (InterruptedException ex) {
             // this only occurs when the consumer thread is interupted while
             // waiting <1ms for the future to complete. It's a very small window
@@ -164,6 +167,7 @@ public class ConcurrentGeneratorResource implements Resource {
             // Generator is finished.
             // No need to throw an exception on the consumer thread. Just
             // interupt the generator thread, as it's no longer being read from.
+            // what do?
             future.cancel(true);
         } catch (ExecutionException ex) {
             // This occures when an exception is thrown in the Generator before
@@ -187,7 +191,7 @@ public class ConcurrentGeneratorResource implements Resource {
         }
     }
     
-    private IOException wrapIOE(Throwable ex) {
+    private static IOException wrapIOE(Throwable ex) {
         return new IOException(String.format(
             "Exception from Generator: %s",
             ex.getMessage()
@@ -201,7 +205,7 @@ public class ConcurrentGeneratorResource implements Resource {
      * This ensures any exceptions thrown in the Generators Thread are exposed to
      * the caller thread that is reading the InputStream.
      */
-    private class SourceErrorInputStreamWrapper extends FilterInputStream {
+    protected static class SourceErrorInputStreamWrapper extends FilterInputStream {
         private final Future<Object> generatorFuture;
         
         public SourceErrorInputStreamWrapper(InputStream in, Future<Object> future) {
@@ -211,8 +215,8 @@ public class ConcurrentGeneratorResource implements Resource {
 
         @Override
         public void close() throws IOException {
+            closeGenerator(generatorFuture);
             super.close();
-            waitForGenerator(generatorFuture);
         }
     }
 }

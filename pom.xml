@@ -31,6 +31,12 @@
             <version>5.8.0-M1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.vmlens</groupId>
+            <artifactId>api</artifactId>
+            <version>1.1.5</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -40,11 +46,39 @@
                 <configuration>
                     <!-- placeholder for large heap tests -->
                     <!--argLine>-Xmx20000m -XX:+UseG1GC</argLine-->
+                    <argLine>-enableassertions</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- concurrency tests -->
+                <groupId>com.vmlens</groupId>
+                <artifactId>interleave</artifactId>
+                <version>1.1.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <argLine>-enableassertions</argLine>
+                    <includes>*/**Interleave.java</includes>
                 </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>3.0.0-M5</version>
+                <configuration>
+                    <argLine>-enableassertions</argLine>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>

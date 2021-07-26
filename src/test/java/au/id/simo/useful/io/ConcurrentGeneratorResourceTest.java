@@ -14,6 +14,7 @@ import java.util.concurrent.ThreadFactory;
 import au.id.simo.useful.Cleaner;
 import org.junit.jupiter.api.Test;
 
+import static au.id.simo.useful.io.ConcurrentGeneratorResourceTest.LineGenerator.testLines;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -26,21 +27,6 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
         return new ConcurrentGeneratorResource((OutputStream out) -> {
             out.write(testData);
         });
-    }
-
-    public void testLines(int loopLineCount, InputStream in) throws IOException {
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
-            String line;
-            int lineNo = 1;
-            while((line = br.readLine())!=null) {
-                if (lineNo<loopLineCount) {
-                    assertEquals("This is line: " + lineNo, line);
-                    lineNo++;
-                } else {
-                    assertEquals("End", br.readLine());
-                }
-            }
-        }
     }
 
     @Test
@@ -201,7 +187,7 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
         });
     }
 
-    private class LineGenerator implements Generator {
+    protected static class LineGenerator implements Generator {
 
         private final int lineCount;
         private final boolean throwException;
@@ -221,6 +207,22 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
             ps.flush();
             if (throwException) {
                 throw new IOException("Manually thrown exception");
+            }
+        }
+
+        public static void testLines(int loopLineCount, InputStream in) throws IOException {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(in))) {
+                String line;
+                int lineNo = 1;
+                while ((line = br.readLine()) != null) {
+                    if (lineNo < loopLineCount) {
+                        assertEquals("This is line: " + lineNo, line);
+                        lineNo++;
+                    } else {
+                        assertEquals("End", br.readLine());
+                    }
+                }
+                assertNull(br.readLine());
             }
         }
     }
