@@ -4,14 +4,20 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
 import au.id.simo.useful.Cleaner;
+import au.id.simo.useful.io.ConcurrentGeneratorResource.ConsumerInputStream;
+import au.id.simo.useful.test.ManualExecutorService;
 import org.junit.jupiter.api.Test;
 
 import static au.id.simo.useful.io.ConcurrentGeneratorResourceTest.LineGenerator.testLines;
@@ -33,9 +39,8 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
     public void testProducerConsumer() throws Exception {
         int lineCount = 100;
         Generator lineGen = new LineGenerator(lineCount, false);
-
-        ConcurrentGeneratorResource genRes
-                = new ConcurrentGeneratorResource(lineGen);
+        ExecutorService service = Executors.newCachedThreadPool();
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(service, lineGen);
 
         testLines(lineCount, genRes.inputStream());
     }
@@ -83,24 +88,98 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
     }
     
     @Test
-    public void testProducerConsumer_GeneratorInteruptedException() throws Exception {
-        int lineCount = 100;
+    public void testProducerConsumer_GeneratorInteruptedAfterStartException() throws Exception {
+        // used to ensure generator has written a byte.
+        CountDownLatch cdlatch = new CountDownLatch(1);
+        
         Generator gen = (OutputStream out) -> {
-            for(int i=0;i<1000;i++) {
-                out.write(i);
-            }
+            out.write(0);
+            cdlatch.countDown();
+            //block on next write due to buffer of size 1
+            out.write(1);
         };
+        ManualExecutorService service = new ManualExecutorService();
+        final Thread generatorThread = new Thread(() -> service.runTaskLoop(1), "Generator Thread");
 
-        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(gen, 1);
-        Thread currentThread = Thread.currentThread();
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(service, gen, 1);
+        // this will add the generator as a task to run on the service
         InputStream in = genRes.inputStream();
-        currentThread.interrupt();
-        in.close();
-        assertTrue(currentThread.isInterrupted(), "Thread should still be interrupted");
-        assertThrows(InterruptedException.class, () -> {
-            // clean interupt flag by having an InterruptedException to be thrown.
-            Thread.sleep(0);
+        // begin the task, which should pause on writing the first number as the
+        // buffer is only 1 byte and nothing is being read just yet.
+        generatorThread.start();
+        // give the serviceThread a chance to write that first byte and be
+        // blocked waiting for it to be read. The serviceThread will notify when
+        // the first byte is written.
+        cdlatch.await();
+        // interupt the generator thread.
+        generatorThread.interrupt();
+        // close the consumer, which in turn throws the interupted exception
+        // wrapped in a IOException
+        IOException ioe = assertThrows(IOException.class, () -> {
+            in.close();
         });
+        assertTrue(ioe instanceof InterruptedIOException);
+        generatorThread.join(1000); // wait one second at most
+        assertFalse(generatorThread.isAlive());
+    }
+    
+    @Test
+    public void testProducerConsumer_GeneratorClosedBeforeStart() throws Exception {
+        Generator gen = (OutputStream out) -> {
+            out.write(0);
+        };
+        ManualExecutorService service = new ManualExecutorService();
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(service, gen, 1);
+        InputStream in = genRes.inputStream();
+        
+        // expect no exception to be thrown when canceling a generator before it has been started.
+        in.close();
+    }
+    
+    @Test
+    public void testProducerConsumer_GeneratorCanceledBeforeStart() throws Exception {
+        Generator gen = (OutputStream out) -> {
+            out.write(0);
+        };
+        ManualExecutorService service = new ManualExecutorService();
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(service, gen, 1);
+        ConsumerInputStream in = (ConsumerInputStream) genRes.inputStream();
+        Future<Object> genFuture = in.getFuture();
+        genFuture.cancel(true);
+        
+        IOException ioe = assertThrows(IOException.class, () -> {
+            in.close();
+        });
+        assertTrue(ioe.getCause() instanceof CancellationException);
+    }
+    
+    @Test
+    public void testProducerConsumer_GeneratorClosedBeforeWrite() throws Exception {
+        CountDownLatch genLatch = new CountDownLatch(1);
+        CountDownLatch consumerLatch = new CountDownLatch(1);
+        Generator gen = (OutputStream out) -> {
+            genLatch.countDown();
+            try {
+                consumerLatch.await();
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();//reset flag.
+            }
+            out.write(0);
+        };
+        ManualExecutorService service = new ManualExecutorService();
+        final Thread generatorThread = new Thread(() -> service.runTaskLoop(1), "Generator Thread");
+        
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(service, gen, 1);
+        InputStream in = genRes.inputStream();
+        
+        generatorThread.start();
+        genLatch.await();
+        // expect no exception to be thrown when canceling a generator before it has been read, but after is has been started.
+        in.close();
+        consumerLatch.countDown();
+        
+        generatorThread.join(1000); // wait one second
+        assertFalse(generatorThread.isAlive());
     }
     
     @Test
@@ -127,19 +206,17 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
 
     @Test
     public void testProducerConsumer_CloseInputStreamFirst() throws Exception {
-        // Start a generator thread.
-        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(new Generator() {
-            @Override
-            public void writeTo(OutputStream out) throws IOException {
-                for (int i=0;i<10000;i++) {
-                    // Consumer PipedInputstream should have closed
-                    // by now, so exception is thrown.
-                    out.write(i);
-                }
+        Generator gen = (out) -> {
+            for (int i=0;i<10000;i++) {
+                // Consumer PipedInputstream should have closed
+                // by now, so exception is thrown.
+                out.write(i);
             }
-        }, 1);
+        };
+        
+        ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(gen, 1);
 
-        // open stream and read a little.
+        // Start a generator thread. Open stream and read a little.
         InputStream inputStream = genRes.inputStream();
         assertEquals(0, inputStream.read());
         assertEquals(1, inputStream.read());
@@ -185,6 +262,16 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
         assertThrows(IOException.class, () -> {
             testLines(lineCount, genRes04.inputStream());
         });
+    }
+    
+    @Test
+    public void testChangeDefaultExecutorService() {
+        ManualExecutorService manualService = new ManualExecutorService();
+        ExecutorService defaultService = ConcurrentGeneratorResource.setDefaultExecutorService(manualService);
+        assertFalse(defaultService == manualService);
+        
+        ExecutorService replacedManualService = ConcurrentGeneratorResource.setDefaultExecutorService(defaultService);
+        assertTrue(manualService == replacedManualService);
     }
 
     protected static class LineGenerator implements Generator {

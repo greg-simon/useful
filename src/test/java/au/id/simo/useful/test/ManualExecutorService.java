@@ -25,7 +25,8 @@ public class ManualExecutorService extends AbstractExecutorService {
     }
     
     /**
-     * Runs a task if any are present, otherwise it returns having done nothing.
+     * Runs a single task if any are present, otherwise it returns having done
+     * nothing.
      */
     public void runTask() {
         Runnable task = tasks.poll();
@@ -33,6 +34,29 @@ public class ManualExecutorService extends AbstractExecutorService {
             return;
         }
         task.run();
+    }
+    
+    /**
+     * Infinite loop that polls for tasks to run.Requires the thread to be
+     * interrupted to exit loop.
+     * 
+     * @param pollWaitInMS the number of milliseconds to wait for a new task
+     * each loop.
+     */
+    public void runTaskLoop(long pollWaitInMS) {
+        try {
+            Runnable task;
+            while (true) {
+                task = tasks.poll(pollWaitInMS, TimeUnit.MILLISECONDS);
+                if (task == null) {
+                    continue;
+                }
+                task.run();
+            }
+        } catch (InterruptedException e) {
+            // can occur while tasks.poll is waiting for a task.
+            // do nothing
+        }
     }
 
     @Override

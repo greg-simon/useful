@@ -46,7 +46,7 @@
                 <configuration>
                     <!-- placeholder for large heap tests -->
                     <!--argLine>-Xmx20000m -XX:+UseG1GC</argLine-->
-                    <argLine>-enableassertions</argLine>
+                    <argLine>@{argLine} -enableassertions</argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -55,14 +55,15 @@
                 <artifactId>interleave</artifactId>
                 <version>1.1.5</version>
                 <executions>
-                    <execution>
+                    <!-- None -->
+                    <!--execution>
                         <goals>
                             <goal>test</goal>
                         </goals>
-                    </execution>
+                    </execution-->
                 </executions>
                 <configuration>
-                    <argLine>-enableassertions</argLine>
+                    <argLine>@{argLine} -enableassertions</argLine>
                     <includes>*/**Interleave.java</includes>
                 </configuration>
             </plugin>

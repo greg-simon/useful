@@ -3,10 +3,12 @@ package au.id.simo.useful.io;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -111,6 +113,9 @@ public class ConcurrentGeneratorResource implements Resource {
      * Runs the generation of the Generator on another thread.
      * <p>
      * An ExecutorService is used to run the Generator.
+     * <p>
+     * NOTE: Resource leakage is very likely to occur if the returned
+     * InputStream is not closed.
      *
      * @return the stream of data generated from the Generator object.
      * @throws IOException if there is an issue in connecting the
@@ -128,33 +133,35 @@ public class ConcurrentGeneratorResource implements Resource {
         Callable<Object> producer = () -> {
             try (OutputStream localOut = out) {
                 generator.writeTo(localOut);
+            } catch (InterruptedIOException e) {
+                // reset interupt status
+                Thread.currentThread().interrupt();
+                throw e;
             }
             return null;
         };
         Future<Object> future = service.submit(producer);
-        return new SourceErrorInputStreamWrapper(in, future);
+        return new ConsumerInputStream(in, future);
     }
 
     /**
-     * Allows the caller to close the Generator running in another thread.
+     * Usually called on the consumer thread, it allows the caller to close the
+     * Generator running in another thread.
      * <p>
      * If the generator thread was never started, this method returns
      * immediately
      *
      * @param future Represents the Generator running in another thread. Cannot
      * be null.
-     * @throws IOException If Generator threw one, otherwise throws
-     * IllegalStateException.
+     * @throws IOException If Generator threw any kind of Exception. Any
+     * Throwable that is not an Exception, such as OutOfMemeoryError is not
+     * caught or wrapped in an IOException.
      */
     protected static void closeGenerator(Future<Object> future) throws IOException {
         try {
-            if (future.isDone()) {
-                // throws any exceptions in the consumer thread that were thrown
-                // in the generator thread.
-                future.get(0, TimeUnit.MILLISECONDS);
-            } else {
-                future.cancel(true);
-            }
+            // throws any exceptions in the consumer thread that were thrown
+            // in the generator thread.
+            future.get(0, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
             // this only occurs when the consumer thread is interupted while
             // waiting <1ms for the future to complete. It's a very small window
@@ -167,8 +174,10 @@ public class ConcurrentGeneratorResource implements Resource {
             // Generator is finished.
             // No need to throw an exception on the consumer thread. Just
             // interupt the generator thread, as it's no longer being read from.
-            // what do?
             future.cancel(true);
+        } catch (CancellationException ex) {
+            // Producer callable was canceled.
+            throw wrapIOE(ex);
         } catch (ExecutionException ex) {
             // This occures when an exception is thrown in the Generator before
             // the consumer is closed.
@@ -199,16 +208,18 @@ public class ConcurrentGeneratorResource implements Resource {
     }
 
     /**
-     * Causes any exceptions thrown by the Generator thread to be re-thrown
+     * The consumer half of the producer/consumer thread pair.
+     * <p>
+     * Causes any exceptions thrown by the Generator/Producer thread to be re-thrown
      * when the input stream is closed.
      * <p>
      * This ensures any exceptions thrown in the Generators Thread are exposed to
      * the caller thread that is reading the InputStream.
      */
-    protected static class SourceErrorInputStreamWrapper extends FilterInputStream {
+    protected static class ConsumerInputStream extends FilterInputStream {
         private final Future<Object> generatorFuture;
         
-        public SourceErrorInputStreamWrapper(InputStream in, Future<Object> future) {
+        public ConsumerInputStream(InputStream in, Future<Object> future) {
             super(in);
             this.generatorFuture = future;
         }
@@ -217,6 +228,10 @@ public class ConcurrentGeneratorResource implements Resource {
         public void close() throws IOException {
             closeGenerator(generatorFuture);
             super.close();
+        }
+        
+        protected Future<Object> getFuture() {
+            return generatorFuture;
         }
     }
 }
