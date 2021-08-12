@@ -1,4 +1,7 @@
-package au.id.simo.useful;
+package au.id.simo.useful.collections;
+
+import au.id.simo.useful.collections.ByteRingBuffer;
+import au.id.simo.useful.collections.AbstractRingBuffer;
 
 import java.io.IOException;
 import java.io.InputStream;

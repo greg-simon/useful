@@ -1,4 +1,4 @@
-package au.id.simo.useful;
+package au.id.simo.useful.collections;
 
 import java.util.Objects;
 

@@ -6,7 +6,7 @@ import java.io.Reader;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import au.id.simo.useful.CharRingBuffer;
+import au.id.simo.useful.collections.CharRingBuffer;
 
 /**
  *

@@ -1,4 +1,4 @@
-package au.id.simo.useful;
+package au.id.simo.useful.collections;
 
 /**
  * Basic RingBuffer implementation for Objects.

@@ -4,7 +4,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import au.id.simo.useful.ByteRingBuffer;
+import au.id.simo.useful.collections.ByteRingBuffer;
 
 /**
  * A pass through InputStream that can run MatchListeners when a specified

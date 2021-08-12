@@ -1,5 +1,7 @@
-package au.id.simo.useful;
+package au.id.simo.useful.collections;
 
+import au.id.simo.useful.collections.AbstractRingBuffer;
+import au.id.simo.useful.collections.RingBuffer;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
