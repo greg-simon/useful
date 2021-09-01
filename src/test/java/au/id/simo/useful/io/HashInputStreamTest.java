@@ -10,7 +10,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.stream.Stream;
 
 import au.id.simo.useful.Cleaner;
-import au.id.simo.useful.backport.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;

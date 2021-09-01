@@ -1,4 +1,4 @@
-package au.id.simo.useful.backport;
+package au.id.simo.useful.io;
 
 import java.io.IOException;
 import java.io.InputStream;

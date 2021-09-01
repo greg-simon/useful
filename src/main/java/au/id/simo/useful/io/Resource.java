@@ -9,7 +9,6 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import au.id.simo.useful.backport.IOUtils;
 
 /**
  * An {@link InputStream} factory. Providing unified access to a source of bytes

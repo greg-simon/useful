@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
-import au.id.simo.useful.backport.IOUtils;
 import au.id.simo.useful.test.DataGenFactory;
 import au.id.simo.useful.test.ManualExecutorService;
 import com.vmlens.api.AllInterleavings;
