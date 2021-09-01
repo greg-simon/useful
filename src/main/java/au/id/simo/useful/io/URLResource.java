@@ -22,8 +22,8 @@ public class URLResource implements Resource {
     }
 
     public URLResource(URL url) {
+        this.urlString = url.toExternalForm();
         this.url = url;
-        this.urlString = null;
     }
 
     @Override
