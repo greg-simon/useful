@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
  * up when {@link #clean()} is called:
  * <ul>
  * <li>{@link Runnable}: Has {@code run()} called</li>
- * <li>{@link AutoCloseable}: Has {@code clean()} called</li>
+ * <li>{@link AutoCloseable}: Has {@code close()} called</li>
  * <li>{@link ExecutorService}: Has {@code shutdownNow()} called</li>
  * </ul>
  * <p>
