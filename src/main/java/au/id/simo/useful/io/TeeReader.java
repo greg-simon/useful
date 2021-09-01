@@ -11,7 +11,7 @@ import java.io.Writer;
 public class TeeReader extends FilterReader {
 
     private final Writer writer;
-    
+
     public TeeReader(Reader reader, Writer writer) {
         super(reader);
         this.writer = writer;
@@ -35,5 +35,11 @@ public class TeeReader extends FilterReader {
         }
         writer.write(ch);
         return ch;
+    }
+
+    @Override
+    public void close() throws IOException {
+        writer.close();
+        super.close();
     }
 }

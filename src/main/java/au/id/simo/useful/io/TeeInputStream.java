@@ -36,4 +36,10 @@ public class TeeInputStream extends FilterInputStream {
         out.write(read);
         return read;
     }
+
+    @Override
+    public void close() throws IOException {
+        out.close();
+        super.close();
+    }
 }
