@@ -52,6 +52,29 @@ public class IOUtils {
         return count;
     }
     
+    public static long copy(InputStream input, ByteCopyConsumer consumer) throws IOException {
+        byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+        long count = 0;
+        int n = 0;
+        while (-1 != (n = input.read(buffer))) {
+            consumer.consume(count, buffer, n);
+            count += n;
+        }
+        return count;
+    }
+    
+    @FunctionalInterface
+    public static interface ByteCopyConsumer {
+        /**
+         * 
+         * @param total the total number of bytes that have been copied before
+         * this method call from a single InputStream.
+         * @param src the byte buffer containing some bytes to copy
+         * @param srcLength the number of bytes available in the src array
+         */
+        void consume(long total, byte[] src, int srcLength);
+    }
+    
     /**
      * Reads the provided InputStream and discards all data until end of stream
      * is reached.

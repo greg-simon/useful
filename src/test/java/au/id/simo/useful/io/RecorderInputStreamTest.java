@@ -1,9 +1,9 @@
 package au.id.simo.useful.io;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
+import au.id.simo.useful.test.DataGenFactory;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,27 +67,16 @@ public class RecorderInputStreamTest {
     @Test
     public void testRead_3args_largeLimit() throws Exception {
         int streamLimit = 100_000;
-        InputStream infiniteStream = new InputStream() {
-            private long counter = 0;
-            
-            @Override
-            public int read() throws IOException {
-                if (counter >= streamLimit) {
-                    return -1;
-                }
-                counter++;
-                return 5;
-            }
-        };
-        RecorderInputStream rin = new RecorderInputStream(infiniteStream, Integer.MAX_VALUE);
+        InputStream in = DataGenFactory.incrementingBytes(streamLimit);
+        RecorderInputStream rin = new RecorderInputStream(in);
         
         byte readBuf[] = new byte[1024];
         int read;
         long readSum=0;
         while ((read = rin.read(readBuf, 0, readBuf.length)) != -1) {
             readSum+=read;
-            //System.out.println(String.format("%d : %d", readSum, rin.getRecordedByteCount()));
         };
+        assertEquals(streamLimit, readSum);
         assertEquals(streamLimit, rin.getRecordedByteCount());
     }
 

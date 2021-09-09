@@ -117,7 +117,7 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
         // wrapped in a IOException
         IOException ioe = assertThrows(IOException.class, () -> {
             in.close();
-        });
+        }, "Sometimes occurs.");
         assertTrue(ioe instanceof InterruptedIOException);
         generatorThread.join(1000); // wait one second at most
         assertFalse(generatorThread.isAlive());

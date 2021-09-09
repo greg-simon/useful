@@ -1,7 +1,5 @@
 package au.id.simo.useful.collections;
 
-import au.id.simo.useful.collections.AbstractRingBuffer;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
