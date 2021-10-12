@@ -1,9 +1,9 @@
 package au.id.simo.useful;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * Used to help ensure resources are cleaned up when required.
@@ -33,29 +33,26 @@ import java.util.concurrent.ExecutorService;
  *    ...
  * } // service has shutdownNow() called here
  * </pre>
- *
- * Cleaner also has two static instances:
- * <ol>
- * <li>{@link #onShutdown()}: This instance is registered with
- * {@link Runtime#addShutdownHook(java.lang.Thread) } to be executed on JVM
- * shutdown. This allows any stand alone application code to add resources to be
- * cleaned up on shutdown from anywhere.
- *
- * <li>{@link #onDemand()}: This instance is never executed unless
- * {@link #onDemandClean()} is called. This is a better option for applications
- * requiring more control over when resources are cleaned up, such as within
- * Servlet containers or regularly scheduled cleanups. It's singleton like
- * nature also enables callers to use it from anywhere without the need of
- * passing a Cleaner instance around manually.
- * </ol>
  * <p>
- * Items added to the Cleaner list are only ever cleaned up once before
- * being discarded. This makes it safe to call an instances {@link #clean()}
- * method multiple times.
+ * Cleaner can also be registered with
+ * {@link Runtime#addShutdownHook(java.lang.Thread)} for cleanup to run on JVM
+ * shutdown, by simply calling {@link #registerShutdownHook()}. It can also be
+ * removed with {@link #unregisterShutdownHook()}.
+ * <pre>
+ * Cleaner cleanOnShutdown = new Cleaner().registerShutdownHook();
+ * cleanOnShutdown.runLater(...);
+ * ...
+ * </pre>
+ * <p>
+ * Items added to the Cleaner list are only ever cleaned up once before being
+ * discarded. This makes it safe to call an instances {@link #clean()} method
+ * multiple times.
  */
 public class Cleaner implements AutoCloseable {
 
-    private static final String SELF_ADD_ERROR_MSG = "Infinite loop detected, a Cleaner can not cleanup itself.";
+    private static final String SELF_ADD_ERROR_MSG
+            = "Infinite loop detected, a Cleaner can not cleanup itself.";
+
     private static final CleanerErrorHandler NO_OP_POLICY = new CleanerErrorHandler() {
         @Override
         public void handle(Runnable runnable, Exception exception) {
@@ -66,74 +63,12 @@ public class Cleaner implements AutoCloseable {
         public void handle(AutoCloseable closable, Exception exception) {
             // no op
         }
-        
+
         @Override
         public void handle(ExecutorService service, Exception exception) {
             // no op
         }
     };
-
-    private static Thread onShutdownThread;
-    private static Cleaner onShutdownInstance;
-    private static Cleaner onDemandInstance;
-
-    /**
-     * Obtains a Cleaner instance that will be executed on JVM shutdown.
-     *
-     * @return a Cleaner instance that will be executed on JVM shutdown.
-     * @see Runtime#addShutdownHook(java.lang.Thread)
-     */
-    public static synchronized Cleaner onShutdown() {
-        if (onShutdownInstance == null) {
-            onShutdownInstance = new Cleaner();
-            onShutdownThread = new Thread(onShutdownInstance::clean);
-            Runtime.getRuntime().addShutdownHook(onShutdownThread);
-        }
-        return onShutdownInstance;
-    }
-    
-    /**
-     * Unregisters the onShutdown instance and returns it if it exists.
-     * <p>
-     * Future calls to {@link #onShutdown()} will return and register a
-     * different instance.
-     * 
-     * @return The registered Cleaner instance, or null if it doesn't exist.
-     */
-    protected static synchronized Cleaner unregisterOnShutdown() {
-        if (onShutdownInstance == null) {
-            return null;
-        }
-        Runtime.getRuntime().removeShutdownHook(onShutdownThread);
-        Cleaner returnCleaner = onShutdownInstance;
-        onShutdownInstance = null;
-        return returnCleaner;
-    }
-
-    /**
-     * Obtains a Cleaner instance that requires {@link Cleaner#onDemandClean()}
-     * to be called to be cleaned up.
-     * <p>
-     * This static instance is best used where the application requires more
-     * control over clean up, such as within a Servlet container or regularly
-     * scheduled cleanups.
-     *
-     * @return the on demand Cleaner instance.
-     */
-    public static synchronized Cleaner onDemand() {
-        if (onDemandInstance == null) {
-            onDemandInstance = new Cleaner();
-        }
-        return onDemandInstance;
-    }
-
-    /**
-     * Executes {@link #clean()} for the onDemand instance. Cleaning all
-     * resources registered with it.
-     */
-    public static void onDemandClean() {
-        onDemand().clean();
-    }
 
     /**
      * Cleaned up in stack order: LIFO.
@@ -146,25 +81,32 @@ public class Cleaner implements AutoCloseable {
      * </ul>
      */
     private final Deque<Object> itemsToClean;
-    
+
     /**
      * The handler used to act on any cleanup task that throws an exception.
      */
     private CleanerErrorHandler handler;
 
+    /**
+     * Thread instance that has been registered with
+     * {@link Runtime#addShutdownHook(java.lang.Thread)}. Only calling
+     * {@link #registerShutdownHook()} will set this variable.
+     */
+    private Thread shutdownHookThread;
+
     public Cleaner() {
-        this.itemsToClean = new ArrayDeque<>();
+        this.itemsToClean = new LinkedBlockingDeque<>();
         this.handler = NO_OP_POLICY;
     }
-    
+
     /**
-     * 
+     *
      * @return the number of tasks to run on cleanup.
      */
     public int size() {
         return itemsToClean.size();
     }
-    
+
     public void setErrorHandler(CleanerErrorHandler handler) {
         this.handler = Objects.requireNonNull(handler);
     }
@@ -182,7 +124,7 @@ public class Cleaner implements AutoCloseable {
      * {@link CleanerErrorHandler} if provided, otherwise the exception is is
      * ignored.
      */
-    public synchronized void clean() {
+    public void clean() {
         // Cleanup in reverse order.
         while (!itemsToClean.isEmpty()) {
             Object item = itemsToClean.pop();
@@ -196,7 +138,7 @@ public class Cleaner implements AutoCloseable {
             // unknown item: ignore
         }
     }
-    
+
     private void cleanRunnable(Runnable runnable) {
         try {
             runnable.run();
@@ -204,7 +146,7 @@ public class Cleaner implements AutoCloseable {
             handler.handle(runnable, t);
         }
     }
-    
+
     private void cleanClosable(AutoCloseable closable) {
         try {
             closable.close();
@@ -212,7 +154,7 @@ public class Cleaner implements AutoCloseable {
             handler.handle(closable, ex);
         }
     }
-    
+
     private void cleanExecutorService(ExecutorService service) {
         try {
             service.shutdownNow();
@@ -222,8 +164,7 @@ public class Cleaner implements AutoCloseable {
     }
 
     /**
-     * {@link AutoCloseable#close()} implementation that calls
-     * {@link #clean()}.
+     * {@link AutoCloseable#close()} implementation that calls {@link #clean()}.
      */
     @Override
     public void close() {
@@ -306,5 +247,48 @@ public class Cleaner implements AutoCloseable {
         }
         itemsToClean.push(closable);
         return closable;
+    }
+
+    /**
+     * @return True if this instance is registered as a JVM shutdown hook.
+     * @see #registerShutdownHook()
+     * @see #unregisterShutdownHook()
+     * @see Runtime#addShutdownHook(java.lang.Thread)
+     */
+    public synchronized boolean isShutdownHookRegistered() {
+        return shutdownHookThread != null;
+    }
+
+    /**
+     * Registers Cleaner instance so it will be executed on JVM shutdown.
+     * <p>
+     * Calling this method on an already registered Cleaner will have no effect.
+     *
+     * @return This Cleaner instance
+     * @see Runtime#addShutdownHook(java.lang.Thread)
+     */
+    public synchronized Cleaner registerShutdownHook() {
+        if (shutdownHookThread == null) {
+            shutdownHookThread = new Thread(this::clean);
+            Runtime.getRuntime().addShutdownHook(shutdownHookThread);
+        }
+        return this;
+    }
+
+    /**
+     * Unregisters this Cleaner instance from execution on JVM shutdown.
+     * <p>
+     * If this method is called on an already unregistered Cleaner will have no
+     * effect.
+     *
+     * @return This Cleaner instance
+     * @see #registerShutdownHook()
+     */
+    public synchronized Cleaner unregisterShutdownHook() {
+        if (shutdownHookThread != null) {
+            Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
+            shutdownHookThread = null;
+        }
+        return this;
     }
 }

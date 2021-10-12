@@ -22,56 +22,24 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CleanerTest {
 
     /**
-     * Uses reflection to test awkward to access static variables.
-     * <p>
-     * Choice was made to use reflection over providing protected methods in the
-     * Cleaner class.
      *
-     * @throws Exception if there is any issues in using reflection.
      */
     @Test
-    public void testOnShutdown() throws Exception {
-        Cleaner cleaner = Cleaner.onShutdown();
-        assertSame(
-                cleaner,
-                Cleaner.onShutdown(),
-                "Verify multiple calls to onShutdown returns the same instance"
-        );
+    public void testRegisterOnShutdown() {
+        Cleaner cleaner = new Cleaner();
+        assertFalse(cleaner.isShutdownHookRegistered());
         
-        Cleaner unregisteredCleaner = Cleaner.unregisterOnShutdown();
-        assertNotNull(unregisteredCleaner);
-        assertSame(cleaner, unregisteredCleaner);
+        assertSame(cleaner, cleaner.registerShutdownHook());
+        assertTrue(cleaner.isShutdownHookRegistered());
+        // register again to test multiple calls.
+        assertSame(cleaner, cleaner.registerShutdownHook());
+        assertTrue(cleaner.isShutdownHookRegistered());
         
-        assertNull(Cleaner.unregisterOnShutdown());
-        
-        assertNotSame(unregisteredCleaner, Cleaner.onShutdown());
-        assertNotNull(Cleaner.unregisterOnShutdown());
-    }
-
-    @Test
-    public void testOnDemand() {
-        Cleaner cleaner = Cleaner.onDemand();
-        assertNotNull(cleaner);
-        assertEquals(0, cleaner.size());
-        assertTrue(
-            cleaner == Cleaner.onDemand(),
-            "Verify same instance is provided by the second onDemand() call"
-        );
-    }
-
-    @Test
-    public void testOnDemandClean() {
-        Cleaner cleaner = Cleaner.onDemand();
-        assertEquals(0, cleaner.size());
-
-        CountRunnable countRunnable = new CountRunnable();
-        cleaner.runLater(countRunnable);
-        assertEquals(1, cleaner.size(), "Verify runnable was added");
-        assertEquals(0, countRunnable.runCount(), "Verify countRunnable has not been run");
-
-        Cleaner.onDemandClean();
-        assertEquals(0, cleaner.size(), "Verify no remaining tasks to cleanup");
-        assertEquals(1, countRunnable.runCount(), "Verify countRunnable has been run once");
+        assertSame(cleaner, cleaner.unregisterShutdownHook());
+        assertFalse(cleaner.isShutdownHookRegistered());
+        // unregister again to test multiple calls
+        assertSame(cleaner, cleaner.unregisterShutdownHook());
+        assertFalse(cleaner.isShutdownHookRegistered());
     }
 
     @Test
