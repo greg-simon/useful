@@ -30,12 +30,12 @@ public class ManualExecutorService extends AbstractExecutorService {
      */
     public void runTask() {
         Runnable task = tasks.poll();
-        if (task == null) {
-            return;
+        if (task != null) {
+            task.run();
         }
-        task.run();
+        notifyIfNeeded();
     }
-    
+
     /**
      * Infinite loop that polls for tasks to run.Requires the thread to be
      * interrupted to exit loop.
@@ -49,6 +49,7 @@ public class ManualExecutorService extends AbstractExecutorService {
             while (true) {
                 task = tasks.poll(pollWaitInMS, TimeUnit.MILLISECONDS);
                 if (task == null) {
+                    notifyIfNeeded();
                     continue;
                 }
                 task.run();
@@ -56,6 +57,12 @@ public class ManualExecutorService extends AbstractExecutorService {
         } catch (InterruptedException e) {
             // can occur while tasks.poll is waiting for a task.
             // do nothing
+        }
+    }
+    
+    private synchronized void notifyIfNeeded() {
+        if (isTerminated()) {
+            this.notifyAll();
         }
     }
 
@@ -80,12 +87,16 @@ public class ManualExecutorService extends AbstractExecutorService {
 
     @Override
     public boolean isTerminated() {
-        return true;
+        return shutdown && tasks.isEmpty();
     }
 
     @Override
     public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-        return true;
+        shutdown = true;
+        synchronized (this) {
+            this.wait(unit.toMillis(timeout));
+        }
+        return isTerminated();
     }
 
     @Override
