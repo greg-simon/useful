@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
-import au.id.simo.useful.Cleaner;
+import au.id.simo.useful.Defer;
 import au.id.simo.useful.io.ConcurrentGeneratorResource.ConsumerInputStream;
 import au.id.simo.useful.test.ManualExecutorService;
 import org.junit.jupiter.api.Test;
@@ -187,14 +187,14 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
         int lineCount = 100;
         Generator gen = new LineGenerator(lineCount, false);
 
-        try (Cleaner c = new Cleaner()) {
+        try (Defer defer = new Defer()) {
             ExecutorService es = Executors.newCachedThreadPool(new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
                     throw new RuntimeException("Runtime exception from thread");
                 }
             });
-            c.shutdownLater(es);
+            defer.shutdownNow(es);
             
             ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(es, gen, 1);
 

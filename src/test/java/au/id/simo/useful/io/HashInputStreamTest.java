@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.stream.Stream;
 
-import au.id.simo.useful.Cleaner;
+import au.id.simo.useful.Defer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -48,9 +48,9 @@ public class HashInputStreamTest {
         Process sumProcess = new ProcessBuilder().command(sumCmd).start();
         String javaHash;
         String processHash;
-        try (Cleaner c = new Cleaner()) {
-            OutputStream out = c.closeLater(sumProcess.getOutputStream());
-            HashInputStream hin = c.closeLater(new HashInputStream(TEST_DATA.inputStream(),hashAlgo));
+        try (Defer defer = new Defer()) {
+            OutputStream out = defer.close(sumProcess.getOutputStream());
+            HashInputStream hin = defer.close(new HashInputStream(TEST_DATA.inputStream(),hashAlgo));
             IOUtils.copy(hin, out);
             javaHash = hin.getHashString();
         }

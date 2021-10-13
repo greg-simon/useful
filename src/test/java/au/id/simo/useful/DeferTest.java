@@ -19,62 +19,62 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  *
  */
-public class CleanerTest {
+public class DeferTest {
 
     /**
      *
      */
     @Test
     public void testRegisterOnShutdown() {
-        Cleaner cleaner = new Cleaner();
-        assertFalse(cleaner.isShutdownHookRegistered());
+        Defer defer = new Defer();
+        assertFalse(defer.isShutdownHookRegistered());
         
-        assertSame(cleaner, cleaner.registerShutdownHook());
-        assertTrue(cleaner.isShutdownHookRegistered());
+        assertSame(defer, defer.registerShutdownHook());
+        assertTrue(defer.isShutdownHookRegistered());
         // register again to test multiple calls.
-        assertSame(cleaner, cleaner.registerShutdownHook());
-        assertTrue(cleaner.isShutdownHookRegistered());
+        assertSame(defer, defer.registerShutdownHook());
+        assertTrue(defer.isShutdownHookRegistered());
         
-        assertSame(cleaner, cleaner.unregisterShutdownHook());
-        assertFalse(cleaner.isShutdownHookRegistered());
+        assertSame(defer, defer.unregisterShutdownHook());
+        assertFalse(defer.isShutdownHookRegistered());
         // unregister again to test multiple calls
-        assertSame(cleaner, cleaner.unregisterShutdownHook());
-        assertFalse(cleaner.isShutdownHookRegistered());
+        assertSame(defer, defer.unregisterShutdownHook());
+        assertFalse(defer.isShutdownHookRegistered());
     }
 
     @Test
     public void testSetErrorHandler() {
         CountErrorHandler errorHandler = new CountErrorHandler();
-        Cleaner cleaner = new Cleaner();
-        cleaner.setErrorHandler(errorHandler);
+        Defer defer = new Defer();
+        defer.setErrorHandler(errorHandler);
         assertEquals(0, errorHandler.getTotalCount());
-        assertEquals(0, cleaner.size());
+        assertEquals(0, defer.size());
         
-        cleaner.runLater(() -> {
+        defer.run(() -> {
             throw new RuntimeException();
         });
-        cleaner.closeLater(() -> {
+        defer.close(() -> {
             throw new RuntimeException();
         });
-        cleaner.shutdownLater(new MockExecutorService());
+        defer.shutdownNow(new MockExecutorService());
         
-        cleaner.clean();
+        defer.execute();
         assertEquals(1, errorHandler.getRunnableCount());
         assertEquals(1, errorHandler.getClosableCount());
         assertEquals(1, errorHandler.getServiceCount());
         assertEquals(3, errorHandler.getTotalCount());
-        assertEquals(0, cleaner.size());
+        assertEquals(0, defer.size());
     }
 
     @Test
     public void testClean() {
         CountRunnable countRun = new CountRunnable();
-        Cleaner cleaner = new Cleaner();
-        cleaner.runLater(countRun);
+        Defer defer = new Defer();
+        defer.run(countRun);
         
-        assertEquals(1, cleaner.size());
-        cleaner.clean();
-        assertEquals(0, cleaner.size());
+        assertEquals(1, defer.size());
+        defer.execute();
+        assertEquals(0, defer.size());
         assertEquals(1, countRun.runCount());
     }
     
@@ -82,83 +82,83 @@ public class CleanerTest {
     public void testCleanWithExceptions() {
         CountRunnable countRun = new CountRunnable();
         
-        Cleaner cleaner = new Cleaner();
-        cleaner.runLater(countRun);
-        cleaner.closeLater(() -> {throw new RuntimeException();});
-        cleaner.runLater(countRun);
-        cleaner.shutdownLater(new MockExecutorService());
-        cleaner.runLater(countRun);
-        cleaner.runLater(() -> {throw new RuntimeException();});
-        cleaner.runLater(countRun);
+        Defer defer = new Defer();
+        defer.run(countRun);
+        defer.close(() -> {throw new RuntimeException();});
+        defer.run(countRun);
+        defer.shutdownNow(new MockExecutorService());
+        defer.run(countRun);
+        defer.run(() -> {throw new RuntimeException();});
+        defer.run(countRun);
         
-        assertEquals(7, cleaner.size());
-        cleaner.clean();
-        assertEquals(0, cleaner.size());
+        assertEquals(7, defer.size());
+        defer.execute();
+        assertEquals(0, defer.size());
         assertEquals(4, countRun.runCount(), "Verify countRun ran before and after each exception throwing task");
     }
 
     @Test
-    public void testClose() {
-        Cleaner cleaner = new Cleaner();
-        CountRunnable countRun = cleaner.runLater(new CountRunnable());
+    public void testDeferClose() {
+        Defer defer = new Defer();
+        CountRunnable countRun = defer.run(new CountRunnable());
         
-        assertEquals(1, cleaner.size());
-        cleaner.close();
-        assertEquals(0, cleaner.size());
+        assertEquals(1, defer.size());
+        defer.close();
+        assertEquals(0, defer.size());
         assertEquals(1, countRun.runCount());
     }
     
     @Test
-    public void testRunLaterNull() {
-        Cleaner cleaner = new Cleaner();
-        Runnable runnable = cleaner.runLater(null);
+    public void testRunNull() {
+        Defer defer = new Defer();
+        Runnable runnable = defer.run(null);
         assertNull(runnable);
-        assertEquals(0, cleaner.size());
+        assertEquals(0, defer.size());
     }
 
     @Test
-    public void testShutdownLater() {
-        Cleaner cleaner = new Cleaner();
-        ExecutorService service = cleaner.shutdownLater(Executors.newCachedThreadPool());
-        assertEquals(1, cleaner.size());
+    public void testShutdownNow() {
+        Defer defer = new Defer();
+        ExecutorService service = defer.shutdownNow(Executors.newCachedThreadPool());
+        assertEquals(1, defer.size());
         assertFalse(service.isShutdown());
-        cleaner.clean();
-        assertEquals(0, cleaner.size());
+        defer.execute();
+        assertEquals(0, defer.size());
         assertTrue(service.isShutdown());
     }
     
     @Test
-    public void testShutdownLaterNull() {
-        Cleaner cleaner = new Cleaner();
-        ExecutorService service = cleaner.shutdownLater(null);
+    public void testShutdownNowNull() {
+        Defer defer = new Defer();
+        ExecutorService service = defer.shutdownNow(null);
         assertNull(service);
-        assertEquals(0, cleaner.size());
+        assertEquals(0, defer.size());
     }
 
     @Test
-    public void testCloseLater() {
-        Cleaner cleaner = new Cleaner();
-        Latch latch = cleaner.closeLater(new Latch());
-        assertEquals(1, cleaner.size());
+    public void testClose() {
+        Defer defer = new Defer();
+        Latch latch = defer.close(new Latch());
+        assertEquals(1, defer.size());
         assertFalse(latch.isClosed());
-        cleaner.clean();
-        assertEquals(0, cleaner.size());
+        defer.execute();
+        assertEquals(0, defer.size());
         assertTrue(latch.isClosed());
     }
     
     @Test
-    public void testCloseLaterNull() {
-        Cleaner cleaner = new Cleaner();
-        AutoCloseable closable = cleaner.closeLater(null);
+    public void testCloseNull() {
+        Defer defer = new Defer();
+        AutoCloseable closable = defer.close(null);
         assertNull(closable);
-        assertEquals(0, cleaner.size());
+        assertEquals(0, defer.size());
     }
     
     @Test
-    public void testCloseLaterSelf() {
-        Cleaner cleaner = new Cleaner();
+    public void testCloseSelf() {
+        Defer defer = new Defer();
         assertThrows(IllegalArgumentException.class, ()-> {
-            cleaner.closeLater(cleaner);
+            defer.close(defer);
         });
     }
     
@@ -175,7 +175,7 @@ public class CleanerTest {
         }
     }
     
-    public class CountErrorHandler implements CleanerErrorHandler {
+    public class CountErrorHandler implements DeferErrorHandler {
         private final AtomicInteger runnableCount = new AtomicInteger();
         private final AtomicInteger closableCount = new AtomicInteger();
         private final AtomicInteger serviceCount = new AtomicInteger();

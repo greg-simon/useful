@@ -8,7 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
-import au.id.simo.useful.Cleaner;
+import au.id.simo.useful.Defer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -139,9 +139,9 @@ public interface ResourceTest {
         Resource r = createResource(testStr.getBytes());
 
         byte[] testBytes = testStr.getBytes();
-        try (Cleaner c = new Cleaner()) {
-            InputStream in1 = c.closeLater(r.inputStream());
-            InputStream in2 = c.closeLater(r.inputStream());
+        try (Defer defer = new Defer()) {
+            InputStream in1 = defer.close(r.inputStream());
+            InputStream in2 = defer.close(r.inputStream());
 
             for (int i = 0; i < testBytes.length; i++) {
                 assertEquals(

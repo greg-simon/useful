@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.stream.Stream;
 
-import au.id.simo.useful.Cleaner;
+import au.id.simo.useful.Defer;
 import au.id.simo.useful.test.DataGenFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,11 +29,11 @@ public class MultiOutputStreamTest {
     @ParameterizedTest
     @MethodSource("testData")
     public void testWrite_3args(Resource testData) throws Exception {
-        try (Cleaner c = new Cleaner()) {
+        try (Defer defer = new Defer()) {
             MultiOutputStream mout = new MultiOutputStream(
-                    c.closeLater(new AssertOutputStream("first", testData.inputStream(), BYTE_COUNT)),
-                    c.closeLater(new AssertOutputStream("second", testData.inputStream(), BYTE_COUNT)),
-                    c.closeLater(new AssertOutputStream("third", testData.inputStream(), BYTE_COUNT))
+                    defer.close(new AssertOutputStream("first", testData.inputStream(), BYTE_COUNT)),
+                    defer.close(new AssertOutputStream("second", testData.inputStream(), BYTE_COUNT)),
+                    defer.close(new AssertOutputStream("third", testData.inputStream(), BYTE_COUNT))
             );
 
             long bytesCopied = testData.copyTo(mout);
@@ -44,11 +44,11 @@ public class MultiOutputStreamTest {
     @ParameterizedTest
     @MethodSource("testData")
     public void testWrite_int(Resource testData) throws Exception {
-        try (Cleaner c = new Cleaner()) {
+        try (Defer defer = new Defer()) {
             MultiOutputStream mout = new MultiOutputStream(
-                    c.closeLater(new AssertOutputStream("first", testData.inputStream(), BYTE_COUNT)),
-                    c.closeLater(new AssertOutputStream("second", testData.inputStream(), BYTE_COUNT)),
-                    c.closeLater(new AssertOutputStream("third", testData.inputStream(), BYTE_COUNT))
+                    defer.close(new AssertOutputStream("first", testData.inputStream(), BYTE_COUNT)),
+                    defer.close(new AssertOutputStream("second", testData.inputStream(), BYTE_COUNT)),
+                    defer.close(new AssertOutputStream("third", testData.inputStream(), BYTE_COUNT))
             );
 
             InputStream in = testData.inputStream();

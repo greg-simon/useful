@@ -8,8 +8,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 /**
  * Used to help ensure resources are cleaned up when required.
  * <p>
- * Cleaner is conceptually a collection of the following types that are cleaned
- * up when {@link #clean()} is called:
+ * Defer is conceptually a collection of items that are executed when
+ * {@link #execute()} is called:
  * <ul>
  * <li>{@link Runnable}: Has {@code run()} called</li>
  * <li>{@link AutoCloseable}: Has {@code close()} called</li>
@@ -19,14 +19,14 @@ import java.util.concurrent.LinkedBlockingDeque;
  * Cleanup tasks are performed in reverse added order (LIFO), consistent with
  * try-with-resources behavior for {@link AutoCloseable} implementations.
  * <p>
- * Cleaner implements AutoCloseable for convenience to enable it to be used
- * easily in try-with-resources blocks.
+ * Defer implements AutoCloseable for convenience to enable it to be used easily
+ * in try-with-resources blocks.
  * <p>
  * Example of simple instance usage:
  * <pre>
- * try (Cleaner cleaner = new Cleaner()) {
- *   ExecutorService service = cleaner.shutdownLater(Executors.newCachedThreadPool());
- *   cleaner.runLater(() -&gt; {
+ * try (Defer defer = new Defer()) {
+ *    ExecutorService service = defer.shutdownNow(Executors.newCachedThreadPool());
+ *    defer.run(() -&gt; {
  *       System.out.println("This will be printed at the end of the try block");
  *    });
  *    service.execute(...);
@@ -34,26 +34,26 @@ import java.util.concurrent.LinkedBlockingDeque;
  * } // service has shutdownNow() called here
  * </pre>
  * <p>
- * Cleaner can also be registered with
- * {@link Runtime#addShutdownHook(java.lang.Thread)} for cleanup to run on JVM
- * shutdown, by simply calling {@link #registerShutdownHook()}. It can also be
- * removed with {@link #unregisterShutdownHook()}.
+ * Defer can also be registered with
+ * {@link Runtime#addShutdownHook(java.lang.Thread)} for {@link #execute()} to
+ * run on JVM shutdown, by simply calling {@link #registerShutdownHook()}. It
+ * can also be removed with {@link #unregisterShutdownHook()}.
  * <pre>
- * Cleaner cleanOnShutdown = new Cleaner().registerShutdownHook();
- * cleanOnShutdown.runLater(...);
+ * Defer onShutdown = new Defer().registerShutdownHook();
+ * onShutdown.run(...);
  * ...
  * </pre>
  * <p>
- * Items added to the Cleaner list are only ever cleaned up once before being
- * discarded. This makes it safe to call an instances {@link #clean()} method
+ * Items added to the Defer instance are only ever cleaned up once before being
+ * discarded. This makes it safe to call an instances {@link #execute()} method
  * multiple times.
  */
-public class Cleaner implements AutoCloseable {
+public class Defer implements AutoCloseable {
 
     private static final String SELF_ADD_ERROR_MSG
-            = "Infinite loop detected, a Cleaner can not cleanup itself.";
+            = "Infinite loop detected, a Defer can not be added to itself.";
 
-    private static final CleanerErrorHandler NO_OP_POLICY = new CleanerErrorHandler() {
+    private static final DeferErrorHandler NO_OP_POLICY = new DeferErrorHandler() {
         @Override
         public void handle(Runnable runnable, Exception exception) {
             // no op
@@ -71,7 +71,7 @@ public class Cleaner implements AutoCloseable {
     };
 
     /**
-     * Cleaned up in stack order: LIFO.
+     * Executed in stack order: LIFO.
      * <p>
      * Could contain any of the following types:
      * <ul>
@@ -80,12 +80,12 @@ public class Cleaner implements AutoCloseable {
      * <li>{@link ExecutorService}</li>
      * </ul>
      */
-    private final Deque<Object> itemsToClean;
+    private final Deque<Object> itemsToExec;
 
     /**
-     * The handler used to act on any cleanup task that throws an exception.
+     * The handler used to act on any task that throws an exception.
      */
-    private CleanerErrorHandler handler;
+    private DeferErrorHandler handler;
 
     /**
      * Thread instance that has been registered with
@@ -94,52 +94,51 @@ public class Cleaner implements AutoCloseable {
      */
     private Thread shutdownHookThread;
 
-    public Cleaner() {
-        this.itemsToClean = new LinkedBlockingDeque<>();
+    public Defer() {
+        this.itemsToExec = new LinkedBlockingDeque<>();
         this.handler = NO_OP_POLICY;
     }
 
     /**
      *
-     * @return the number of tasks to run on cleanup.
+     * @return the number of tasks registered to be executed.
      */
     public int size() {
-        return itemsToClean.size();
+        return itemsToExec.size();
     }
 
-    public void setErrorHandler(CleanerErrorHandler handler) {
+    public void setErrorHandler(DeferErrorHandler handler) {
         this.handler = Objects.requireNonNull(handler);
     }
 
     /**
-     * Performs all cleanup tasks that have been registered.
+     * Executes all tasks that have been registered.
      * <p>
-     * Any cleanup task performed is removed from the list to ensure
-     * one-run-only policy, even if an exception is thrown.
+     * Any executed task is removed from the list to ensure one-run-only policy,
+     * even if an exception is thrown.
      * <p>
-     * Tasks are performed in reverse order they were added in (LIFO), to ensure
+     * Tasks are executed in reverse order they were added in (LIFO), to ensure
      * the behavior matches try-with-resources behavior.
      * <p>
-     * Any Exception thrown by any cleanup task handled by a
-     * {@link CleanerErrorHandler} if provided, otherwise the exception is is
-     * ignored.
+     * Any Exception thrown by any task handled by a {@link DeferErrorHandler}
+     * if provided, otherwise the exception is is ignored.
      */
-    public void clean() {
-        // Cleanup in reverse order.
-        while (!itemsToClean.isEmpty()) {
-            Object item = itemsToClean.pop();
+    public void execute() {
+        // Execute in reverse order.
+        while (!itemsToExec.isEmpty()) {
+            Object item = itemsToExec.pop();
             if (item instanceof Runnable) {
-                cleanRunnable((Runnable) item);
+                execRunnable((Runnable) item);
             } else if (item instanceof AutoCloseable) {
-                cleanClosable((AutoCloseable) item);
+                execClosable((AutoCloseable) item);
             } else if (item instanceof ExecutorService) {
-                cleanExecutorService((ExecutorService) item);
+                execExecutorService((ExecutorService) item);
             }
             // unknown item: ignore
         }
     }
 
-    private void cleanRunnable(Runnable runnable) {
+    private void execRunnable(Runnable runnable) {
         try {
             runnable.run();
         } catch (Exception t) {
@@ -147,7 +146,7 @@ public class Cleaner implements AutoCloseable {
         }
     }
 
-    private void cleanClosable(AutoCloseable closable) {
+    private void execClosable(AutoCloseable closable) {
         try {
             closable.close();
         } catch (Exception ex) {
@@ -155,7 +154,7 @@ public class Cleaner implements AutoCloseable {
         }
     }
 
-    private void cleanExecutorService(ExecutorService service) {
+    private void execExecutorService(ExecutorService service) {
         try {
             service.shutdownNow();
         } catch (Exception ex) {
@@ -164,88 +163,85 @@ public class Cleaner implements AutoCloseable {
     }
 
     /**
-     * {@link AutoCloseable#close()} implementation that calls {@link #clean()}.
+     * {@link AutoCloseable#close()} implementation that calls
+     * {@link #execute()}.
      */
     @Override
     public void close() {
-        clean();
+        execute();
     }
 
     /**
-     * Registers a {@link Runnable} for later running.
+     * Registers a {@link Runnable} for later execution.
      *
      * @param <R> The exact type passed as an argument.
-     * @param cleanupTask executed when this instances {@link Cleaner#clean()}
+     * @param task executed when this instances {@link Defer#execute()}
      * method is run.
      * @return the same runnable instance passed as an argument, to allow this
      * method to be used inline with declaration and assignment.
      */
-    public <R extends Runnable> R runLater(R cleanupTask) {
-        if (cleanupTask == null) {
+    public <R extends Runnable> R run(R task) {
+        if (task == null) {
             return null;
         }
-        itemsToClean.push(cleanupTask);
-        return cleanupTask;
+        itemsToExec.push(task);
+        return task;
     }
 
     /**
      * Registers an ExecutorServices for later shutdown.
      * <p>
-     * On cleanup, {@link ExecutorService#shutdownNow()} will be called and any
-     * remaining Runnable tasks will be discarded.
+     * On {@link Defer#execute()}, {@link ExecutorService#shutdownNow()} will be
+     * called and any remaining Runnable tasks will be discarded.
      * <p>
      * Usage example:
      * <pre>
-     * ExecutorService service = cleaner.shutdownLater(Executors.newCachedThreadPool());
+     * ExecutorService service = defer.shutdownNow(Executors.newCachedThreadPool());
      * </pre>
      *
      * @param <S> The exact type passed as an argument.
      * @param service The ExecutorService instance to shutdown when this
-     * Cleaners clean method is executed.
+     * Defers execute method is called.
      * @return the same service instance passed as an argument, to allow this
      * method to be used inline with ExecutorService declaration.
      */
-    public <S extends ExecutorService> S shutdownLater(S service) {
+    public <S extends ExecutorService> S shutdownNow(S service) {
         if (service == null) {
             return null;
         }
-        itemsToClean.push(service);
+        itemsToExec.push(service);
         return service;
     }
 
     /**
      * Registers an AutoClosable for later closing.
      * <p>
-     * When the Cleaner instance is closed, all AutoClosables added with this
-     * method will be closed in reverse order they are added in (LIFO),
-     * consistent with try-with-resources behavior.
-     * <p>
      * Usage example:
      * <pre>
-     * try (Cleaner cleaner = new Cleaner()) {
-     *    InputStream in = cleaner.closeLater(new FileInputStream("in.txt"));
-     *    OutputStream out = cleaner.closeLater(new FileInputStream("out.txt"));
+     * try (Defer defer = new Defer()) {
+     *    InputStream in = defer.close(new FileInputStream("in.txt"));
+     *    OutputStream out = defer.close(new FileInputStream("out.txt"));
      *    ...
      * } // streams closed here, 'out' first then 'in'
      * </pre>
      *
      * @param <C> The exact type passed as an argument.
-     * @param closable The AutoClosable instance to shutdown when this Cleaner
-     * instances clean method is executed.
-     * @return the same service instance passed as an argument, to allow this
+     * @param closable The AutoClosable instance to close when this Defer
+     * instances execute method is called.
+     * @return the same closable instance passed as an argument, to allow this
      * method to be used inline with AutoClosable declaration.
-     * @throws IllegalArgumentException if this Cleaner instance is added to
+     * @throws IllegalArgumentException if this Defer instance is added to
      * itself via this method, otherwise it would result in an infinite loop on
-     * cleanup until a stack overflow exception is thrown.
+     * execute() until a stack overflow exception is thrown.
      */
-    public <C extends AutoCloseable> C closeLater(C closable) {
+    public <C extends AutoCloseable> C close(C closable) {
         if (closable == null) {
             return null;
         }
         if (closable == this) {
             throw new IllegalArgumentException(SELF_ADD_ERROR_MSG);
         }
-        itemsToClean.push(closable);
+        itemsToExec.push(closable);
         return closable;
     }
 
@@ -262,14 +258,15 @@ public class Cleaner implements AutoCloseable {
     /**
      * Registers Cleaner instance so it will be executed on JVM shutdown.
      * <p>
-     * Calling this method on an already registered Cleaner will have no effect.
+     * Calling this method on an already registered Defer is safe as it will
+     * have no effect.
      *
-     * @return This Cleaner instance
+     * @return This Defer instance
      * @see Runtime#addShutdownHook(java.lang.Thread)
      */
-    public synchronized Cleaner registerShutdownHook() {
+    public synchronized Defer registerShutdownHook() {
         if (shutdownHookThread == null) {
-            shutdownHookThread = new Thread(this::clean);
+            shutdownHookThread = new Thread(this::execute);
             Runtime.getRuntime().addShutdownHook(shutdownHookThread);
         }
         return this;
@@ -278,13 +275,13 @@ public class Cleaner implements AutoCloseable {
     /**
      * Unregisters this Cleaner instance from execution on JVM shutdown.
      * <p>
-     * If this method is called on an already unregistered Cleaner will have no
-     * effect.
+     * Calling this method on an already unregistered Defer is safe as it will
+     * have no effect.
      *
-     * @return This Cleaner instance
+     * @return This Defer instance
      * @see #registerShutdownHook()
      */
-    public synchronized Cleaner unregisterShutdownHook() {
+    public synchronized Defer unregisterShutdownHook() {
         if (shutdownHookThread != null) {
             Runtime.getRuntime().removeShutdownHook(shutdownHookThread);
             shutdownHookThread = null;

@@ -3,14 +3,14 @@ package au.id.simo.useful;
 import java.util.concurrent.ExecutorService;
 
 /**
- * A handler for cleaner tasks that throw an exception when attempting to clean
- * them up.
+ * A handler for Defer tasks that throw an exception when attempting to execute
+ * them.
  */
-public interface CleanerErrorHandler {
+public interface DeferErrorHandler {
 
     /**
      * Handles any unchecked exceptions from running {@link Runnable#run()} as
-     * cleanup tasks.
+     * a deferred task.
      * 
      * @param runnable The Runnable instance that threw the exception.
      * @param exception The exception that was thrown.
