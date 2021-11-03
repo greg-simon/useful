@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -22,7 +23,7 @@ public class FileResource implements Resource {
      * Paths will be normalized to follow relative references such as
      * {@code ../}
      *
-     * @param path the first or only part pf the path to the file to read.
+     * @param path the first or only part of the path to the file to read.
      * @param more optional subsequent segments of the file path.
      */
     public FileResource(String path, String... more) {

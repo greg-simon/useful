@@ -18,7 +18,7 @@ public class DataGenFactoryTest {
     @Test
     public void testIncrementingBytes() throws IOException {
         InputStream in = DataGenFactory.incrementingBytes();
-        for (int i=0;i<300;i++) {
+        for (int i = 0; i < 300; i++) {
             int expected = i % 256;
             int value = in.read();
             assertEquals(expected, value);

@@ -7,7 +7,7 @@ import java.util.Objects;
 import au.id.simo.useful.CheckUtil;
 
 /**
- * An interface to working with a bundle of bytes.
+ * An interface to a resizable bundle of bytes.
  * <p>
  * Implementations are usually more convenient than raw byte arrays.
  */

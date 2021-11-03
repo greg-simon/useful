@@ -1,8 +1,8 @@
 package au.id.simo.useful.collections;
 
-import au.id.simo.useful.CheckUtil;
-
 import java.util.Objects;
+
+import au.id.simo.useful.CheckUtil;
 
 /**
  * Byte focused implementation of RingBuffer with efficient methods for reading
@@ -39,6 +39,19 @@ public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
         } else {
             size++;
         }
+    }
+    
+    
+    public void write(byte[] src, int srcInx, int length) {
+        CheckUtil.checkReadWriteArgs(src.length, srcInx, length);
+        if (getFreeSpace() < length) {
+            throw new ArrayIndexOutOfBoundsException(
+                String.format("Not enough free space for %d bytes", length)
+            );
+        }
+        System.arraycopy(src, srcInx, buffer, head, length);
+        head += incrementIndex(head, length);
+        size += length;
     }
 
     /**

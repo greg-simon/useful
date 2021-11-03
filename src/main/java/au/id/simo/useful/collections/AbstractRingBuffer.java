@@ -1,10 +1,10 @@
 package au.id.simo.useful.collections;
 
-import au.id.simo.useful.CheckUtil;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+
+import au.id.simo.useful.CheckUtil;
 
 /**
  * Allows adding to it forever without additional memory usage.
