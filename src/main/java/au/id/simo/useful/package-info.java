@@ -3,7 +3,7 @@
  * <p>
  * Notable items:
  * <ul>
- * <li> {@link Defer}: A collection of tasks (Runnable, AutoClose,
+ * <li> {@link au.id.simo.useful.Defer}: A collection of tasks (Runnable, AutoClose,
  * ExecutorService) to be executed, closed or shutdown at a later time.
  * </ul>
  */

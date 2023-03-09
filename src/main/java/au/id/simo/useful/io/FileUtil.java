@@ -18,7 +18,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -139,7 +139,7 @@ public class FileUtil {
         // obtain user principle
         UserPrincipal userPrincipal = userLookup.lookupPrincipalByName(System.getProperty("user.name"));
         //Give all permissions to user, and no one else.
-        List<AclEntry> entryList = Arrays.asList(
+        List<AclEntry> entryList = Collections.singletonList(
             AclEntry.newBuilder()
                 .setPrincipal(userPrincipal)
                 .setPermissions(AclEntryPermission.values())

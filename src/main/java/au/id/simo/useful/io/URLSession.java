@@ -154,13 +154,13 @@ public interface URLSession extends Closeable {
      * <p>
      * It allows for iterating over all resources registered along with the
      * {@link #getResource(java.lang.String)} or
-     * {@link #getInputStream(java.lang.String)} methods.      <code>
+     * {@link #getInputStream(java.lang.String)} methods.      <pre>
      * for (String path: urlSession.getRegisteredPaths()) {
      *    Resource res = urlSession.getResource(path);
      *    ...
      * }
-     * </code>
-     *
+     * </pre>
+     * <p>
      * Paths returned are relative to the base url of the session, so will not
      * contain a leading '/' character.
      *

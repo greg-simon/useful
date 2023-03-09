@@ -50,7 +50,7 @@ public class Counts {
         if (al != null) {
             return al.longValue();
         } else {
-            return 0l;
+            return 0L;
         }
     }
 
@@ -64,7 +64,7 @@ public class Counts {
     public static long get(String countName) {
         AtomicLong al = countsMap.get(countName);
         if (al == null) {
-            return 0l;
+            return 0L;
         } else {
             return al.longValue();
         }
@@ -92,7 +92,7 @@ public class Counts {
     public static long removeCount(String countName) {
         AtomicLong atomicLong = countsMap.remove(countName);
         if (atomicLong == null) {
-            return 0l;
+            return 0L;
         }
         return atomicLong.get();
     }

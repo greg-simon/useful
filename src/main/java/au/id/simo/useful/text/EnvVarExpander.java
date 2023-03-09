@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Expands variables found in provided {@code String} formatted like
  * {@code $VAR} or {@code ${VAR}}.
- *
+ * <p>
  * And variables with no found value will be simply removed.
  */
 public class EnvVarExpander implements VarExpander {

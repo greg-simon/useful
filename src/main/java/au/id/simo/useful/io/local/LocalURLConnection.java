@@ -7,7 +7,7 @@ import java.net.URLConnection;
 
 /**
  * URLConnection implementation for the {@code local://} protocol.
- *
+ * <p>
  * Underlying InputStreams are sourced from the {@link LocalProtocol} via the
  * referenced {@link LocalSession}.
  */
@@ -24,7 +24,7 @@ public class LocalURLConnection extends URLConnection {
     }
 
     @Override
-    public void connect() throws IOException {
+    public void connect() {
         connected = true;
     }
     

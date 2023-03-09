@@ -9,7 +9,7 @@ import au.id.simo.useful.collections.ByteRingBuffer;
 /**
  * A pass through InputStream that can run MatchListeners when a specified
  * series of bytes is detected.
- *
+ * <p>
  * Detected bytes are discarded and not provided to the consumer of this stream.
  */
 public class DetectionInputStream extends FilterInputStream {

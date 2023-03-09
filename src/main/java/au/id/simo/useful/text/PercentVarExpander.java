@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * Expands variables in a format like {@code %var}.
- *
+ * <p>
  * To return an actual '%' char, two '%' chars must be used. e.g. '%%'
  */
 public class PercentVarExpander implements VarExpander {
