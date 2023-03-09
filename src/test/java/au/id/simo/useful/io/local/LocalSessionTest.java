@@ -11,6 +11,8 @@ import au.id.simo.useful.io.Resource;
 import au.id.simo.useful.io.URLResource;
 import au.id.simo.useful.io.URLSession;
 import au.id.simo.useful.io.URLSessionTest;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,6 +21,11 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  */
 public class LocalSessionTest implements URLSessionTest {
+
+    @AfterEach
+    public void verifyAllSessionsAreClosed() {
+        assertEquals(0, LocalProtocol.sessionCount());
+    }
 
     @Override
     public URLSession createURLSession() throws IOException {

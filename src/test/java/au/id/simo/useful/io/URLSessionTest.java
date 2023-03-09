@@ -173,14 +173,15 @@ public interface URLSessionTest {
 
     @Test
     default void testGetBaseUrl() throws IOException {
-        URLSession session = createURLSession();
-        // verify the result is java.net.URL compatible.
-        String urlStr = session.getBaseUrl();
-        assertNotNull(urlStr);
-        try {
-            URL url = new URL(urlStr);
-        } catch (MalformedURLException ex) {
-            fail(ex);
+        try (URLSession session = createURLSession()) {
+            // verify the result is java.net.URL compatible.
+            String urlStr = session.getBaseUrl();
+            assertNotNull(urlStr);
+            try {
+                URL url = new URL(urlStr);
+            } catch (MalformedURLException ex) {
+                fail(ex);
+            }
         }
     }
 
