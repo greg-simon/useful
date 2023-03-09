@@ -7,8 +7,8 @@ import java.io.InputStream;
  * Utility class to help load {@link Resource}s using a naming pattern.
  * <p>
  * It uses the {@link java.util.Formatter} template system to resolve resource
- * names. Typically '%s' in the pattern provided to the constructor, and it is
- * formatted with resource name arguments in the
+ * names. Commonly '%s' is within the pattern provided to the constructor, and
+ * the pattern is formatted with resource name arguments in the
  * {@link #get(java.lang.Object, java.lang.Object...)} method.
  * <p>
  * Template pattern example:
@@ -93,14 +93,14 @@ public abstract class Resources {
      * for further details on when exceptions are thrown.
      */
     public Resource get(Object resourceName, Object... otherArgs) {
-        String resovledResourceName = resolveResourceName(resourceName, otherArgs);
-        if (!exists(resovledResourceName)) {
+        String resolvedResourceName = resolveResourceName(resourceName, otherArgs);
+        if (!exists(resolvedResourceName)) {
             return null;
         }
         return new Resource() {
             @Override
             public InputStream inputStream() throws IOException {
-                return createStream(resovledResourceName);
+                return createStream(resolvedResourceName);
             }
         };
     }

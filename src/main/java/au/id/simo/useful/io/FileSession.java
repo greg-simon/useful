@@ -87,7 +87,7 @@ public class FileSession implements URLSession {
     }
 
     /**
-     * @return The base directory registered files will written to.
+     * @return The base directory registered files will be written to.
      */
     public File getBaseDir() {
         return baseDir;
@@ -138,7 +138,7 @@ public class FileSession implements URLSession {
 
     /**
      * Creates all the directories to the provided file, if they don't already
-     * exists.
+     * exist.
      * <p>
      * All directories created here will be deleted on session close, if they
      * are empty at the time. Even if the created directories are outside the
@@ -264,7 +264,7 @@ public class FileSession implements URLSession {
         for (Path filePath : createdFileList) {
             Files.deleteIfExists(filePath);
         }
-        // delete directories in reverse order, to ensure subdirs are
+        // delete directories in reverse order, to ensure subdirectories are
         // deleted before their parents.
         int lastIndex = createdDirList.size() - 1;
         for (int i = lastIndex; i >= 0; i--) {

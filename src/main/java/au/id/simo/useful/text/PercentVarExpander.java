@@ -37,7 +37,7 @@ public class PercentVarExpander implements VarExpander {
                     } else {
                         // end the variable name reading and lookup the value
                         output.append(expandVar(varName));
-                        // dont forget to add the non varname char to the output
+                        // don't forget to add the non varname char to the output
                         output.append(c);
                         state = State.NORMAL;
                     }
@@ -46,7 +46,7 @@ public class PercentVarExpander implements VarExpander {
                     switch (c) {
                         case '%':
                             if (isNextChar('%', sourceStr, index)) {
-                                // ecscaped %, add one and skip the next.
+                                // escaped %, add one and skip the next.
                                 output.append(c);
                                 index++;
                             } else {

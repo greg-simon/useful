@@ -32,7 +32,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
      */
     protected int head;
     /**
-     * Remove index. Points to oldest value to read from. Read then increment.
+     * Remove index. Points to the oldest value to read from. Read then increment.
      */
     protected int tail;
 
@@ -68,7 +68,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
      * @param index head or tail.
      * @param incrementBy the number to increment the index by.
      * @return new incremented value, possibly wrapped back to 0 if required.
-     * Will never be a number that causes an ArrayOutpfBoundsException on the
+     * Will never be a number that causes an ArrayOutOfBoundsException on the
      * buffer.
      */
     protected int incrementIndex(int index, int incrementBy) {
@@ -86,7 +86,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
         head = incrementIndex(head, 1);
 
         if (isFull()) {
-            // if old value was overriden, update the tail.
+            // if old value was overridden, update the tail.
             tail = head;
         } else {
             size++;
@@ -94,7 +94,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
     }
 
     /**
-     * Same as {@link add} except an exception will be thrown if there is no
+     * Same as {@link #add(Object)}} except an exception will be thrown if there is no
      * space.
      * @param i the object to put on the buffer.
      * @throws ArrayIndexOutOfBoundsException if there is no free space left on

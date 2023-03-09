@@ -86,7 +86,7 @@ public class Counts {
      * Removes the named count.
      *
      * @param countName the name of the count to remove.
-     * @return Any value that was present at time of removal. Otherwise 0 if
+     * @return Any value that was present at time of removal. Otherwise, 0 if
      * count doesn't exist.
      */
     public static long removeCount(String countName) {

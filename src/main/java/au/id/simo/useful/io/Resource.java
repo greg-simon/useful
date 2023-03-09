@@ -107,7 +107,7 @@ public interface Resource {
      * NOTE: From Java 9+ this will be redundant due to
      * {@code InputStream.transferTo(OutputStream)}
      *
-     * @param out Underlying bytes this resources refers to is written to this
+     * @param out Underlying bytes this resource refers to is written to this
      * OutputStream
      * @return the number of bytes written to the provided OutputStream
      * @throws IOException if there was an issue in reading from this resource's

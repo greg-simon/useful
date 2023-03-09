@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /**
- * Useful for tracking elapsed time and printing results in human readable
+ * Useful for tracking elapsed time and printing results in human-readable
  * format.
  * <p>
  * The timer starts on instance construction and each call to any of the results

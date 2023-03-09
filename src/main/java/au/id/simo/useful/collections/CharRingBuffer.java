@@ -33,7 +33,7 @@ public class CharRingBuffer extends AbstractRingBuffer<Character> implements Cha
         head = incrementIndex(head, 1);
 
         if (isFull()) {
-            // if old value was overriden, update the tail.
+            // if old value was overridden, update the tail.
             tail = head;
         } else {
             size++;
@@ -47,11 +47,11 @@ public class CharRingBuffer extends AbstractRingBuffer<Character> implements Cha
     }
 
     /**
-     * Same as {@link add} except an exception will be thrown if there is no
+     * Same as {@link #add(CharSequence)}} except an exception will be thrown if there is no
      * space.
      * @param chars the sequence of chars to put on the buffer.
      * @throws ArrayIndexOutOfBoundsException if there is no free space left on
-     * the buffer for all of the chars in the sequence.
+     * the buffer for all the chars in the sequence.
      */
     public void put(CharSequence chars) {
         if (chars.length() > getFreeSpace()) {

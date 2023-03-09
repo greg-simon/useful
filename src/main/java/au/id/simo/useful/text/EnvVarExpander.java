@@ -59,7 +59,7 @@ public class EnvVarExpander implements VarExpander {
                     } else {
                         // end the variable name reading and lookup the value
                         output.append(expandVar(varName));
-                        // dont forget to add the whitespace to the output
+                        // don't forget to add the whitespace to the output
                         output.append(c);
                         state = State.NORMAL;
                     }

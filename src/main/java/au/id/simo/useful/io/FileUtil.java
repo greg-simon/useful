@@ -47,8 +47,8 @@ public class FileUtil {
      * argument. Saves the need to use platform specific path separators
      * manually.
      * @return A new File instance representing the provided path.
-     * @throws IOException If the provided path resolves to being outside of the
-     * provided parent directory. Or if the parent directory does not exists or
+     * @throws IOException If the provided path resolves to being outside the
+     * provided parent directory. Or if the parent directory does not exist or
      * is not a directory.
      */
     public static File newFileInDir(File parentDir, String path,

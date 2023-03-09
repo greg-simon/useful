@@ -5,7 +5,7 @@ import java.io.Writer;
 
 /**
  * Writes characters to the provided {@link Writer} until the character limit is
- * reached, then ignores any thing else written.
+ * reached, then ignores anything else written.
  *
  */
 public class LimitedWriter extends CountingWriter {

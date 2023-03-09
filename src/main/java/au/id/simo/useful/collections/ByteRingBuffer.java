@@ -34,7 +34,7 @@ public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
         head = incrementIndex(head, 1);
 
         if (isFull()) {
-            // if old value was overriden, update the tail.
+            // if old value was overridden, update the tail.
             tail = head;
         } else {
             size++;

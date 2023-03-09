@@ -121,7 +121,7 @@ public class Defer implements AutoCloseable {
      * the behavior matches try-with-resources behavior.
      * <p>
      * Any Exception thrown by any task handled by a {@link DeferErrorHandler}
-     * if provided, otherwise the exception is is ignored.
+     * if provided, otherwise the exception is ignored.
      */
     public void execute() {
         // Execute in reverse order.
@@ -200,7 +200,7 @@ public class Defer implements AutoCloseable {
      * </pre>
      *
      * @param <S> The exact type passed as an argument.
-     * @param service The ExecutorService instance to shutdown when this
+     * @param service The ExecutorService instance to shut down when this
      * Defers execute method is called.
      * @return the same service instance passed as an argument, to allow this
      * method to be used inline with ExecutorService declaration.
@@ -226,13 +226,13 @@ public class Defer implements AutoCloseable {
      * </pre>
      *
      * @param <C> The exact type passed as an argument.
-     * @param closable The AutoClosable instance to close when this Defer
-     * instances execute method is called.
+     * @param closable The AutoClosable instance to close when this instance's
+     * execute method is called.
      * @return the same closable instance passed as an argument, to allow this
      * method to be used inline with AutoClosable declaration.
-     * @throws IllegalArgumentException if this Defer instance is added to
-     * itself via this method, otherwise it would result in an infinite loop on
-     * execute() until a stack overflow exception is thrown.
+     * @throws IllegalArgumentException if this instance is added to
+     * itself via this method, otherwise it would result in an infinite loop when
+     * execute() is called, until a stack overflow exception is thrown.
      */
     public <C extends AutoCloseable> C close(C closable) {
         if (closable == null) {
@@ -256,12 +256,12 @@ public class Defer implements AutoCloseable {
     }
 
     /**
-     * Registers Cleaner instance so it will be executed on JVM shutdown.
+     * Registers this instance, so it will be executed on JVM shutdown.
      * <p>
-     * Calling this method on an already registered Defer is safe as it will
+     * Calling this method on an already registered instance is safe as it will
      * have no effect.
      *
-     * @return This Defer instance
+     * @return The instance of this class (${@code this})
      * @see Runtime#addShutdownHook(java.lang.Thread)
      */
     public synchronized Defer registerShutdownHook() {
@@ -278,7 +278,7 @@ public class Defer implements AutoCloseable {
      * Calling this method on an already unregistered Defer is safe as it will
      * have no effect.
      *
-     * @return This Defer instance
+     * @return The instance of this class (${@code this})
      * @see #registerShutdownHook()
      */
     public synchronized Defer unregisterShutdownHook() {

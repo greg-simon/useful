@@ -7,7 +7,7 @@ import java.util.ArrayList;
  * segments.
  * <p>
  * Best used when adding a significantly large number of bytes without knowing
- * the size before hand, yet also only allocating close to the memory required.
+ * the final size beforehand, yet also only allocating close to the memory required.
  */
 public class SegmentByteBundle implements ByteBundle {
 
@@ -135,7 +135,7 @@ public class SegmentByteBundle implements ByteBundle {
     public void trim() {
         int segId = getSegmentId(size);
 
-        // if there is any bytes in the last segment, then dont trim it
+        // if there is any bytes in the last segment, then don't trim it
         // remove the next one instead.
         if (getSegmentIndex(size) > 0) {
             segId++;

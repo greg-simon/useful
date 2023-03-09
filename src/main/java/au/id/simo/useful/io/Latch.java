@@ -3,7 +3,7 @@ package au.id.simo.useful.io;
 import java.io.IOException;
 
 /**
- * Used to track an open/closed state and to reduce boiler plate code around
+ * Used to track an open/closed state and to reduce boilerplate code around
  * throwing exceptions if closed.
  * <p>
  * Useful in IO class implementations that should throw exceptions when data is

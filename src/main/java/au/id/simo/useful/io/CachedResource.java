@@ -8,8 +8,8 @@ import java.io.InputStream;
  * Caches the data read from the provided resource to speed up subsequent reads.
  * <p>
  * Cache size is not allocated up front. If the cache size is exceeded on the
- * first read then caching is disabled and will not used for subsequent reads.
- * Instead the underlying Resource will be read again.
+ * first read then caching is disabled and will not be used for subsequent reads.
+ * Instead, the underlying Resource will be read again.
  */
 public class CachedResource extends FilterResource {
 

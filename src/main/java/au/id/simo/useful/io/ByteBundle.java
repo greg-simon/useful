@@ -47,7 +47,7 @@ public interface ByteBundle extends Resource {
      * @param srcPos the array index to start coping from the source array
      * @param length number of bytes to copy from the provided source array
      * @throws IndexOutOfBoundsException if the pos, srcPos or length arguments
-     * point to array elements outside of the ByteBuffer or source array.
+     * point to array elements outside the ByteBuffer or source array.
      */
     void copyIn(int pos, byte[] src, int srcPos, int length);
 
@@ -62,7 +62,7 @@ public interface ByteBundle extends Resource {
      * copied to
      * @param src the provided array containing bytes to be copied
      * @throws IndexOutOfBoundsException if the pos arguments point to array
-     * elements outside of the ByteBuffer or the length of the src byte plus the
+     * elements outside the ByteBuffer or the length of the src byte plus the
      * pos argument is larger than the maximum capacity of the ByteBundle.
      */
     default void copyIn(int pos, byte[] src) {

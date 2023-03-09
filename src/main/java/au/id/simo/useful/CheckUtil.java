@@ -21,7 +21,7 @@ public class CheckUtil {
      * Returns the first argument if it is non-{@code null} and otherwise
      * returns the non-{@code null} second argument.
      * <p>
-     * NOTE: Backported from Java 9+ Objects class.
+     * NOTE: Backport from Java 9+ Objects class.
      *
      * @param obj an object
      * @param defaultObj a non-{@code null} object to return if the first

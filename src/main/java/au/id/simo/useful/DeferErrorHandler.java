@@ -30,7 +30,7 @@ public interface DeferErrorHandler {
      * Handles any exceptions from running {@link ExecutorService#shutdownNow()}.
      *
      * @param service The ExecutorService instance that caused the exception.
-     * @param exception The exception thrown when attempting to shutdown the
+     * @param exception The exception thrown when attempting to shut down the
      * ExecutorService.
      */
     public void handle(ExecutorService service, Exception exception);

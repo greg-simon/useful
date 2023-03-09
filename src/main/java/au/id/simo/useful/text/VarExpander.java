@@ -27,7 +27,7 @@ public interface VarExpander {
      * @param sourceStr the String to run the test on.
      * @param currentIndex The index of the String to test from.
      * @return true if the character at index + 1 is the same as the character
-     * provided as first argument. Otherwise false is returned.
+     * provided as first argument. Otherwise, false is returned.
      */
     default boolean isNextChar(char expected, String sourceStr, int currentIndex) {
         if (currentIndex >= sourceStr.length()) {

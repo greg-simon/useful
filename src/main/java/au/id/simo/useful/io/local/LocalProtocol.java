@@ -105,7 +105,7 @@ public class LocalProtocol {
      */
     public static int closeAllSessions() throws IOException {
         // no synchronized required as the session.close() will unregister in a
-        // synchonised block anyway.
+        // synchronized block anyway.
         List<LocalSession> sessions = new ArrayList<>(SESSION_REGISTRY.values());
         int returnValue = sessions.size();
         for(LocalSession session: sessions) {
@@ -127,7 +127,7 @@ public class LocalProtocol {
      */
     public static LocalSession newSession() {
         Handler.registerHandlerIfRequired();
-        // in a syncblock to make the session 'generate' and 'add'
+        // in a synchronized block to make the session 'generate' and 'add'
         // operations into a single atomic operation.
         synchronized (SESSION_REGISTRY) {
             Integer sessionId = allocateSessionId();
@@ -176,7 +176,7 @@ public class LocalProtocol {
      * Attempts to parse an Integer from the provided String.
      *
      * @param integerStr A string representation of an Integer.
-     * @return An Integer, or null of the string is not able to be parsed.
+     * @return An Integer, or null if the string is unable to be parsed.
      */
     protected static Integer parseIntOrNull(String integerStr) {
         try {

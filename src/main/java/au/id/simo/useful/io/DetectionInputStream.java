@@ -44,10 +44,10 @@ public class DetectionInputStream extends FilterInputStream {
 
     private void fillBuffer() throws IOException {
         if(inStatus.isClosed()) {
-            // no more in the underlying input stream, no need to read any more.
+            // no more in the underlying input stream, no need to read anymore.
             return;
         }
-        int byt = -2; // -2 is an arbitary out-of-band init marker.
+        int byt = -2; // -2 is an arbitrary out-of-band init marker.
         while (buffer.isNotFull() && (byt = in.read()) != -1) {
             byte b = (byte) byt;
             buffer.add(b);

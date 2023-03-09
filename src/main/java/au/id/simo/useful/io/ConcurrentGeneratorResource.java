@@ -64,8 +64,8 @@ public class ConcurrentGeneratorResource implements Resource {
     /**
      * Constructor.
      *
-     * @param generator The Generator that will executed when an InputStream is
-     * requested
+     * @param generator The Generator that will be executed when an InputStream
+     * is requested
      */
     public ConcurrentGeneratorResource(Generator generator) {
         this(defaultExecutorService, generator, DEFAULT_BUFFER_SIZE);
@@ -75,8 +75,8 @@ public class ConcurrentGeneratorResource implements Resource {
      * Constructor.
      *
      * @param service The executor service that the Generator will use
-     * @param generator The Generator that will executed when an InputStream is
-     * requested
+     * @param generator The Generator that will be executed when an InputStream
+     * is requested
      */
     public ConcurrentGeneratorResource(ExecutorService service, Generator generator) {
         this(service, generator, DEFAULT_BUFFER_SIZE);
@@ -85,8 +85,8 @@ public class ConcurrentGeneratorResource implements Resource {
     /**
      * Constructor.
      *
-     * @param generator The Generator that will executed when an InputStream is
-     * requested
+     * @param generator The Generator that will be executed when an InputStream
+     * is requested
      * @param bufferSize The number of bytes in size of the buffer between the
      * OutputStream the Generator s writing to and the created InputStream.
      */
@@ -98,8 +98,8 @@ public class ConcurrentGeneratorResource implements Resource {
      * Constructor.
      *
      * @param service The executor service that the Generator will use
-     * @param generator The Generator that will executed when an InputStream is
-     * requested
+     * @param generator The Generator that will be executed when an InputStream
+     * is requested
      * @param bufferSize The number of bytes in size of the buffer between the
      * OutputStream the Generator s writing to and the created InputStream.
      */
@@ -134,7 +134,7 @@ public class ConcurrentGeneratorResource implements Resource {
             try (OutputStream localOut = out) {
                 generator.writeTo(localOut);
             } catch (InterruptedIOException e) {
-                // reset interupt status
+                // reset interrupt status
                 Thread.currentThread().interrupt();
                 throw e;
             }
@@ -154,7 +154,7 @@ public class ConcurrentGeneratorResource implements Resource {
      * @param future Represents the Generator running in another thread. Cannot
      * be null.
      * @throws IOException If Generator threw any kind of Exception. Any
-     * Throwable that is not an Exception, such as OutOfMemeoryError is not
+     * Throwable that is not an Exception, such as OutOfMemoryError is not
      * caught or wrapped in an IOException.
      */
     protected static void closeGenerator(Future<Object> future) throws IOException {
@@ -163,30 +163,30 @@ public class ConcurrentGeneratorResource implements Resource {
             // in the generator thread.
             future.get(0, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
-            // this only occurs when the consumer thread is interupted while
+            // this only occurs when the consumer thread is interrupted while
             // waiting <1ms for the future to complete. It's a very small window
             // but still possible.
             
-            // ensure interupt flag is reset, but otherwise ignore.
+            // ensure interrupt flag is reset, but otherwise ignore.
             Thread.currentThread().interrupt();
         } catch (TimeoutException ex) {
             // This occurs when the consumer InputStream is closed before the
             // Generator is finished.
             // No need to throw an exception on the consumer thread. Just
-            // interupt the generator thread, as it's no longer being read from.
+            // interrupt the generator thread, as it's no longer being read from.
             future.cancel(true);
         } catch (CancellationException ex) {
             // Producer callable was canceled.
             throw wrapIOE(ex);
         } catch (ExecutionException ex) {
-            // This occures when an exception is thrown in the Generator before
+            // This occurs when an exception is thrown in the Generator before
             // the consumer is closed.
             // Because ExecutorServices wraps Callable exceptions, unwrap and
-            // rethrow any IOExceptions or RuntimeExceptions, any thing else is
+            // rethrow any IOExceptions or RuntimeExceptions, anything else is
             // wrapped in an IOException.
             Throwable causedBy = ex.getCause();
             if(causedBy == null) {
-                // this scenaro requires a custom ExecutorService to occur, but
+                // this scenario requires a custom ExecutorService to occur, but
                 // is still technically possible.
                 throw wrapIOE(ex);
             }

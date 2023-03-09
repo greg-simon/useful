@@ -12,9 +12,9 @@ public class HashInputStream extends CountingInputStream implements Hasher {
 
     private final MessageDigest messageDigest;
 
-    public HashInputStream(InputStream inputStream, String messageDigestAlgorithmn) throws NoSuchAlgorithmException {
+    public HashInputStream(InputStream inputStream, String messageDigestAlgorithm) throws NoSuchAlgorithmException {
         super(inputStream);
-        this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithmn);
+        this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithm);
     }
 
     public HashInputStream(InputStream inputStream, MessageDigest messageDigest) {

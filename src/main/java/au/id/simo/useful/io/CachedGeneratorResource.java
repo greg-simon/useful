@@ -17,7 +17,7 @@ public class CachedGeneratorResource implements Resource {
     private byte[] generatedData;
 
     /**
-     * Creates a new Resource that obtains it's data from the provided
+     * Creates a new Resource that obtains its data from the provided
      * Generator.
      *
      * @param generator Is used to generate the data that backs this resource

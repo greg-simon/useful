@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * ExecutorService that doesn't manage it's own threads, instead it relies on
+ * ExecutorService that doesn't manage its own threads, instead it relies on
  * the caller to use {@link #runTask()} to run a task.
  * 
  */

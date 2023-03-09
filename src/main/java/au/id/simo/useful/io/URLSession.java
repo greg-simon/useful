@@ -155,7 +155,7 @@ public interface URLSession extends Closeable {
      * It allows for iterating over all resources registered along with the
      * {@link #getResource(java.lang.String)} or
      * {@link #getInputStream(java.lang.String)} methods.      <code>
-     * for (String path: urlSession.getgetRegisteredPaths()) {
+     * for (String path: urlSession.getRegisteredPaths()) {
      *    Resource res = urlSession.getResource(path);
      *    ...
      * }

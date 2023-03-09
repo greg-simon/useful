@@ -108,7 +108,7 @@ public class VarExpanderReader extends Reader {
 
                     // end the variable name reading and lookup the value
                     String varName = varNameBuf.toString();
-                    // clean varname buffer
+                    // clean variable name buffer
                     varNameBuf.delete(0, varNameBuf.length() - 1);
                     varValue = varMap.get(varName);
                     break;

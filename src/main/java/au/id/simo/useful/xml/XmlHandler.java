@@ -86,7 +86,7 @@ public abstract class XmlHandler extends DefaultHandler {
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
         if (currentTag == null) {
-            // mostly likly the parser has already thrown the exception and this
+            // mostly likely the parser has already thrown the exception and this
             // code will never be reached.
             throw new SAXException("Should not receive characters outside a tag.");
         }
