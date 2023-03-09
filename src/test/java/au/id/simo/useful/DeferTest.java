@@ -67,7 +67,7 @@ public class DeferTest {
     }
 
     @Test
-    public void testClean() {
+    public void testExecute() {
         CountRunnable countRun = new CountRunnable();
         Defer defer = new Defer();
         defer.run(countRun);
@@ -79,7 +79,7 @@ public class DeferTest {
     }
     
     @Test
-    public void testCleanWithExceptions() {
+    public void testExecuteWithExceptions() {
         CountRunnable countRun = new CountRunnable();
         
         Defer defer = new Defer();
