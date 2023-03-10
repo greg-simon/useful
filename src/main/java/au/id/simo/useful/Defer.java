@@ -122,6 +122,11 @@ public class Defer implements AutoCloseable {
      * <p>
      * Any Exception thrown by any task handled by a {@link DeferErrorHandler}
      * if provided, otherwise the exception is ignored.
+     * <p>
+     * As of Java 19, ${@link ExecutorService} implements ${@link AutoCloseable}.
+     * However the executor service will have it's
+     * ${@link ExecutorService#shutdownNow()} method called, and not it's close method.
+     *
      */
     public void execute() {
         // Execute in reverse order.
@@ -129,10 +134,10 @@ public class Defer implements AutoCloseable {
             Object item = itemsToExec.pop();
             if (item instanceof Runnable) {
                 execRunnable((Runnable) item);
-            } else if (item instanceof AutoCloseable) {
-                execClosable((AutoCloseable) item);
             } else if (item instanceof ExecutorService) {
                 execExecutorService((ExecutorService) item);
+            } else if (item instanceof AutoCloseable) {
+                execClosable((AutoCloseable) item);
             }
             // unknown item: ignore
         }
