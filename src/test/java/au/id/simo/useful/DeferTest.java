@@ -47,90 +47,53 @@ public class DeferTest {
         CountErrorHandler errorHandler = new CountErrorHandler();
         Defer defer = new Defer();
         defer.setErrorHandler(errorHandler);
-        assertEquals(0, errorHandler.getTotalCount());
+        assertEquals(0, errorHandler.getClosableCount());
         assertEquals(0, defer.size());
-        
-        defer.run(() -> {
-            throw new RuntimeException();
-        });
+
         defer.close(() -> {
             throw new RuntimeException();
         });
-        defer.shutdownNow(new MockExecutorService());
+        defer.shutdown(new MockExecutorService());
         
-        defer.execute();
-        assertEquals(1, errorHandler.getRunnableCount());
-        assertEquals(1, errorHandler.getClosableCount());
-        assertEquals(1, errorHandler.getServiceCount());
-        assertEquals(3, errorHandler.getTotalCount());
+        defer.close();
+        assertEquals(2, errorHandler.getClosableCount());
         assertEquals(0, defer.size());
     }
 
     @Test
-    public void testExecute() {
-        CountRunnable countRun = new CountRunnable();
-        Defer defer = new Defer();
-        defer.run(countRun);
-        
-        assertEquals(1, defer.size());
-        defer.execute();
-        assertEquals(0, defer.size());
-        assertEquals(1, countRun.runCount());
-    }
-    
-    @Test
-    public void testExecuteWithExceptions() {
-        CountRunnable countRun = new CountRunnable();
+    public void testCloseWithExceptions() {
+        CountCloseable countCloseable = new CountCloseable();
         
         Defer defer = new Defer();
-        defer.run(countRun);
+        defer.close(countCloseable);
         defer.close(() -> {throw new RuntimeException();});
-        defer.run(countRun);
-        defer.shutdownNow(new MockExecutorService());
-        defer.run(countRun);
-        defer.run(() -> {throw new RuntimeException();});
-        defer.run(countRun);
+        defer.close(countCloseable);
+        defer.shutdown(new MockExecutorService());
+        defer.close(countCloseable);
+        defer.close(() -> {throw new RuntimeException();});
+        defer.close(countCloseable);
         
         assertEquals(7, defer.size());
-        defer.execute();
-        assertEquals(0, defer.size());
-        assertEquals(4, countRun.runCount(), "Verify countRun ran before and after each exception throwing task");
-    }
-
-    @Test
-    public void testDeferClose() {
-        Defer defer = new Defer();
-        CountRunnable countRun = defer.run(new CountRunnable());
-        
-        assertEquals(1, defer.size());
         defer.close();
         assertEquals(0, defer.size());
-        assertEquals(1, countRun.runCount());
-    }
-    
-    @Test
-    public void testRunNull() {
-        Defer defer = new Defer();
-        Runnable runnable = defer.run(null);
-        assertNull(runnable);
-        assertEquals(0, defer.size());
+        assertEquals(4, countCloseable.getCount(), "Verify countRun ran before and after each exception throwing task");
     }
 
     @Test
-    public void testShutdownNow() {
+    public void testShutdown() {
         Defer defer = new Defer();
-        ExecutorService service = defer.shutdownNow(Executors.newCachedThreadPool());
+        ExecutorService service = defer.shutdown(Executors.newCachedThreadPool());
         assertEquals(1, defer.size());
         assertFalse(service.isShutdown());
-        defer.execute();
+        defer.close();
         assertEquals(0, defer.size());
         assertTrue(service.isShutdown());
     }
     
     @Test
-    public void testShutdownNowNull() {
+    public void testShutdownNull() {
         Defer defer = new Defer();
-        ExecutorService service = defer.shutdownNow(null);
+        ExecutorService service = defer.shutdown(null);
         assertNull(service);
         assertEquals(0, defer.size());
     }
@@ -141,7 +104,7 @@ public class DeferTest {
         Latch latch = defer.close(new Latch());
         assertEquals(1, defer.size());
         assertFalse(latch.isClosed());
-        defer.execute();
+        defer.close();
         assertEquals(0, defer.size());
         assertTrue(latch.isClosed());
     }
@@ -162,53 +125,29 @@ public class DeferTest {
         });
     }
     
-    public class CountRunnable implements Runnable {
-        private final AtomicInteger runCount = new AtomicInteger();
+    public class CountCloseable implements AutoCloseable {
+        private final AtomicInteger count = new AtomicInteger();
         
         @Override
-        public void run() {
-            runCount.incrementAndGet();
+        public void close() {
+            count.incrementAndGet();
         }
         
-        public int runCount() {
-            return runCount.get();
+        public int getCount() {
+            return count.get();
         }
     }
-    
+
     public class CountErrorHandler implements DeferErrorHandler {
-        private final AtomicInteger runnableCount = new AtomicInteger();
         private final AtomicInteger closableCount = new AtomicInteger();
-        private final AtomicInteger serviceCount = new AtomicInteger();
-        
-        @Override
-        public void handle(Runnable runnable, Exception exception) {
-            runnableCount.incrementAndGet();
-        }
 
         @Override
         public void handle(AutoCloseable closable, Exception exception) {
             closableCount.incrementAndGet();
         }
-        
-        @Override
-        public void handle(ExecutorService closable, Exception exception) {
-            serviceCount.incrementAndGet();
-        }
-
-        public int getRunnableCount() {
-            return runnableCount.get();
-        }
 
         public int getClosableCount() {
             return closableCount.get();
-        }
-        
-        public int getServiceCount() {
-            return serviceCount.get();
-        }
-        
-        public int getTotalCount() {
-            return getRunnableCount() + getClosableCount() + getServiceCount();
         }
     }
     
@@ -281,6 +220,5 @@ public class DeferTest {
         public void execute(Runnable command) {
             throw new UnsupportedOperationException();
         }
-        
     }
 }

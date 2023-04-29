@@ -4,48 +4,60 @@ import java.util.Deque;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Used to help ensure resources are cleaned up when required.
+ * Helps ensure resources are cleaned up.
  * <p>
- * Defer is conceptually a collection of items that are executed when
- * {@link #execute()} is called:
+ * Defer is conceptually a collection of {@link AutoCloseable}s that are closed
+ * when {@link #close()} is called in last in, first out (LIFO) order. Consistent
+ * with try-with-resources behavior.
+ * <p>
+ * Usages:
  * <ul>
- * <li>{@link Runnable}: Has {@code run()} called</li>
- * <li>{@link AutoCloseable}: Has {@code close()} called</li>
- * <li>{@link ExecutorService}: Has {@code shutdownNow()} called</li>
- * </ul>
+ * <li>
+ * Make try-with-resources blocks slightly neater when several items are declared:
  * <p>
- * Cleanup tasks are performed in reverse added order (LIFO), consistent with
- * try-with-resources behavior for {@link AutoCloseable} implementations.
+ * Without Defer
+ * <pre>
+ * try (Connection conn = DriverManager.getConnection(...);
+ *      Statement stmt = conn.createStatement();
+ *      ResultSet rs = stmt.executeQuery(QUERY_STR);) {
+ *    while (rs.next()) {
+ *        System.out.println(rs.getString(1));
+ *    }
+ * }
+ * </pre>
  * <p>
- * Defer implements AutoCloseable for convenience to enable it to be used easily
- * in try-with-resources blocks.
- * <p>
- * Example of simple instance usage:
+ * Using Defer
  * <pre>
  * try (Defer defer = new Defer()) {
- *    ExecutorService service = defer.shutdownNow(Executors.newCachedThreadPool());
- *    defer.run(() -&gt; {
- *       System.out.println("This will be printed at the end of the try block");
- *    });
- *    service.execute(...);
- *    ...
- * } // service has shutdownNow() called here
+ *    Connection conn = defer.close(DriverManager.getConnection(...));
+ *    Statement stmt = defer.close(conn.createStatement());
+ *    ResultSet rs = defer.close(stmt.executeQuery(QUERY_STR));
+ *    while (rs.next()) {
+ *        System.out.println(rs.getString(1));
+ *    }
+ * }
  * </pre>
+ * </li>
+ * <li>
  * <p>
- * Defer can also be registered with
- * {@link Runtime#addShutdownHook(java.lang.Thread)} for {@link #execute()} to
- * run on JVM shutdown, by simply calling {@link #registerShutdownHook()}. It
- * can also be removed with {@link #unregisterShutdownHook()}.
+ * Easily register {@link AutoCloseable}s to close on JVM shutdown.
  * <pre>
  * Defer onShutdown = new Defer().registerShutdownHook();
- * onShutdown.run(...);
- * ...
+ * onShutdown.close(...);
  * </pre>
+ * See {@link Runtime#addShutdownHook(java.lang.Thread)} for the underlying
+ * mechanism used.
+ * </li>
+ * </ul>
+ * As of Java 19, the {@link ExecutorService} implements {@link AutoCloseable},
+ * however previous versions can use the {@link #shutdown(ExecutorService)}
+ * method, which back ports the same behavior using an internal wrapper class.
  * <p>
  * Items added to the Defer instance are only ever cleaned up once before being
- * discarded. This makes it safe to call an instances {@link #execute()} method
+ * discarded. This makes it safe to call an instances {@link #close()} method
  * multiple times.
  */
 public class Defer implements AutoCloseable {
@@ -53,34 +65,17 @@ public class Defer implements AutoCloseable {
     private static final String SELF_ADD_ERROR_MSG
             = "Infinite loop detected, a Defer can not be added to itself.";
 
-    private static final DeferErrorHandler NO_OP_POLICY = new DeferErrorHandler() {
-        @Override
-        public void handle(Runnable runnable, Exception exception) {
-            // no op
-        }
-
-        @Override
-        public void handle(AutoCloseable closable, Exception exception) {
-            // no op
-        }
-
-        @Override
-        public void handle(ExecutorService service, Exception exception) {
-            // no op
-        }
+    /**
+     * Ignores any exceptions thrown when {@link AutoCloseable#close()} is called on items.
+     */
+    public static final DeferErrorHandler IGNORE_EXCEPTIONS_POLICY = (closable, exception) -> {
+        // no op
     };
 
     /**
-     * Executed in stack order: LIFO.
-     * <p>
-     * Could contain any of the following types:
-     * <ul>
-     * <li>{@link Runnable}</li>
-     * <li>{@link AutoCloseable}</li>
-     * <li>{@link ExecutorService}</li>
-     * </ul>
+     * Closed in stack order: LIFO.
      */
-    private final Deque<Object> itemsToExec;
+    private final Deque<AutoCloseable> itemsToClose;
 
     /**
      * The handler used to act on any task that throws an exception.
@@ -95,8 +90,8 @@ public class Defer implements AutoCloseable {
     private Thread shutdownHookThread;
 
     public Defer() {
-        this.itemsToExec = new LinkedBlockingDeque<>();
-        this.handler = NO_OP_POLICY;
+        this.itemsToClose = new LinkedBlockingDeque<>();
+        this.handler = IGNORE_EXCEPTIONS_POLICY;
     }
 
     /**
@@ -104,104 +99,51 @@ public class Defer implements AutoCloseable {
      * @return the number of tasks registered to be executed.
      */
     public int size() {
-        return itemsToExec.size();
+        return itemsToClose.size();
     }
 
-    public void setErrorHandler(DeferErrorHandler handler) {
+    public Defer setErrorHandler(DeferErrorHandler handler) {
         this.handler = Objects.requireNonNull(handler);
+        return this;
     }
 
     /**
-     * Executes all tasks that have been registered.
+     * Closes all items that have been registered.
      * <p>
-     * Any executed task is removed from the list to ensure one-run-only policy,
+     * Any closed item is removed from the list to ensure exactly-one-close policy,
      * even if an exception is thrown.
      * <p>
-     * Tasks are executed in reverse order they were added in (LIFO), to ensure
-     * the behavior matches try-with-resources behavior.
+     * Tasks are closed in reverse order they were added in (LIFO), to ensure
+     * the behavior matches try-with-resources.
      * <p>
-     * Any Exception thrown by any task handled by a {@link DeferErrorHandler}
-     * if provided, otherwise the exception is ignored.
-     * <p>
-     * As of Java 19, ${@link ExecutorService} implements ${@link AutoCloseable}.
-     * However the executor service will have it's
-     * ${@link ExecutorService#shutdownNow()} method called, and not it's close method.
-     *
-     */
-    public void execute() {
-        // Execute in reverse order.
-        while (!itemsToExec.isEmpty()) {
-            Object item = itemsToExec.pop();
-            if (item instanceof Runnable) {
-                execRunnable((Runnable) item);
-            } else if (item instanceof ExecutorService) {
-                execExecutorService((ExecutorService) item);
-            } else if (item instanceof AutoCloseable) {
-                execClosable((AutoCloseable) item);
-            }
-            // unknown item: ignore
-        }
-    }
-
-    private void execRunnable(Runnable runnable) {
-        try {
-            runnable.run();
-        } catch (Exception t) {
-            handler.handle(runnable, t);
-        }
-    }
-
-    private void execClosable(AutoCloseable closable) {
-        try {
-            closable.close();
-        } catch (Exception ex) {
-            handler.handle(closable, ex);
-        }
-    }
-
-    private void execExecutorService(ExecutorService service) {
-        try {
-            service.shutdownNow();
-        } catch (Exception ex) {
-            handler.handle(service, ex);
-        }
-    }
-
-    /**
-     * {@link AutoCloseable#close()} implementation that calls
-     * {@link #execute()}.
+     * Any Exception thrown by any item while closing, is handled by a
+     * {@link DeferErrorHandler} if provided, which may include throwing
+     * unchecked exceptions. The default handler ignores all exceptions.
      */
     @Override
     public void close() {
-        execute();
-    }
-
-    /**
-     * Registers a {@link Runnable} for later execution.
-     *
-     * @param <R> The exact type passed as an argument.
-     * @param task executed when this instances {@link Defer#execute()}
-     * method is run.
-     * @return the same runnable instance passed as an argument, to allow this
-     * method to be used inline with declaration and assignment.
-     */
-    public <R extends Runnable> R run(R task) {
-        if (task == null) {
-            return null;
+        // close in reverse order.
+        while (!itemsToClose.isEmpty()) {
+            AutoCloseable item = itemsToClose.pop();
+            try {
+                item.close();
+            } catch (Exception ex) {
+                handler.handle(item, ex);
+            }
         }
-        itemsToExec.push(task);
-        return task;
     }
 
     /**
      * Registers an ExecutorServices for later shutdown.
      * <p>
-     * On {@link Defer#execute()}, {@link ExecutorService#shutdownNow()} will be
-     * called and any remaining Runnable tasks will be discarded.
+     * On {@link Defer#close()},
+     * an orderly shutdown in which previously submitted tasks are
+     * executed, but no new tasks will be accepted. This method waits until all
+     * tasks have completed execution and the executor has terminated.
      * <p>
      * Usage example:
      * <pre>
-     * ExecutorService service = defer.shutdownNow(Executors.newCachedThreadPool());
+     * ExecutorService service = defer.shutdown(Executors.newCachedThreadPool());
      * </pre>
      *
      * @param <S> The exact type passed as an argument.
@@ -210,12 +152,81 @@ public class Defer implements AutoCloseable {
      * @return the same service instance passed as an argument, to allow this
      * method to be used inline with ExecutorService declaration.
      */
-    public <S extends ExecutorService> S shutdownNow(S service) {
+    public <S extends ExecutorService> S shutdown(S service) {
         if (service == null) {
             return null;
         }
-        itemsToExec.push(service);
+        itemsToClose.push(new ExecutorServiceWrapper(service));
         return service;
+    }
+
+    public static abstract class AutoCloseableWrapper<T> implements AutoCloseable {
+        private final T wrappedType;
+
+        public AutoCloseableWrapper(T wrappedType) {
+            this.wrappedType = wrappedType;
+        }
+
+        public T getWrappedType() {
+            return wrappedType;
+        }
+    }
+
+    /**
+     * Back ported ExecutorService close method from Java 19.
+     */
+    private static class ExecutorServiceWrapper extends AutoCloseableWrapper<ExecutorService> {
+        public ExecutorServiceWrapper(ExecutorService service) {
+            super(service);
+        }
+
+        /**
+         * Initiates an orderly shutdown in which previously submitted tasks are
+         * executed, but no new tasks will be accepted. This method waits until all
+         * tasks have completed execution and the executor has terminated.
+         *
+         * <p> If interrupted while waiting, this method stops all executing tasks as
+         * if by invoking {@link ExecutorService#shutdownNow()}. It then continues to wait until all
+         * actively executing tasks have completed. Tasks that were awaiting
+         * execution are not executed. The interrupt status will be re-asserted
+         * before this method returns.
+         *
+         * <p> If already terminated, invoking this method has no effect.
+         *
+         * The default implementation invokes {@code shutdown()} and waits for tasks
+         * to complete execution with {@code awaitTermination}.
+         *
+         * @throws SecurityException if a security manager exists and
+         *         shutting down this ExecutorService may manipulate
+         *         threads that the caller is not permitted to modify
+         *         because it does not hold {@link
+         *         java.lang.RuntimePermission}{@code ("modifyThread")},
+         *         or the security manager's {@code checkAccess} method
+         *         denies access.
+         * @since 19
+         */
+        @Override
+        public void close() {
+            ExecutorService service = getWrappedType();
+            boolean terminated = service.isTerminated();
+            if (!terminated) {
+                service.shutdown();
+                boolean interrupted = false;
+                while (!terminated) {
+                    try {
+                        terminated = service.awaitTermination(1L, TimeUnit.DAYS);
+                    } catch (InterruptedException e) {
+                        if (!interrupted) {
+                            service.shutdownNow();
+                            interrupted = true;
+                        }
+                    }
+                }
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
     }
 
     /**
@@ -246,7 +257,7 @@ public class Defer implements AutoCloseable {
         if (closable == this) {
             throw new IllegalArgumentException(SELF_ADD_ERROR_MSG);
         }
-        itemsToExec.push(closable);
+        itemsToClose.push(closable);
         return closable;
     }
 
@@ -271,7 +282,13 @@ public class Defer implements AutoCloseable {
      */
     public synchronized Defer registerShutdownHook() {
         if (shutdownHookThread == null) {
-            shutdownHookThread = new Thread(this::execute);
+            shutdownHookThread = new Thread(() -> {
+                try {
+                    this.close();
+                } catch (Exception e) {
+                    // ignore
+                }
+            });
             Runtime.getRuntime().addShutdownHook(shutdownHookThread);
         }
         return this;

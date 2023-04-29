@@ -194,7 +194,7 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
                     throw new RuntimeException("Runtime exception from thread");
                 }
             });
-            defer.shutdownNow(es);
+            defer.shutdown(es);
             
             ConcurrentGeneratorResource genRes = new ConcurrentGeneratorResource(es, gen, 1);
 
@@ -268,10 +268,10 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
     public void testChangeDefaultExecutorService() {
         ManualExecutorService manualService = new ManualExecutorService();
         ExecutorService defaultService = ConcurrentGeneratorResource.setDefaultExecutorService(manualService);
-        assertFalse(defaultService == manualService);
+        assertNotSame(defaultService, manualService);
         
         ExecutorService replacedManualService = ConcurrentGeneratorResource.setDefaultExecutorService(defaultService);
-        assertTrue(manualService == replacedManualService);
+        assertSame(manualService, replacedManualService);
     }
 
     protected static class LineGenerator implements Generator {
