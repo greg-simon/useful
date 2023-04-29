@@ -21,4 +21,14 @@
         <Class name="au.id.simo.useful.io.ByteArrayResource" />
         <Bug code="EI2" />
     </Match>
+    <Match>
+        <!-- Unconditional wait. It is conditional, perhaps spotbugs is over eager on this one.  -->
+        <Class name="au.id.simo.useful.test.ManualExecutorService" />
+        <Bug code="UW" />
+    </Match>
+    <Match>
+        <!-- Wait not in Loop: I don't want it in a loop?  -->
+        <Class name="au.id.simo.useful.test.ManualExecutorService" />
+        <Bug code="Wa" />
+    </Match>
 </FindBugsFilter>

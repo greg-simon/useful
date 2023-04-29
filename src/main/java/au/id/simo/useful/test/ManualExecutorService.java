@@ -93,8 +93,13 @@ public class ManualExecutorService extends AbstractExecutorService {
     @Override
     public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
         shutdown = true;
+        long timeoutMillis = unit.toMillis(timeout);
+        if (tasks.isEmpty()) {
+            // shutdown is true and there are no more tasks. It's terminated.
+            return true;
+        }
         synchronized (this) {
-            this.wait(unit.toMillis(timeout));
+            this.wait(timeoutMillis);
         }
         return isTerminated();
     }
