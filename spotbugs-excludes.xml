@@ -31,4 +31,26 @@
         <Class name="au.id.simo.useful.test.ManualExecutorService" />
         <Bug code="Wa" />
     </Match>
+    <Match>
+        <!--
+            Do not use floating-point variables as loop counters: It's ok, it's just a
+            human-readable time, accuracy will be sufficient.
+          -->
+        <Class name="au.id.simo.useful.Stopwatch" />
+        <Bug code="FL" />
+    </Match>
+    <Match>
+        <!--
+            May expose internal representation by returning reference to mutable object
+          -->
+        <!--Class name="au.id.simo.useful." /-->
+        <Bug code="EI" />
+    </Match>
+    <Match>
+        <!--
+            May expose internal representation by incorporating reference to mutable object
+          -->
+        <Bug code="EI2" />
+    </Match>
+
 </FindBugsFilter>

@@ -32,8 +32,12 @@ public class Tag implements Map<String, String> {
         this.attributes = new LinkedHashMap<>();
         this.children = new ArrayList<>();
         if (parent != null) {
-            parent.children.add(this);
+            parent.addChild(this);
         }
+    }
+
+    protected final void addChild(Tag tag) {
+        children.add(tag);
     }
 
     public String getXPath() {
