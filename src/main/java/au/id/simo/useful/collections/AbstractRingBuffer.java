@@ -1,5 +1,6 @@
 package au.id.simo.useful.collections;
 
+import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -74,7 +75,37 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
     protected int incrementIndex(int index, int incrementBy) {
         return (index + incrementBy) % capacity;
     }
-    
+
+    protected int typelessPeek(Object bufferArray, Object destArray, int start, int length) {
+        int destLength = Array.getLength(destArray);
+        int bufferLength = Array.getLength(bufferArray);
+        CheckUtil.checkReadWriteArgs(destLength, start, length);
+        // buffer array could have two segments to copy out of order. One at
+        // start of the buffer and one at the end.
+        // (h is head index, t is tail index)
+        // [0,0,0,0,h, , ,t,0,0,0,0]
+        // [^ seg1  ^]   [^ seg2  ^]
+        // Steps: Copy segment two to start of dest array, as seg two will be
+        // the oldest values, then copy segment to the dest array after segment
+        // one.
+        // Ending with:
+        // [t,0,0,0,0,0,0,0,0,h]
+        // [^ seg2  ^][^ seg1 ^]
+        int readLength = Math.min(size, length);
+
+        // segment two to the start of the destination.
+        int segTwoLength = bufferLength - tail;
+        int segTwoReadLength = Math.min(readLength, segTwoLength);
+        System.arraycopy(bufferArray, tail, destArray, start, segTwoReadLength);
+
+        // segment one to end of newArray
+        int segOneReadLength = Math.min(head + 1, readLength - segTwoReadLength);
+        System.arraycopy(bufferArray, 0, destArray, start + segTwoReadLength, segOneReadLength);
+
+        // sum segment lengths and return
+        return segTwoReadLength + segOneReadLength;
+    }
+
     /**
      *
      * @param i add value, overwriting oldest value if at capacity.
@@ -255,7 +286,7 @@ public abstract class AbstractRingBuffer<T> implements Iterable<T> {
             }
             // is this byte actual data or uncleared noise?
             if (isData(i)) {
-                sb.append(String.valueOf(getFromArray(i)));
+                sb.append(getFromArray(i));
             } else {
                 sb.append(showNullValue);
             }

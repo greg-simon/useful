@@ -101,31 +101,7 @@ public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
      * {@code dest.length - start}
      */
     public int peek(byte[] dest, int start, int length) {
-        CheckUtil.checkReadWriteArgs(dest.length, start, length);
-        // buffer array could have two segments to copy out of order. One at
-        // start of the buffer and one at the end.
-        // (h is head index, t is tail index)
-        // [0,0,0,0,h, , ,t,0,0,0,0]
-        // [^ seg1  ^]   [^ seg2  ^]
-        // Steps: Copy segment two to start of dest array, as seg two will be
-        // the oldest values, then copy segment to the dest array after segment
-        // one.
-        // Ending with:
-        // [t,0,0,0,0,0,0,0,0,h]
-        // [^ seg2  ^][^ seg1 ^]
-        int readLength = Math.min(size, length);
-
-        // segment two to the start of the destination.
-        int segTwoLength = buffer.length - tail;
-        int segTwoReadLength = Math.min(readLength, segTwoLength);
-        System.arraycopy(buffer, tail, dest, start, segTwoReadLength);
-
-        // segment one to end of newArray
-        int segOneReadLength = Math.min(head + 1, readLength - segTwoReadLength);
-        System.arraycopy(buffer, 0, dest, start + segTwoReadLength, segOneReadLength);
-
-        // sum segment lengths and return
-        return segTwoReadLength + segOneReadLength;
+        return typelessPeek(buffer, dest ,start ,length);
     }
 
     public byte[] toArray() {
