@@ -13,7 +13,7 @@ import java.util.Objects;
 /**
  * A Collection that sets a time-to-live for added items and provides a way to
  * remove them when their time-to-live expires.
- * <P>
+ * <p>
  * Useful for tracking duplicate items over a specified time window.
  *
  * @param <E> The item type it contains

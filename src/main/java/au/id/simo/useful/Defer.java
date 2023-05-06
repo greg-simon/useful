@@ -96,7 +96,7 @@ public class Defer implements AutoCloseable {
 
     /**
      *
-     * @return the number of tasks registered to be executed.
+     * @return the number of items registered to be closed.
      */
     public int size() {
         return itemsToClose.size();
@@ -113,7 +113,7 @@ public class Defer implements AutoCloseable {
      * Any closed item is removed from the list to ensure exactly-one-close policy,
      * even if an exception is thrown.
      * <p>
-     * Tasks are closed in reverse order they were added in (LIFO), to ensure
+     * Items are closed in reverse order they were added in (LIFO), to ensure
      * the behavior matches try-with-resources.
      * <p>
      * Any Exception thrown by any item while closing, is handled by a
@@ -193,7 +193,7 @@ public class Defer implements AutoCloseable {
          *
          * <p> If already terminated, invoking this method has no effect.
          *
-         * The default implementation invokes {@code shutdown()} and waits for tasks
+         * <p> The default implementation invokes {@code shutdown()} and waits for tasks
          * to complete execution with {@code awaitTermination}.
          *
          * @throws SecurityException if a security manager exists and
@@ -274,7 +274,7 @@ public class Defer implements AutoCloseable {
     /**
      * Registers this instance, so it will be executed on JVM shutdown.
      * <p>
-     * Calling this method on an already registered instance is safe as it will
+     * Calling this method on an already registered instance is safe, as it will
      * have no effect.
      *
      * @return The instance of this class (${@code this})
@@ -295,7 +295,7 @@ public class Defer implements AutoCloseable {
     }
 
     /**
-     * Unregisters this Cleaner instance from execution on JVM shutdown.
+     * Unregisters this Defer instance from execution on JVM shutdown.
      * <p>
      * Calling this method on an already unregistered Defer is safe as it will
      * have no effect.
