@@ -21,7 +21,7 @@ public class CheckUtil {
      * Returns the first argument if it is non-{@code null} and otherwise
      * returns the non-{@code null} second argument.
      * <p>
-     * NOTE: Backport from Java 9+ Objects class.
+     * NOTE: Backported from Java 9+ Objects class.
      *
      * @param obj an object
      * @param defaultObj a non-{@code null} object to return if the first
@@ -55,6 +55,21 @@ public class CheckUtil {
      */
     public static void checkReadWriteArgs(int arrayLength, int arrayOffset, int copyLength) {
         if (arrayOffset < 0 || copyLength < 0 || copyLength > arrayLength - arrayOffset) {
+            throw new IndexOutOfBoundsException();
+        }
+    }
+    
+    /**
+     * Checks the start and end arguments against the provided array length.
+     * @param arrayLength
+     * @param start
+     * @param end 
+     * @throws IndexOutOfBoundsException if {@code start} or {@code end} are
+     * negative, if {@code end} is greater than {@code arrayLength}, or if
+     * {@code start} is greater than {@code end}
+     */
+    public static void checkStartEnd(int arrayLength, int start, int end) {
+        if (start < 0 || end < 0 || end > arrayLength || start > end) {
             throw new IndexOutOfBoundsException();
         }
     }
