@@ -90,8 +90,8 @@ public class TextTable implements Iterable<CharSequence> {
         } else {
             // headings exist, so create the formatting around them
             List<String> headingDividers = new ArrayList<>(maxColSizeList.size());
-            for (int i=0;i<maxColSizeList.size(); i++) {
-                int colWidth = (maxColSizeList.get(i) / TAB_SIZE) + 1 * 8;
+            for (Integer integer : maxColSizeList) {
+                int colWidth = (integer / TAB_SIZE) + TAB_SIZE;
                 headingDividers.add(Text.repeat('-', colWidth));
             }
             rowsItr = new ConcatIterator<>(

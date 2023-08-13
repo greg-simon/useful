@@ -189,7 +189,7 @@ public class FileSession implements URLSession {
 
     @Override
     public String register(String urlPath, Resource resource) throws IOException {
-        return register(urlPath, (OutputStream out) -> resource.copyTo(out));
+        return register(urlPath, resource::copyTo);
     }
 
     @Override

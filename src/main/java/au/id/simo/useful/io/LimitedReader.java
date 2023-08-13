@@ -24,7 +24,7 @@ public class LimitedReader extends CountingReader {
             return -1;
         }
 
-        int newLen = (int) Math.min(remaining, (long) len);
+        int newLen = (int) Math.min(remaining, len);
         return super.read(cbuf, off, newLen);
     }
 

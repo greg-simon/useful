@@ -1,9 +1,9 @@
 package au.id.simo.useful.io;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -43,6 +43,6 @@ public class FileResource implements Resource {
 
     @Override
     public InputStream inputStream() throws IOException {
-        return new FileInputStream(file);
+        return Files.newInputStream(file.toPath());
     }
 }

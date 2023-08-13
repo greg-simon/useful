@@ -13,5 +13,5 @@ public interface DeferErrorHandler {
      * @param exception The exception thrown when attempting to close the
      * AutoClosable.
      */
-    public void handle(AutoCloseable closable, Exception exception);
+    void handle(AutoCloseable closable, Exception exception);
 }

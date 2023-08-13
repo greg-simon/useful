@@ -34,7 +34,7 @@ public interface Resource {
      * @see #getReader()
      * @see #getString()
      */
-    public static final Charset DEFAULT_CHARSET_UTF8 = StandardCharsets.UTF_8;
+    Charset DEFAULT_CHARSET_UTF8 = StandardCharsets.UTF_8;
 
     /**
      * Loads the contents of the resource as a String.

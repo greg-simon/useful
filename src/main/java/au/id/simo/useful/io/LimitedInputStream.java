@@ -33,7 +33,7 @@ public class LimitedInputStream extends CountingInputStream {
         }
 
         long remaining = byteLimit - byteCount;
-        int newLen = (int) Math.min((long) len, remaining);
+        int newLen = (int) Math.min(len, remaining);
         return super.read(b, off, newLen);
     }
 

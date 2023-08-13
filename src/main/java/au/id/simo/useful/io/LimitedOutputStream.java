@@ -19,7 +19,7 @@ public class LimitedOutputStream extends CountingOutputStream {
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         long remaining = byteLimit - getByteCount();
-        int newLen = (int) Math.min((long) len, remaining);
+        int newLen = (int) Math.min(len, remaining);
         super.write(b, off, newLen);
     }
 

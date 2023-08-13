@@ -97,12 +97,7 @@ public abstract class Resources {
         if (!exists(resolvedResourceName)) {
             return null;
         }
-        return new Resource() {
-            @Override
-            public InputStream inputStream() throws IOException {
-                return createStream(resolvedResourceName);
-            }
-        };
+        return () -> createStream(resolvedResourceName);
     }
 
     /**

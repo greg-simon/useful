@@ -73,9 +73,9 @@ public class CheckUtil {
     
     /**
      * Checks the start and end arguments against the provided array length.
-     * @param arrayLength
-     * @param start
-     * @param end 
+     * @param arrayLength The length of the array to check
+     * @param start The start index of the array to check
+     * @param end The end index of the array to check
      * @throws IndexOutOfBoundsException if {@code start} or {@code end} are
      * negative, if {@code end} is greater than {@code arrayLength}, or if
      * {@code start} is greater than {@code end}

@@ -31,7 +31,7 @@ public class IOUtils {
     };
 
     /**
-     * Creates a {@link Callable<Long>} that can be used with an {@link java.util.concurrent.ExecutorService} to copy
+     * Creates a {@link Callable} that can be used with an {@link java.util.concurrent.ExecutorService} to copy
      * bytes from an {@link InputStream} to an {@link OutputStream}.
      * <p>
      * Useful in copying bytes off the main thread of execution.

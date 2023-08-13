@@ -35,7 +35,7 @@ import java.util.Set;
  */
 public interface URLSession extends Closeable {
 
-    static final String SESSION_CLOSE_MSG = "Session is closed";
+    String SESSION_CLOSE_MSG = "Session is closed";
 
     /**
      * Obtains a string representation of base URL of this session.

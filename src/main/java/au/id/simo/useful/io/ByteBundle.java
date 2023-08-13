@@ -19,9 +19,9 @@ public interface ByteBundle extends Resource {
      * larger arrays may result in OutOfMemoryError: Requested array size
      * exceeds VM limit
      */
-    public static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+    int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
-    public static void checkCopyArgs(int pos, int copyLimit, byte[] array, int arrayIdx, int length) {
+    static void checkCopyArgs(int pos, int copyLimit, byte[] array, int arrayIdx, int length) {
         Objects.requireNonNull(array);
 
         // negative index check
@@ -194,7 +194,7 @@ public interface ByteBundle extends Resource {
     }
 
     @Override
-    public default byte[] getBytes() {
+    default byte[] getBytes() {
         byte[] bytes = new byte[size()];
         copyOut(bytes);
         return bytes;

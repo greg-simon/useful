@@ -1,9 +1,9 @@
 package au.id.simo.useful.io;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 
 /**
  * A Resources implementation that will obtain resources from the file system.
@@ -67,7 +67,7 @@ public class FileResources extends Resources {
     @Override
     protected InputStream createStream(String resolvedResourceName) throws IOException {
         File file = FileUtil.newFileInDir(parentDir, resolvedResourceName);
-        return new FileInputStream(file);
+        return Files.newInputStream(file.toPath());
     }
 
     @Override
