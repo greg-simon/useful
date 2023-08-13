@@ -19,8 +19,8 @@ import au.id.simo.useful.Defer;
 import au.id.simo.useful.io.ConcurrentGeneratorResource.ConsumerInputStream;
 import au.id.simo.useful.test.ManualExecutorService;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledOnOs;
 
 import static au.id.simo.useful.io.ConcurrentGeneratorResourceTest.LineGenerator.testLines;
 import static org.junit.jupiter.api.Assertions.*;
@@ -89,9 +89,10 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
         assertTrue(ioe.getCause() instanceof OutOfMemoryError);
     }
     
-    @Test
+    //@Test
+    @RepeatedTest(5)
     @Disabled(value = "TODO: fix flaky test")
-    public void testProducerConsumer_GeneratorInteruptedAfterStartException() throws Exception {
+    public void testProducerConsumer_GeneratorInterruptedAfterStartException() throws Exception {
         // used to ensure generator has written a byte.
         CountDownLatch cdlatch = new CountDownLatch(1);
         
@@ -114,9 +115,9 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
         // blocked waiting for it to be read. The serviceThread will notify when
         // the first byte is written.
         cdlatch.await();
-        // interupt the generator thread.
+        // interrupt the generator thread.
         generatorThread.interrupt();
-        // close the consumer, which in turn throws the interupted exception
+        // close the consumer, which in turn throws the interrupted exception
         // wrapped in a IOException
         IOException ioe = assertThrows(IOException.class, () -> {
             in.close();
@@ -211,7 +212,7 @@ public class ConcurrentGeneratorResourceTest implements ResourceTest {
     public void testProducerConsumer_CloseInputStreamFirst() throws Exception {
         Generator gen = (out) -> {
             for (int i=0;i<10000;i++) {
-                // Consumer PipedInputstream should have closed
+                // Consumer PipedInputStream should have closed
                 // by now, so exception is thrown.
                 out.write(i);
             }

@@ -3,7 +3,7 @@ package au.id.simo.useful.io;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import au.id.simo.useful.test.DataGenFactory;
+import au.id.simo.useful.datagen.DataGenFactory;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

@@ -3,8 +3,7 @@ package au.id.simo.useful.text;
 import au.id.simo.useful.CheckUtil;
 
 /**
- * A CharSequence for repeated characters. It's constructed with a single
- * character and a count of how many times it is repeated.
+ * A CharSequence for a single character that repeats a provided number of times.
  * <p>
  * It allows for a kind of run length encoded string like object to be used to
  * save space on the heap.

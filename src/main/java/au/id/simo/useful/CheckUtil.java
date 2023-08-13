@@ -37,6 +37,18 @@ public class CheckUtil {
         return (obj != null) ? obj : Objects.requireNonNull(defaultObj, "defaultObj");
     }
 
+    public static void checkIndex(int index, int length) {
+        if (index < 0 || index >= length) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+    }
+
+    public static void checkFromToIndex(int fromIndex, int toIndex, int length) {
+        if (fromIndex < 0 || fromIndex > toIndex || toIndex > length) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
+    }
+
     /**
      * Validates the arguments commonly found in {@code read(T[], int, int)}
      * style methods.

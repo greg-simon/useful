@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import java.util.stream.Stream;
 
 import au.id.simo.useful.Defer;
-import au.id.simo.useful.test.DataGenFactory;
+import au.id.simo.useful.datagen.DataGenFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

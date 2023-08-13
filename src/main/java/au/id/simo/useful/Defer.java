@@ -1,5 +1,6 @@
 package au.id.simo.useful;
 
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -102,6 +103,12 @@ public class Defer implements AutoCloseable {
         return itemsToClose.size();
     }
 
+    /**
+     * Sets a custom error handler.
+     *
+     * @param handler the handler that will be notified of any errors in closing any provided object.
+     * @return this instance of {@link Defer} to allow using in a chainable manner.
+     */
     public Defer setErrorHandler(DeferErrorHandler handler) {
         this.handler = Objects.requireNonNull(handler);
         return this;
@@ -259,6 +266,14 @@ public class Defer implements AutoCloseable {
         }
         itemsToClose.push(closable);
         return closable;
+    }
+
+    public Defer closeAll(AutoCloseable... items) {
+        if (items == null || items.length == 0) {
+            return this;
+        }
+        itemsToClose.addAll(Arrays.asList(items));
+        return this;
     }
 
     /**

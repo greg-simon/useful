@@ -1,8 +1,7 @@
-package au.id.simo.useful.test;
+package au.id.simo.useful.datagen;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 import au.id.simo.useful.io.Latch;
@@ -13,7 +12,9 @@ import au.id.simo.useful.io.LimitedReader;
  * Factory for obtaining test data generators.
  */
 public class DataGenFactory {
-    
+
+    private static final String CHARS = "abcdefghijklmnopqrstuvwxyz ";
+    private static final byte[] CHARS_AS_BYTES = "abcdefghijklmnopqrstuvwxyz ".getBytes(StandardCharsets.UTF_8);
     public static final String STREAM_MSG = "Stream Closed";
     public static final String READER_MSG = "Reader Closed";
     
@@ -70,19 +71,33 @@ public class DataGenFactory {
             }           
         },limit);
     }
-    
+
+    public static InputStream ascendingCharsInputStream(long limit) {
+        return new LimitedInputStream(new InputStream() {
+            private final Latch closeStatus = new Latch(STREAM_MSG);
+            private final RepeatingBytes repeatingBytes = new RepeatingBytes(CHARS_AS_BYTES);
+            @Override
+            public int read() throws IOException {
+                closeStatus.throwIfClosed();
+                return repeatingBytes.next();
+            }
+
+            @Override
+            public void close() throws IOException {
+                closeStatus.close();
+            }
+        }, limit);
+    }
     public static Reader ascendingChars(long limit) {
         return new LimitedReader(new Reader() {
-            private static final String CHARS = "abcdefghijklmnopqrstuvwxyz ";
             private final Latch closeStatus = new Latch(READER_MSG);
-            private volatile int index = 0;
-            
+            private final RepeatingChars repeatingChars = new RepeatingChars(CHARS);
+
             @Override
             public int read(char[] cbuf, int off, int len) throws IOException {
                 closeStatus.throwIfClosed();
-                for(int i=0;i<len;i++) {
-                    index = nextIndex(index);
-                    cbuf[off + i] = CHARS.charAt(index);
+                for (int i = 0; i < len; i++) {
+                    cbuf[off + i] = repeatingChars.next();
                 }
                 return len;
             }
@@ -90,12 +105,7 @@ public class DataGenFactory {
             @Override
             public int read() throws IOException {
                 closeStatus.throwIfClosed();
-                index = nextIndex(index);
-                return CHARS.charAt(index);
-            }
-            
-            private int nextIndex(int currentIndex) {
-                return (currentIndex + 1) % CHARS.length();
+                return repeatingChars.next();
             }
 
             @Override

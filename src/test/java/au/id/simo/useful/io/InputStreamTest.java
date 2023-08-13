@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.stream.Stream;
 
-import au.id.simo.useful.test.DataGenFactory;
+import au.id.simo.useful.datagen.DataGenFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -170,7 +170,7 @@ public interface InputStreamTest {
         in.reset();
         
         byte[] secondReadBuf = new byte[10];
-        assertEquals(5, in.read(secondReadBuf), "Verify only 5 bytes remaoning in the stream");
+        assertEquals(5, in.read(secondReadBuf), "Verify only 5 bytes remaining in the stream");
         
         assertEquals(new byte[]{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}, firstReadBuf);
         assertEquals(new byte[]{15,16,17,18,19}, secondReadBuf);

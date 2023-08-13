@@ -1,8 +1,11 @@
 package au.id.simo.useful.io;
 
+import au.id.simo.useful.Defer;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.Callable;
 
 /**
  *
@@ -27,8 +30,26 @@ public class IOUtils {
         }
     };
 
+    /**
+     * Creates a {@link Callable<Long>} that can be used with an {@link java.util.concurrent.ExecutorService} to copy
+     * bytes from an {@link InputStream} to an {@link OutputStream}.
+     * <p>
+     * Useful in copying bytes off the main thread of execution.
+     * @param input The source of bytes to copy.
+     * @param output The destination of the bytes to copy.
+     * @return The callable used to actually perform the copying. This Callable will also carry the count of
+     * the copied bytes.
+     */
+    public static Callable<Long> copyCallable(InputStream input, OutputStream output) {
+        return () -> {
+            try (Defer defer = new Defer().closeAll(input, output)) {
+                return copy(input, output);
+            }
+        };
+    }
+
     private IOUtils() {}
-    
+
     /**
      * Copies all the contents from the given input stream to the given output
      * stream.
@@ -51,7 +72,7 @@ public class IOUtils {
         }
         return count;
     }
-    
+
     public static long copy(InputStream input, ByteCopyConsumer consumer) throws IOException {
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
         long count = 0;
@@ -64,7 +85,7 @@ public class IOUtils {
     }
     
     @FunctionalInterface
-    public static interface ByteCopyConsumer {
+    public interface ByteCopyConsumer {
         /**
          * 
          * @param total the total number of bytes that have been copied before

@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class ManualExecutorService extends AbstractExecutorService {
     
     private volatile boolean shutdown;
-    public BlockingQueue<Runnable> tasks;
+    public final BlockingQueue<Runnable> tasks;
 
     public ManualExecutorService() {
         shutdown = false;
@@ -37,16 +37,15 @@ public class ManualExecutorService extends AbstractExecutorService {
     }
 
     /**
-     * Infinite loop that polls for tasks to run.Requires the thread to be
-     * interrupted to exit loop.
+     * Polls for tasks to run in a loop, as long as the service is not shutdown, or there are still tasks to run.
      * 
-     * @param pollWaitInMS the number of milliseconds to wait for a new task
+     * @param pollWaitInMS the number of milliseconds to wait for a new task before looping and trying again.
      * each loop.
      */
     public void runTaskLoop(long pollWaitInMS) {
         try {
             Runnable task;
-            while (true) {
+            while (!shutdown || !tasks.isEmpty()) {
                 task = tasks.poll(pollWaitInMS, TimeUnit.MILLISECONDS);
                 if (task == null) {
                     notifyIfNeeded();

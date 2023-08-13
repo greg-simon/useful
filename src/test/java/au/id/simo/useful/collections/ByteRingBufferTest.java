@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.stream.Stream;
 
+import au.id.simo.useful.datagen.DataGenFactory;
 import au.id.simo.useful.io.ConcatInputStream;
 import au.id.simo.useful.io.LimitedInputStream;
-import au.id.simo.useful.test.DataGenFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
-import au.id.simo.useful.test.DataGenFactory;
+import au.id.simo.useful.datagen.DataGenFactory;
 import au.id.simo.useful.test.ManualExecutorService;
 import com.vmlens.api.AllInterleavings;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ConcurrentGeneratorResourceInterleave {
 
     @Test
-    //@Timeout(unit = TimeUnit.SECONDS, value = 1)
+    @Timeout(unit = TimeUnit.SECONDS, value = 1)
     public void testAll() throws Exception {
         try (AllInterleavings allInterleavings = AllInterleavings.builder(getClass().getSimpleName() + "_ManualExecutorService")
                 .showStatementsInExecutor()
@@ -45,7 +45,7 @@ public class ConcurrentGeneratorResourceInterleave {
     }
     
     @Test
-    //@Timeout(unit = TimeUnit.SECONDS, value = 1)
+    @Timeout(unit = TimeUnit.SECONDS, value = 1)
     public void testCloseConsumerFirst() throws Exception {
         try (AllInterleavings allInterleavings = AllInterleavings.builder(getClass().getSimpleName() + "_CloseConsumerFirst")
                 .showStatementsInExecutor()

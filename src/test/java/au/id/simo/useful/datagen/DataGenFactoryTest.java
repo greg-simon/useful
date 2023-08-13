@@ -1,4 +1,4 @@
-package au.id.simo.useful.test;
+package au.id.simo.useful.datagen;
 
 import java.io.IOException;
 import java.io.InputStream;
