@@ -52,5 +52,18 @@
           -->
         <Bug code="EI2" />
     </Match>
+    <Match>
+        <!--
+            Transient field that isn't set by deserialization.
+            This class contains a field that is updated at multiple places in the class, thus it seems to be
+            part of the state of the class. However, since the field is marked as transient and not set in
+            readObject or readResolve, it will contain the default value in any deserialized instance of the class.
+
+            A List of AutoCloseables have been marked transient, as the choice to not enforce implementation of
+            Serializable interface for those AutoCloseables.
+          -->
+        <Class name="au.id.simo.useful.DeferException" />
+        <Bug code="Se" />
+    </Match>
 
 </FindBugsFilter>

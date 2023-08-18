@@ -124,8 +124,23 @@ public class DeferTest {
             defer.close(defer);
         });
     }
+
+    @Test
+    public void testErrorCollector() {
+        try (Defer defer = new Defer().collectAndThrowCloseErrors()) {
+            defer.close(() -> {
+               throw new Exception("Close Exception");
+            });
+        } catch (DeferException me) {
+            List<Exception> errorList = me.getExceptionList();
+            assertEquals(1, errorList.size());
+            assertEquals("Close Exception", errorList.get(0).getMessage());
+            return;
+        }
+        fail("Failed to throw the expected MultiException");
+    }
     
-    public class CountCloseable implements AutoCloseable {
+    public static class CountCloseable implements AutoCloseable {
         private final AtomicInteger count = new AtomicInteger();
         
         @Override
@@ -138,7 +153,7 @@ public class DeferTest {
         }
     }
 
-    public class CountErrorHandler implements DeferErrorHandler {
+    public static class CountErrorHandler implements DeferErrorHandler {
         private final AtomicInteger closableCount = new AtomicInteger();
 
         @Override
@@ -154,7 +169,7 @@ public class DeferTest {
     /**
      * Will throw {@link UnsupportedOperationException} if any method is called.
      */
-    public class MockExecutorService implements ExecutorService {
+    public static class MockExecutorService implements ExecutorService {
 
         @Override
         public void shutdown() {

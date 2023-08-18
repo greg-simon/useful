@@ -1,8 +1,6 @@
 package au.id.simo.useful;
 
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -73,6 +71,29 @@ public class Defer implements AutoCloseable {
         // no op
     };
 
+    private static class CatchAndThrowErrorHandler implements DeferErrorHandler {
+        private List<AutoCloseable> closeableList = new ArrayList<>();
+        private List<Exception> exceptionList = new ArrayList<>();
+        @Override
+        public void handle(AutoCloseable closable, Exception exception) {
+            closeableList.add(closable);
+            exceptionList.add(exception);
+        }
+
+        @Override
+        public void throwExceptions() throws DeferException {
+            if (exceptionList.isEmpty()) {
+                return;
+            }
+            Exception ex = exceptionList.get(0);
+            List<AutoCloseable> oldClosableList = closeableList;
+            List<Exception> oldExceptionList = exceptionList;
+            closeableList = new ArrayList<>();
+            exceptionList = new ArrayList<>();
+            throw new DeferException(oldClosableList, oldExceptionList, ex.getMessage(), ex);
+        }
+    }
+
     /**
      * Closed in stack order: LIFO.
      */
@@ -115,6 +136,36 @@ public class Defer implements AutoCloseable {
     }
 
     /**
+     * Resets the error handler to the default no-op implementation which ignores all errors.
+     * @return this instance, to enable method chaining.
+     */
+    public Defer ignoreCloseErrors() {
+        return this.setErrorHandler(IGNORE_EXCEPTIONS_POLICY);
+    }
+
+    /**
+     * Causes the {@link #close()} method to collect all exceptions thrown by any registered
+     * {@link AutoCloseable#close()} and makes them available via a thrown {@link DeferException}.
+     * <p>
+     * E.g.
+     * <pre>
+     *    try (Defer defer = new Defer().collectAndThrowCloseErrors()) {
+     *        defer.close(() -> throw new Exception("My Exception"));
+     *    } catch (MultiException e) {
+     *        throw new Exception(
+     *           "Problem in closing everything",
+     *           e.getErrorList().get(0).getException()
+     *        );
+     *    }
+     * </pre>
+     * @return this instance, to enable method chaining.
+     */
+    public Defer collectAndThrowCloseErrors() {
+        setErrorHandler(new CatchAndThrowErrorHandler());
+        return this;
+    }
+
+    /**
      * Closes all items that have been registered.
      * <p>
      * Any closed item is removed from the list to ensure exactly-one-close policy,
@@ -126,6 +177,8 @@ public class Defer implements AutoCloseable {
      * Any Exception thrown by any item while closing, is handled by a
      * {@link DeferErrorHandler} if provided, which may include throwing
      * unchecked exceptions. The default handler ignores all exceptions.
+     *
+     * @throws DeferException if an error handler is implemented to do so.
      */
     @Override
     public void close() {
@@ -138,6 +191,8 @@ public class Defer implements AutoCloseable {
                 handler.handle(item, ex);
             }
         }
+        // throw exception from the handler, if implemented.
+        handler.throwExceptions();
     }
 
     /**
