@@ -2,6 +2,7 @@ package au.id.simo.useful.io.local;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -28,7 +29,7 @@ public class LocalURLConnectionTest {
         try (URLSession session = LocalProtocol.newSession()) {
             String urlStr = session.register("path", new StringResource("contents"));
 
-            URL url = new URL(urlStr);
+            URL url = URI.create(urlStr).toURL();
             URLConnection connection = url.openConnection();
             assertTrue(connection instanceof LocalURLConnection);
             connection.connect();
@@ -41,7 +42,7 @@ public class LocalURLConnectionTest {
         try (URLSession session = LocalProtocol.newSession()) {
             String urlStr = session.register("path", new StringResource("contents"));
 
-            URL url = new URL(urlStr);
+            URL url = URI.create(urlStr).toURL();
             URLConnection connection = url.openConnection();
             assertTrue(connection instanceof LocalURLConnection);
             assertFalse(((LocalURLConnection) connection).isConnected());
@@ -58,14 +59,12 @@ public class LocalURLConnectionTest {
     
     @Test
     public void testGetInputStream_Unknown_Session() throws Exception {
-        URL url = new URL("local://unknownsession/path");
+        URL url = URI.create("local://unknownsession/path").toURL();
         URLConnection connection = url.openConnection();
         assertTrue(connection instanceof LocalURLConnection);
         assertFalse(((LocalURLConnection) connection).isConnected());
         
-        IOException ioe = assertThrows(IOException.class, () -> {
-            connection.getInputStream();
-        });
+        IOException ioe = assertThrows(IOException.class, connection::getInputStream);
         assertEquals("Unknown local session (Session may have been closed): unknownsession", ioe.getMessage());
     }
 }

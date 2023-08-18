@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Set;
 
 /**
@@ -19,7 +20,7 @@ import java.util.Set;
  *     session.register("style.css", new File("app-style.css"));
  *
  *     String indexUrl = session.getUrl("index.html");
- *     URL url = new URL(indexUrl);
+ *     URL url = URI.create(indexUrl).toURL();
  *
  *     // use renderer here.
  *     HtmlToPDF.generate(url, new File("output.pdf"));
@@ -53,11 +54,11 @@ public interface URLSession extends Closeable {
      * Example:
      * <pre>
      * String fullUrlStr = session.getUrl("index.html");
-     * URL url = new URL(fullUrlStr);
+     * URL url = URI.create(fullUrlStr).toURL();
      * </pre>
      *
      * The full URL spec provided is implementation specific, but will be usable
-     * with {@link java.net.URL#URL(java.lang.String)}.
+     * with {@link java.net.URI#create(java.lang.String)} and {@link URI#toURL()}.
      *
      * @param path a relative path to a resource.
      * @return A string URL suitable for use with {@link java.net.URL} to point

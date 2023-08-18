@@ -36,7 +36,7 @@ import au.id.simo.useful.io.Resource;
  *     String url = session.register("index.html", new File("mypage.html"));
  *
  *     // url is "local://1/index.html"
- *     URL indexUrl = new URL(url);
+ *     URL indexUrl = URI.create(url).toURL();
  *     // code using indexUrl here
  * }
  * </pre>

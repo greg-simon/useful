@@ -1,6 +1,7 @@
 package au.id.simo.useful.io;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
@@ -33,7 +34,7 @@ public class ClasspathResourceTest implements ResourceTest {
         String resourcePath = "testdata";
         session.register(resourcePath, new ByteArrayResource(testData));
         ClassLoader loader = new URLClassLoader(new URL[]{
-            new URL(session.getBaseUrl())
+            URI.create(session.getBaseUrl()).toURL()
         });
         return new ClasspathResource(loader, resourcePath);
     }
@@ -49,9 +50,7 @@ public class ClasspathResourceTest implements ResourceTest {
         // create a classloader with nothing in it.
         URLClassLoader loader = new URLClassLoader(new URL[0]);
         ClasspathResource res = new ClasspathResource(loader, "nothing-will-be-found");
-        IOException ex = assertThrows(IOException.class, () -> {
-            res.inputStream();
-        });
+        IOException ex = assertThrows(IOException.class, res::inputStream);
         assertEquals("Resource not found on Classpath: nothing-will-be-found", ex.getMessage());
     }
 }

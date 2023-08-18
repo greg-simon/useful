@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the interface contracts and default methods.
- * 
+ * <p>
  * Inherit this interface on your test class when testing
  * URLSession implementations.
  * @see FileSessionTest
@@ -178,7 +179,7 @@ public interface URLSessionTest {
             String urlStr = session.getBaseUrl();
             assertNotNull(urlStr);
             try {
-                URL url = new URL(urlStr);
+                URL url = URI.create(urlStr).toURL();
             } catch (MalformedURLException ex) {
                 fail(ex);
             }
@@ -193,7 +194,7 @@ public interface URLSessionTest {
             assertEquals(regUrl, getUrl);
 
             try {
-                URL parseTestURL = new URL(getUrl);
+                URL parseTestURL = URI.create(getUrl).toURL();
             } catch (MalformedURLException e) {
                 fail(e);
             }
@@ -207,7 +208,7 @@ public interface URLSessionTest {
                 String resURL = session.register("path", (OutputStream out) -> {
                     out.write("contents".getBytes());
                 });
-                URL url = new URL(resURL);
+                URL url = URI.create(resURL).toURL();
                 String urlPath = url.getPath();
                 assertTrue(urlPath.endsWith("path"));
 
@@ -231,7 +232,7 @@ public interface URLSessionTest {
                 // register and check twice.
                 for (int i = 0; i < 2; i++) {
                     String resURL = session.register("path", generator);
-                    URL url = new URL(resURL);
+                    URL url = URI.create(resURL).toURL();
                     // read contents from registration url
                     String contents = new String(readAllBytes(url.openStream()));
                     assertEquals("contents", contents);
@@ -259,7 +260,7 @@ public interface URLSessionTest {
         try (URLSession session = createURLSession()) {
             try {
                 String resURL = session.register("path", new StringResource("contents"));
-                URL url = new URL(resURL);
+                URL url = URI.create(resURL).toURL();
                 String urlPath = url.getPath();
                 assertTrue(urlPath.endsWith("path"));
 
@@ -279,7 +280,7 @@ public interface URLSessionTest {
                 // repeate twice
                 for (int i = 0; i < 2; i++) {
                     String resURL = session.register("path", new StringResource("contents"));
-                    URL url = new URL(resURL);
+                    URL url = URI.create(resURL).toURL();
                     String urlPath = url.getPath();
                     assertTrue(urlPath.endsWith("path"));
                     // read contents from registration url
@@ -309,7 +310,7 @@ public interface URLSessionTest {
             writeString(tmpFile.toPath(), "contents");
             try {
                 String resURL = session.register("path", tmpFile);
-                URL url = new URL(resURL);
+                URL url = URI.create(resURL).toURL();
                 String urlPath = url.getPath();
                 assertTrue(urlPath.endsWith("path"));
 
@@ -332,7 +333,7 @@ public interface URLSessionTest {
             try {
                 for (int i = 0; i < 2; i++) {
                     String resURL = session.register("path", tmpFile);
-                    URL url = new URL(resURL);
+                    URL url = URI.create(resURL).toURL();
                     String urlPath = url.getPath();
                     assertTrue(urlPath.endsWith("path"));
                     // read contents from registration url

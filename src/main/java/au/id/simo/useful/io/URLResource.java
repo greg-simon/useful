@@ -2,6 +2,7 @@ package au.id.simo.useful.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 
 /**
@@ -29,7 +30,7 @@ public class URLResource implements Resource {
     @Override
     public InputStream inputStream() throws IOException {
         if (url == null) {
-            url = new URL(urlString);
+            url = URI.create(urlString).toURL();
         }
         return url.openStream();
     }

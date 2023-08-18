@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.net.URL;
 
 import au.id.simo.useful.io.Generator;
@@ -36,7 +37,7 @@ public class LocalSessionTest implements URLSessionTest {
     public void testBasicUsage() throws IOException {
         try (URLSession session = LocalProtocol.newSession()) {
             String baseUrlStr = session.getBaseUrl();
-            URL baseUrl = new URL(baseUrlStr);
+            URL baseUrl = URI.create(baseUrlStr).toURL();
             String sessionId = baseUrl.getHost();
 
             String genUrl = session.register("generator", new Generator() {
