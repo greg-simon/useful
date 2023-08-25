@@ -79,7 +79,7 @@ public class DataGenFactory {
             @Override
             public int read() throws IOException {
                 closeStatus.throwIfClosed();
-                return repeatingBytes.next();
+                return repeatingBytes.next() & 0xFF;
             }
 
             @Override

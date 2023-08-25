@@ -1,15 +1,18 @@
 package au.id.simo.useful.io;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 
 import au.id.simo.useful.io.local.LocalProtocol;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,8 +24,8 @@ public class ClasspathResourceTest implements ResourceTest {
     private URLSession session;
     
     @BeforeEach
-    public void setUp() {
-        session = LocalProtocol.newSession();
+    public void setUp(@TempDir File tempDir) {
+        session = new FileSession(tempDir);
     }
     @AfterEach
     public void tearDown() throws IOException {

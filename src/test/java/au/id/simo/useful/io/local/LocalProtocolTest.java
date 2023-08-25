@@ -3,6 +3,7 @@ package au.id.simo.useful.io.local;
 import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -10,8 +11,9 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  */
 public class LocalProtocolTest {
-    
+    private Object lock = new Object();
     @Test
+    @ResourceLock(value = "lock")
     public void testCreateAllSessions() throws IOException {
         // creating all sessions is a lengthy operation, so test everything
         // while we're at it.
@@ -27,9 +29,7 @@ public class LocalProtocolTest {
         assertEquals(LocalProtocol.MIN_SESSION_ID, minId, "Min");
         assertEquals(LocalProtocol.MAX_SESSION_ID, maxId, "Max");
 
-        SessionLimitReachedException ex = assertThrows(SessionLimitReachedException.class, () -> {
-            LocalProtocol.newSession();
-        });
+        SessionLimitReachedException ex = assertThrows(SessionLimitReachedException.class, LocalProtocol::newSession);
         assertTrue(ex.getMessage().startsWith("Session limit reached: "));
         
         // close the last session, and create another to replace it

@@ -1,19 +1,18 @@
 package au.id.simo.useful.xml;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import au.id.simo.useful.io.FileSession;
 import au.id.simo.useful.io.Latch;
 import au.id.simo.useful.io.StringResource;
 import au.id.simo.useful.io.URLSession;
 import au.id.simo.useful.io.local.LocalProtocol;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -34,9 +33,9 @@ public class XmlHandlerTest {
             ;
 
     @Test
-    public void testParseInputSourceUrl() throws IOException, SAXException, ParserConfigurationException {
+    public void testParseInputSourceUrl(@TempDir File tempDir) throws IOException, SAXException, ParserConfigurationException {
         TagListXmlHandler xmlHandler = new TagListXmlHandler();
-        try (URLSession session = LocalProtocol.newSession()) {
+        try (URLSession session = new FileSession(tempDir)) {
             String url = session.register("doc", new StringResource(TEST_DOC));
             xmlHandler.parse(new InputSource(url));
         }
