@@ -10,7 +10,6 @@ import au.id.simo.useful.io.FileSession;
 import au.id.simo.useful.io.Latch;
 import au.id.simo.useful.io.StringResource;
 import au.id.simo.useful.io.URLSession;
-import au.id.simo.useful.io.local.LocalProtocol;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.xml.sax.InputSource;
@@ -21,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  *
  */
-public class XmlHandlerTest {
+public class TagStackSaxHandlerTest {
     public static final String TEST_DOC = ""
             + "\n\n   \t\t  <doc>\n"
             + "  <onelevel level=\"1\">\n"
@@ -34,10 +33,10 @@ public class XmlHandlerTest {
 
     @Test
     public void testParseInputSourceUrl(@TempDir File tempDir) throws IOException, SAXException, ParserConfigurationException {
-        TagListXmlHandler xmlHandler = new TagListXmlHandler();
+        ListTagHandler xmlHandler = new ListTagHandler();
         try (URLSession session = new FileSession(tempDir)) {
             String url = session.register("doc", new StringResource(TEST_DOC));
-            xmlHandler.parse(new InputSource(url));
+            TagStack.parse(new InputSource(url), xmlHandler);
         }
         
         testTags(xmlHandler.tagList);
@@ -45,7 +44,7 @@ public class XmlHandlerTest {
     
     @Test
     public void testParseInputStream() throws IOException, SAXException, ParserConfigurationException {
-        TagListXmlHandler xmlHandler = new TagListXmlHandler();
+        ListTagHandler xmlHandler = new ListTagHandler();
         Latch latch = new Latch();
         ByteArrayInputStream in = new ByteArrayInputStream(TEST_DOC.getBytes()) {
             @Override
@@ -54,14 +53,14 @@ public class XmlHandlerTest {
                 latch.close();
             }
         };
-        xmlHandler.parse(in);
+        TagStack.parse(in, xmlHandler);
         testTags(xmlHandler.tagList);
         assertTrue(latch.isClosed());
     }
     
     @Test
     public void testParseReader() throws IOException, SAXException, ParserConfigurationException {
-        TagListXmlHandler xmlHandler = new TagListXmlHandler();
+        ListTagHandler xmlHandler = new ListTagHandler();
         Latch latch = new Latch();
         Reader in = new StringReader(TEST_DOC) {
             @Override
@@ -70,7 +69,7 @@ public class XmlHandlerTest {
                 latch.close();
             }
         };
-        xmlHandler.parse(in);
+        TagStack.parse(in, xmlHandler);
         testTags(xmlHandler.tagList);
         assertTrue(latch.isClosed());
     }
@@ -96,7 +95,7 @@ public class XmlHandlerTest {
         assertEquals("This is text", textTag.getContent());
     }
     
-    private class TagListXmlHandler extends XmlHandler {
+    private static class ListTagHandler implements TagHandler {
         List<Tag> tagList = new ArrayList<>();
         
         @Override

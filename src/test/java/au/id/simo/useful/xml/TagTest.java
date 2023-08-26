@@ -53,9 +53,9 @@ public class TagTest {
         Tag root = new Tag("root", null);
         Tag branch = new Tag("branch", root);
         Tag leaf = new Tag("leaf", branch);
-        
-        assertTrue(leaf.getParent() == branch);
-        assertTrue(branch.getParent() == root);
+
+        assertSame(leaf.getParent(), branch);
+        assertSame(branch.getParent(), root);
         assertNull(root.getParent());
     }
 
@@ -83,11 +83,11 @@ public class TagTest {
         Collection<Tag> leaf2Children = leaf2.getChildren();
         
         assertEquals(1, rootChildren.size());
-        assertTrue(rootChildren.iterator().next() == branch);
+        assertSame(rootChildren.iterator().next(), branch);
         assertEquals(2, branchChildren.size());
         Iterator<Tag> branchItr = branchChildren.iterator();
-        assertTrue(branchItr.next() == leaf1);
-        assertTrue(branchItr.next() == leaf2);
+        assertSame(branchItr.next(), leaf1);
+        assertSame(branchItr.next(), leaf2);
         assertFalse(branchItr.hasNext());
         
         assertEquals(0, leaf1Children.size());
@@ -137,7 +137,7 @@ public class TagTest {
         
         Tag tag1 = new Tag("tag", null);
         Tag tag2 = new Tag("tag2", null);
-        assertFalse(tag1.equals(null));
+        assertNotEquals(null, tag1);
         assertNotEquals(tag1, tag2);
         assertNotEquals(tag1, new Object());
         tag2 = new Tag("tag", null);
