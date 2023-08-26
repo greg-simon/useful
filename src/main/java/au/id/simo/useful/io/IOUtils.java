@@ -2,9 +2,12 @@ package au.id.simo.useful.io;
 
 import au.id.simo.useful.Defer;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 /**
@@ -30,6 +33,8 @@ public class IOUtils {
         }
     };
 
+    private IOUtils() {}
+
     /**
      * Creates a {@link Callable} that can be used with an {@link java.util.concurrent.ExecutorService} to copy
      * bytes from an {@link InputStream} to an {@link OutputStream}.
@@ -47,8 +52,6 @@ public class IOUtils {
             }
         };
     }
-
-    private IOUtils() {}
 
     /**
      * Copies all the contents from the given input stream to the given output
@@ -82,6 +85,33 @@ public class IOUtils {
             count += n;
         }
         return count;
+    }
+
+    public static String getStringAsUTF8(InputStream inputStream) throws IOException {
+        return new String(getBytes(inputStream), StandardCharsets.UTF_8);
+    }
+
+    public static String getStringAsUTF8(Resource resource) throws IOException {
+        return new String(getBytes(resource), StandardCharsets.UTF_8);
+    }
+
+    public static String getString(Resource resource, Charset charset) throws IOException {
+        return new String(getBytes(resource), charset);
+    }
+
+    public static String getString(InputStream inputStream, Charset charset) throws IOException {
+        return new String(getBytes(inputStream), charset);
+    }
+    public static byte[] getBytes(Resource resource) throws IOException {
+        return getBytes(resource.inputStream());
+    }
+
+    public static byte[] getBytes(InputStream inputStream) throws IOException {
+        try (InputStream in = inputStream) {
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            IOUtils.copy(in, bout);
+            return bout.toByteArray();
+        }
     }
     
     @FunctionalInterface

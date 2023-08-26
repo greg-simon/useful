@@ -1,5 +1,9 @@
 package au.id.simo.useful.io.local;
 
+import au.id.simo.useful.io.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,16 +11,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
 
-import au.id.simo.useful.io.Generator;
-import au.id.simo.useful.io.Resource;
-import au.id.simo.useful.io.URLResource;
-import au.id.simo.useful.io.URLSession;
-import au.id.simo.useful.io.URLSessionTest;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  *
@@ -61,12 +56,12 @@ public class LocalSessionTest implements URLSessionTest {
             assertEquals("This is a generator", urlToString(genUrl));
             assertEquals("This is a resource", urlToString(resUrl));
 
-            assertEquals("This is a generator", session.getResource("generator").getString());
-            assertEquals("This is a resource", session.getResource("resource").getString());
+            assertEquals("This is a generator", IOUtils.getStringAsUTF8(session.getResource("generator")));
+            assertEquals("This is a resource", IOUtils.getStringAsUTF8(session.getResource("resource")));
         }
     }
 
     public static String urlToString(String urlStr) throws IOException {
-        return new URLResource(urlStr).getString();
+        return IOUtils.getStringAsUTF8(new URLResource(urlStr));
     }
 }

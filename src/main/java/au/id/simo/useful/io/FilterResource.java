@@ -17,16 +17,6 @@ public class FilterResource implements Resource {
     }
 
     @Override
-    public String getString() throws IOException {
-        return resource.getString();
-    }
-
-    @Override
-    public String getString(Charset charset) throws IOException {
-        return resource.getString(charset);
-    }
-
-    @Override
     public Reader getReader() throws IOException {
         return resource.getReader();
     }
@@ -34,11 +24,6 @@ public class FilterResource implements Resource {
     @Override
     public Reader getReader(Charset charset) throws IOException {
         return resource.getReader(charset);
-    }
-
-    @Override
-    public byte[] getBytes() throws IOException {
-        return resource.getBytes();
     }
 
     @Override

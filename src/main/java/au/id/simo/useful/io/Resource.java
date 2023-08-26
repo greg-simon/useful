@@ -1,6 +1,5 @@
 package au.id.simo.useful.io;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -20,7 +19,7 @@ import java.nio.charset.StandardCharsets;
  * Any attempt to read a nonexistent resource should result in an IOException,
  * or a subclass, being thrown.
  * <p>
- * All character related methods ({@code getString()}, {@code getReader()})
+ * All character related methods ({@code getReader()})
  * assume UTF-8 as the character encoding, unless another {@link Charset} is
  * provided.
  */
@@ -32,34 +31,8 @@ public interface Resource {
      * argument.
      * 
      * @see #getReader()
-     * @see #getString()
      */
     Charset DEFAULT_CHARSET_UTF8 = StandardCharsets.UTF_8;
-
-    /**
-     * Loads the contents of the resource as a String.
-     * <p>
-     * It is assumed that UTF-8 is the character encoding.
-     *
-     * @return the full contents of the resource, as a String. Cannot be null.
-     * @throws IOException if there is any errors in finding or reading the
-     * resource.
-     */
-    default String getString() throws IOException {
-        return getString(DEFAULT_CHARSET_UTF8);
-    }
-
-    /**
-     * Loads the contents of the resource as a String.
-     *
-     * @param charset The character set to use in decoding the characters.
-     * @return the full contents of the resource, as a String. Cannot be null.
-     * @throws IOException if there is any errors in finding or reading the
-     * resource.
-     */
-    default String getString(Charset charset) throws IOException {
-        return new String(getBytes(), charset);
-    }
 
     /**
      * Creates a Reader to read the resources contents.
@@ -84,20 +57,6 @@ public interface Resource {
      */
     default Reader getReader(Charset charset) throws IOException {
         return new InputStreamReader(inputStream(), charset);
-    }
-
-    /**
-     * Loads the contents of the resource as a {@code byte} array.
-     *
-     * @return the full contents of the resource, as a byte array.
-     * @throws IOException if there is any errors in reading the resource.
-     */
-    default byte[] getBytes() throws IOException {
-        try (InputStream in = inputStream()) {
-            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            IOUtils.copy(in, bout);
-            return bout.toByteArray();
-        }
     }
 
     /**

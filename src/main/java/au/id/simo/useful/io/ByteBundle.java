@@ -187,13 +187,12 @@ public interface ByteBundle extends Resource {
             }
 
             @Override
-            public void close() throws IOException {
+            public void close() {
                 latch.close();
             }
         };
     }
 
-    @Override
     default byte[] getBytes() {
         byte[] bytes = new byte[size()];
         copyOut(bytes);

@@ -45,11 +45,6 @@ public class StringResource implements Resource {
     }
 
     @Override
-    public byte[] getBytes() throws IOException {
-        return str.getBytes(charset);
-    }
-
-    @Override
     public Reader getReader() throws IOException {
         return new StringReader(str);
     }
@@ -59,13 +54,7 @@ public class StringResource implements Resource {
         return new StringReader(str);
     }
 
-    @Override
     public String getString() throws IOException {
-        return str;
-    }
-
-    @Override
-    public String getString(Charset charset) throws IOException {
         return str;
     }
 

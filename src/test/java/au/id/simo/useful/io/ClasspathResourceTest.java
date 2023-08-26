@@ -1,20 +1,19 @@
 package au.id.simo.useful.io;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 
-import au.id.simo.useful.io.local.LocalProtocol;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  *
@@ -45,7 +44,7 @@ public class ClasspathResourceTest implements ResourceTest {
     @Test
     public void testConstructor_String() throws IOException {
         ClasspathResource res = new ClasspathResource("classpath-test.txt");
-        assertEquals("Hello World", res.getString());
+        assertEquals("Hello World", IOUtils.getStringAsUTF8(res));
     }
     
     @Test

@@ -41,21 +41,6 @@ public interface ResourceTest {
     }
 
     @Test
-    default void testGetString() throws Exception {
-        String testStr = "This is a test, I repeat, this is a test";
-        Resource r = createResource(testStr.getBytes());
-        assertEquals(testStr, r.getString());
-    }
-    
-    @ParameterizedTest
-    @MethodSource("charsets")
-    default void testGetString_Charset(Charset charset) throws Exception {
-        String testStr = "This is a test, I repeat, this is a test";
-        Resource r = createResource(testStr.getBytes(charset), charset);
-        assertEquals(testStr, r.getString(charset));
-    }
-
-    @Test
     default void testGetReader() throws Exception {
         String testStr = "This is a test for the reader() method";
         Resource r = createResource(testStr.getBytes());
@@ -85,24 +70,6 @@ public interface ResourceTest {
     }
 
     @Test
-    default void testGetBytes() throws Exception {
-        String testStr = "This is a test for the bytes() method";
-        Resource r = createResource(testStr.getBytes());
-
-        byte[] testBytes = testStr.getBytes();
-        byte[] resourceBytes = r.getBytes();
-
-        assertEquals(testBytes.length, resourceBytes.length);
-        for (int i = 0; i < testBytes.length; i++) {
-            assertEquals(
-                    testBytes[i],
-                    resourceBytes[i],
-                    "Comparing byte No. " + i
-            );
-        }
-    }
-
-    @Test
     default void testCopyTo() throws Exception {
         String testStr = "This is some data to test copyTo()";
         Resource r = createResource(testStr.getBytes());
@@ -122,14 +89,14 @@ public interface ResourceTest {
         Resource r = createResource(testStr.getBytes());
 
         byte[] testBytes = testStr.getBytes();
-        InputStream in = r.inputStream();
-
-        for (int i = 0; i < testBytes.length; i++) {
-            assertEquals(
-                    testBytes[i],
-                    (byte) in.read(),
-                    "Comparing byte index: " + i
-            );
+        try (InputStream in = r.inputStream()) {
+            for (int i = 0; i < testBytes.length; i++) {
+                assertEquals(
+                        testBytes[i],
+                        (byte) in.read(),
+                        "Comparing byte index: " + i
+                );
+            }
         }
     }
     

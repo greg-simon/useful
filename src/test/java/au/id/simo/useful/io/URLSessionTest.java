@@ -64,7 +64,7 @@ public interface URLSessionTest {
     @Test
     default void testGetInputStream() throws Exception {
         Resource res = new StringResource("Test resource");
-        byte[] fromRes = res.getBytes();
+        byte[] fromRes = IOUtils.getBytes(res);
 
         try (URLSession sess = createURLSession()) {
             sess.register("test", res);
@@ -109,7 +109,7 @@ public interface URLSessionTest {
             sess.forEachResource((path, resource) -> {
                 pathList.add(path);
                 try {
-                    resContentList.add(resource.getString());
+                    resContentList.add(IOUtils.getStringAsUTF8(resource));
                 } catch (IOException ex) {
                     fail(ex.getMessage());
                 }
@@ -135,7 +135,7 @@ public interface URLSessionTest {
             sess.forEachResource((path, resource) -> {
                 pathList.add(path);
                 try {
-                    resContentList.add(resource.getString());
+                    resContentList.add(IOUtils.getStringAsUTF8(resource));
                 } catch (IOException ex) {
                     fail(ex.getMessage());
                 }
@@ -161,7 +161,7 @@ public interface URLSessionTest {
             sess.forEachResource((path, resource) -> {
                 pathList.add(path);
                 try {
-                    resContentList.add(resource.getString());
+                    resContentList.add(IOUtils.getStringAsUTF8(resource));
                 } catch (IOException ex) {
                     fail(ex.getMessage());
                 }
@@ -370,7 +370,7 @@ public interface URLSessionTest {
             session.register("path", new StringResource("contents"));
             Resource res = session.getResource("path");
             assertNotNull(res);
-            assertEquals("contents", res.getString());
+            assertEquals("contents", IOUtils.getStringAsUTF8(res));
         }
     }
 
