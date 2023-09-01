@@ -31,7 +31,7 @@ import java.util.TreeSet;
  */
 public class FileSession implements URLSession {
 
-    private final File baseDir;
+    private final Path baseDirPath;
     private final Resources resources;
     private final List<Path> createdFileList;
     private final List<Path> createdDirList;
@@ -47,8 +47,8 @@ public class FileSession implements URLSession {
      */
     public FileSession() throws IOException {
         Path basePath = FileUtil.createTempDirectory("FS_");
-        this.baseDir = basePath.toFile();
-        resources = new FileResources(baseDir);
+        this.baseDirPath = basePath;
+        resources = new FileResources(baseDirPath.toFile());
         createdFileList = new ArrayList<>();
         createdDirList = new ArrayList<>();
         latch = new Latch(SESSION_CLOSE_MSG);
@@ -67,7 +67,7 @@ public class FileSession implements URLSession {
      * expected this exists and is a directory.
      */
     public FileSession(File baseDir) {
-        this.baseDir = baseDir;
+        this.baseDirPath = baseDir.toPath();
         resources = new FileResources(baseDir);
         createdFileList = new ArrayList<>();
         createdDirList = new ArrayList<>();
@@ -83,14 +83,14 @@ public class FileSession implements URLSession {
      */
     @Override
     public String getBaseUrl() {
-        return baseDir.toURI().toString();
+        return baseDirPath.toUri().toString();
     }
 
     /**
      * @return The base directory registered files will be written to.
      */
     public File getBaseDir() {
-        return baseDir;
+        return baseDirPath.toFile();
     }
 
     /**
@@ -106,7 +106,7 @@ public class FileSession implements URLSession {
      */
     @Override
     public String getUrl(String path) {
-        return baseDir.toURI().resolve(path).toString();
+        return baseDirPath.toUri().resolve(path).toString();
     }
 
     /**
@@ -131,7 +131,7 @@ public class FileSession implements URLSession {
         if (tempPath.startsWith("/")) {
             tempPath = path.substring(1);
         }
-        File newFile = FileUtil.newFileInDir(baseDir, tempPath);
+        File newFile = FileUtil.newFileInDir(baseDirPath.toFile(), tempPath);
         createdFileList.add(newFile.toPath());
         return newFile;
     }
@@ -232,11 +232,17 @@ public class FileSession implements URLSession {
      */
     @Override
     public Set<String> getRegisteredPaths() {
-        Path basePath = baseDir.toPath();
         Set<String> paths = new TreeSet<>();
+        // if path separator isn't '/' then swap it, so it is.
+        final String pathSeparator = baseDirPath.getFileSystem().getSeparator();
+        final boolean switchPathSeparator = !pathSeparator.equals("/");
         createdFileList.forEach(filePath -> {
-            Path normPath = basePath.relativize(filePath);
-            paths.add(normPath.toString());
+            Path normPath = baseDirPath.relativize(filePath);
+            String normPathStr = normPath.toString();
+            if (switchPathSeparator) {
+                normPathStr = normPathStr.replace(pathSeparator, "/");
+            }
+            paths.add(normPathStr);
         });
         return paths;
     }

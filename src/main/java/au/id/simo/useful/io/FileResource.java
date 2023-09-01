@@ -12,10 +12,10 @@ import java.nio.file.Paths;
  */
 public class FileResource implements Resource {
 
-    private final File file;
+    private final Path path;
 
     public FileResource(File file) {
-        this.file = file;
+        this.path = file.toPath();
     }
 
     /**
@@ -30,19 +30,19 @@ public class FileResource implements Resource {
         for(String morePath: more) {
             p = p.resolve(morePath);
         }
-        this.file = p.normalize().toFile();
+        this.path = p.normalize();
     }
 
     public FileResource(Path path) {
-        this.file = path.toFile();
+        this.path = path;
     }
-    
-    protected File getFile() {
-        return file;
+
+    protected Path getPath() {
+        return path;
     }
 
     @Override
     public InputStream inputStream() throws IOException {
-        return Files.newInputStream(file.toPath());
+        return Files.newInputStream(path);
     }
 }

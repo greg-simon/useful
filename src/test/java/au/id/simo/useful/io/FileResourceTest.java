@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -33,7 +34,9 @@ public class FileResourceTest implements ResourceTest {
     
     @AfterEach
     public void cleanup() throws IOException {
-        Files.deleteIfExists(tempFile);
+        if (tempFile != null) {
+            Files.deleteIfExists(tempFile);
+        }
     }
     
     private static Stream<Arguments> stringConstructorTests() {
@@ -61,19 +64,20 @@ public class FileResourceTest implements ResourceTest {
     @MethodSource("stringConstructorTests")
     public void testConstructor_String(String expectedAbsolutePath, String path, String... morePath) {
         FileResource fr = new FileResource(path, morePath);
-        assertEquals(expectedAbsolutePath, fr.getFile().getAbsolutePath());
+        assertEquals(Paths.get(expectedAbsolutePath).toAbsolutePath(), fr.getPath().toAbsolutePath());
     }
     
     @Test
     public void testConstructor_StringNoMore() {
-        FileResource fr = new FileResource("/file.txt");
-        assertEquals("/file.txt", fr.getFile().getAbsolutePath());
+        String pathStr = "/file.txt";
+        FileResource fr = new FileResource(pathStr);
+        assertEquals(Paths.get(pathStr), fr.getPath());
     }
     
     @Test
     public void testConstructor_File() throws IOException {
         FileResource fr = createResource("Hello there".getBytes(), null);
-        assertEquals(tempFile.toFile().getAbsolutePath(), fr.getFile().getAbsolutePath());
+        assertEquals(tempFile.toAbsolutePath(), fr.getPath().toAbsolutePath());
         assertArrayEquals("Hello there".getBytes(), Files.readAllBytes(tempFile));
     }
 }

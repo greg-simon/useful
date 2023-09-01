@@ -41,14 +41,16 @@ public interface URLSessionTest {
      * @return
      * @throws IOException 
      */
-    static byte[] readAllBytes(InputStream in) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buf = new byte[4048];
-        int readCount;
-        while((readCount = in.read(buf))!=-1) {
-            out.write(buf, 0, readCount);
+    static byte[] readAllBytesAndClose(InputStream in) throws IOException {
+        try (InputStream is = in) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[4048];
+            int readCount;
+            while ((readCount = is.read(buf)) != -1) {
+                out.write(buf, 0, readCount);
+            }
+            return out.toByteArray();
         }
-        return out.toByteArray();
     }
     
     /**
@@ -70,7 +72,7 @@ public interface URLSessionTest {
             sess.register("test", res);
 
             InputStream in = sess.getInputStream("test");
-            byte[] fromStream = readAllBytes(in);
+            byte[] fromStream = readAllBytesAndClose(in);
             assertArrayEquals(fromRes, fromStream);
         }
     }
@@ -213,7 +215,7 @@ public interface URLSessionTest {
                 assertTrue(urlPath.endsWith("path"));
 
                 // read contents from registration url
-                String contents = new String(readAllBytes(url.openStream()));
+                String contents = new String(readAllBytesAndClose(url.openStream()));
                 assertEquals("contents", contents);
             } catch (MalformedURLException e) {
                 fail(e);
@@ -234,7 +236,7 @@ public interface URLSessionTest {
                     String resURL = session.register("path", generator);
                     URL url = URI.create(resURL).toURL();
                     // read contents from registration url
-                    String contents = new String(readAllBytes(url.openStream()));
+                    String contents = new String(readAllBytesAndClose(url.openStream()));
                     assertEquals("contents", contents);
                 }
             } catch (MalformedURLException e) {
@@ -265,7 +267,7 @@ public interface URLSessionTest {
                 assertTrue(urlPath.endsWith("path"));
 
                 // read contents from registration url
-                String contents = new String(readAllBytes(url.openStream()));
+                String contents = new String(readAllBytesAndClose(url.openStream()));
                 assertEquals("contents", contents);
             } catch (MalformedURLException e) {
                 fail(e);
@@ -284,7 +286,7 @@ public interface URLSessionTest {
                     String urlPath = url.getPath();
                     assertTrue(urlPath.endsWith("path"));
                     // read contents from registration url
-                    String contents = new String(readAllBytes(url.openStream()));
+                    String contents = new String(readAllBytesAndClose(url.openStream()));
                     assertEquals("contents", contents);
                 }
             } catch (MalformedURLException e) {
@@ -315,7 +317,7 @@ public interface URLSessionTest {
                 assertTrue(urlPath.endsWith("path"));
 
                 // read contents from registration url
-                String contents = new String(readAllBytes(url.openStream()));
+                String contents = new String(readAllBytesAndClose(url.openStream()));
                 assertEquals("contents", contents);
             } catch (MalformedURLException e) {
                 fail(e);
@@ -337,7 +339,7 @@ public interface URLSessionTest {
                     String urlPath = url.getPath();
                     assertTrue(urlPath.endsWith("path"));
                     // read contents from registration url
-                    String contents = new String(readAllBytes(url.openStream()));
+                    String contents = new String(readAllBytesAndClose(url.openStream()));
                     assertEquals("contents", contents);
                 }
             } catch (MalformedURLException e) {

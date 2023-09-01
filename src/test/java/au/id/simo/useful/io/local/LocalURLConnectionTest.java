@@ -51,7 +51,7 @@ public class LocalURLConnectionTest {
             for (int i = 0; i < 2; i++) {
                 InputStream in = connection.getInputStream();
                 assertTrue(((LocalURLConnection) connection).isConnected());
-                String contents = new String(URLSessionTest.readAllBytes(in));
+                String contents = new String(URLSessionTest.readAllBytesAndClose(in));
                 assertEquals("contents", contents);
             }
         }

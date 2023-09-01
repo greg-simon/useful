@@ -44,13 +44,14 @@ public interface ResourceTest {
     default void testGetReader() throws Exception {
         String testStr = "This is a test for the reader() method";
         Resource r = createResource(testStr.getBytes());
-        Reader reader = r.getReader();
-        for (int i = 0; i < testStr.length(); i++) {
-            assertEquals(
-                    testStr.charAt(i),
-                    (char) reader.read(),
-                    "Comparing char No. " + i
-            );
+        try (Reader reader = r.getReader()) {
+            for (int i = 0; i < testStr.length(); i++) {
+                assertEquals(
+                        testStr.charAt(i),
+                        (char) reader.read(),
+                        "Comparing char No. " + i
+                );
+            }
         }
     }
     
@@ -59,13 +60,14 @@ public interface ResourceTest {
     default void testGetReader_Charset(Charset charset) throws Exception {
         String testStr = "This is a test for the reader() method";
         Resource r = createResource(testStr.getBytes(charset), charset);
-        Reader reader = r.getReader(charset);
-        for (int i = 0; i < testStr.length(); i++) {
-            assertEquals(
-                    testStr.charAt(i),
-                    (char) reader.read(),
-                    "Comparing char No. " + i
-            );
+        try (Reader reader = r.getReader(charset)) {
+            for (int i = 0; i < testStr.length(); i++) {
+                assertEquals(
+                        testStr.charAt(i),
+                        (char) reader.read(),
+                        "Comparing char No. " + i
+                );
+            }
         }
     }
 
