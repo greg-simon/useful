@@ -37,15 +37,14 @@ public class LocalURLConnection extends URLConnection {
         if (!connected) {
             this.connect();
         }
-        // sessionId is the host part of the url:
-        // local://sessionid/path
-        String sessionIdStr = url.getHost();
-        Integer sessionId = LocalProtocol.parseIntOrNull(sessionIdStr);
-        LocalSession session = LocalProtocol.getSession(sessionId);
+        // The hostname is the namespace and the session id seperated with a period character.
+        // local://namespace.sessionId/path
+        String hostname = url.getHost();
+        LocalSession session = LocalProtocol.getSession(hostname);
         if (session == null) {
-            throw new IOException(String.format(
-                    "Unknown local session (Session may have been closed): %s"
-                    ,sessionIdStr
+            throw new IOException(String.join(" ",
+                    "Unknown local session (Session may have been closed):"
+                    ,hostname
             ));
         }
         return session.getInputStream(url.getPath());

@@ -1,10 +1,8 @@
 package au.id.simo.useful.io.local;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import au.id.simo.useful.io.Resource;
 
@@ -14,28 +12,28 @@ import au.id.simo.useful.io.Resource;
  * <p>
  * The components of the {@code local://} protocol are:
  * <pre>
- * local://[sessionId]/[path]
+ * local://[registryName].[sessionId]/[path]
  * </pre>
  * Example:
  * <pre>
- * local://12345/index.html
+ * local://default.12345/index.html
  * </pre>
  * <p>
- * Each {@code sessionId} is an Integer assigned when the session is created.
+ * Each {@code sessionId} is a registry unique String identifier, assigned on
+ * new {@link LocalSession} creation. Exactly how this is done is
+ * {@link LocalSessionRegistry} implementation specific.
  * The {@code path} is provided by the calling code when resources are
  * registered to the session.
  * <p>
- * Sessions are limited to 100,000 active at any one time via the following
- * constants: {@link #MAX_SESSION_ID}, {@link #MIN_SESSION_ID}. Attempting to
- * create a new session after this limit will throw a
- * {@link SessionLimitReachedException}
+ * There is always a default {@link LocalSessionRegistry} registered under the
+ * {@code default} namespace. Which is what the no-argument
  * <p>
  * Usage:
  * <pre>
  * try (URLSession session = LocalProtocol.newSession()) {
  *     String url = session.register("index.html", new File("mypage.html"));
  *
- *     // url is "local://1/index.html"
+ *     // url is "local://default.1/index.html"
  *     URL indexUrl = URI.create(url).toURL();
  *     // code using indexUrl here
  * }
@@ -49,29 +47,9 @@ import au.id.simo.useful.io.Resource;
  * {@code newSession()} is called.
  */
 public class LocalProtocol {
+    private static final String DEFAULT_NAMESPACE = "default";
 
-    /**
-     * Allocate session ids above or equal to this number.
-     */
-    protected static final int MIN_SESSION_ID = 1;
-    /**
-     * Allocate session ids below or equal to this number.
-     */
-    protected static final int MAX_SESSION_ID = 100_000;
-    /**
-     * The maximum number of active sessions.
-     */
-    protected static final int MAX_SESSIONS = MAX_SESSION_ID - MIN_SESSION_ID + 1;
-    /**
-     * The registry of all sessions in the current application. Indexed by
-     * sessionId.
-     */
-    private static final Map<Integer, LocalSession> SESSION_REGISTRY = new HashMap<>();
-    /**
-     * Used to allocate new sessionIds. Initialised to one less than min, as the
-     * allocator increments first then allocates.
-     */
-    private static int sessionCounter = MIN_SESSION_ID - 1;
+    private static final Map<String, LocalSessionRegistry> REGISTRY_MAP = new ConcurrentHashMap<>();
 
     /**
      * Utility class should not have a public default constructor.
@@ -79,138 +57,143 @@ public class LocalProtocol {
     private LocalProtocol() {
         // no-op
     }
-    
-    /**
-     * 
-     * @return The maximum number of active sessions.
-     */
-    public static int maxSessions() {
-        return MAX_SESSIONS;
-    }
-    
-    /**
-     * 
-     * @return The number of currently active sessions.
-     */
-    public static int sessionCount() {
-        return SESSION_REGISTRY.size();
-    }
-    
-    /**
-     * Closes all active sessions.
-     * 
-     * @return the number of sessions that were closed.
-     * @throws java.io.IOException if {@link LocalSession#close()} throws an
-     * exception.
-     */
-    public static int closeAllSessions() throws IOException {
-        // no synchronized required as the session.close() will unregister in a
-        // synchronized block anyway.
-        List<LocalSession> sessions = new ArrayList<>(SESSION_REGISTRY.values());
-        int returnValue = sessions.size();
-        for(LocalSession session: sessions) {
-            session.close();
+
+    protected static void validateRegistryName(String name) throws IllformedLocaleException {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Registry name must be a non-null, non-zero length String.");
         }
-        return returnValue;
+        if (name.length() > 255) {
+            throw new IllegalArgumentException("Registry name must be less than 255 characters in length.");
+        }
+        boolean valid;
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            valid = ((c >= 'a') && (c <= 'z')) ||
+                    ((c >= 'A') && (c <= 'Z')) ||
+                    ((c >= '0') && (c <= '9')) ||
+                    c == '-' || c == '_';
+            if (!valid) {
+                throw new IllegalArgumentException(String.format("Illegal registry name character: '%s'", c));
+            }
+        }
     }
 
     /**
-     * Create a new LocalSession with a unique session id.
+     * When a registry is already registered under the given namespace, it will be
+     * replaced, and all existing session closed.
+     * @param namespace the namespace to identify the given registry with.
+     * @param registry the registry responsible for creating new sessions
+     *                 under the provided namespace.
+     */
+    public void register(String namespace, LocalSessionRegistry registry) {
+        validateRegistryName(namespace);
+        REGISTRY_MAP.compute(namespace, (k,v) -> {
+            if (v !=null) {
+                v.closeAllSessions();
+            }
+            return registry;
+        });
+    }
+
+    /**
+     * Closes all active sessions.
+     *
+     * @return the number of sessions that were closed.
+     */
+    public static long closeAllSessions() {
+        AtomicLong counter = new AtomicLong();
+        REGISTRY_MAP.forEach((k,v) -> {
+            counter.addAndGet(v.closeAllSessions());
+        });
+        return counter.longValue();
+    }
+
+    /**
+     * Create a new LocalSession from the default {@link LocalSessionRegistry}.
      * <p>
      * The local protocol is also registered on the URL package search path if
-     * required.
-     *
+     * it's not already.
      * @return a new LocalSession.
      * @see Handler#registerHandlerIfRequired()
      * @throws SessionLimitReachedException if the number of active sessions
-     * equals {@link #maxSessions()} when this method is called.
+     * are exceeded for the {@link LocalSessionRegistry} implementation.
      */
     public static LocalSession newSession() {
-        Handler.registerHandlerIfRequired();
-        // in a synchronized block to make the session 'generate' and 'add'
-        // operations into a single atomic operation.
-        synchronized (SESSION_REGISTRY) {
-            Integer sessionId = allocateSessionId();
-            LocalSession newSession = new LocalSession(sessionId);
-            SESSION_REGISTRY.put(sessionId, newSession);
-            return newSession;
-        }
-    }
-    
-    /**
-     * Allocates an Integer for use as a LocalSession id, guaranteed to be
-     * unique among already allocated session ids.
-     * 
-     * @return An incrementing Integer.
-     * @throws SessionLimitReachedException if the number of active sessions
-     * equals {@link #maxSessions()} when this method is called.
-     */
-    private static Integer allocateSessionId() {
-        int sessionId = nextSessionId();
-        int loopCounter = 0;
-        while (SESSION_REGISTRY.containsKey(sessionId)) {
-            sessionId = nextSessionId();
-            
-            if (loopCounter == MAX_SESSIONS) {
-                // by now we have looped through the full rage of the numbers
-                // and none are left to allocate
-                throw new SessionLimitReachedException(String.format(
-                        "Session limit reached: %s already exist",
-                        MAX_SESSIONS
-                ));
-            }
-            loopCounter++;
-        }
-        return sessionId;
-    }
-    
-    private static int nextSessionId() {
-        sessionCounter++;
-        if (sessionCounter > MAX_SESSION_ID) {
-            sessionCounter = MIN_SESSION_ID;
-        }
-        return sessionCounter;
-    }
-    
-    /**
-     * Attempts to parse an Integer from the provided String.
-     *
-     * @param integerStr A string representation of an Integer.
-     * @return An Integer, or null if the string is unable to be parsed.
-     */
-    protected static Integer parseIntOrNull(String integerStr) {
-        try {
-            return Integer.parseInt(integerStr);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        return newSession(DEFAULT_NAMESPACE);
     }
 
     /**
-     * Lookup an existing session with the provided session ID.
+     * Create a new LocalSession from a registered Registry.
+     * <p>
+     * The local protocol is also registered on the URL package search path if
+     * it's not already.
+     * @param namespace The namespace of a {@link LocalSessionRegistry} instance to
+     *                  create the new {@link LocalSession}.
+     * @return a new LocalSession.
+     * @see Handler#registerHandlerIfRequired()
+     * @throws SessionLimitReachedException if the number of active sessions
+     * are exceeded for the {@link LocalSessionRegistry} implementation.
+     * @throws IllegalArgumentException if there is no registry identified by the
+     * given namespace, or if the given namespace is null.
+     */
+    public static LocalSession newSession(String namespace) {
+        Handler.registerHandlerIfRequired();
+        if (namespace == null) {
+            throw new IllegalArgumentException("namespace is null");
+        }
+        LocalSessionRegistry registry = REGISTRY_MAP.computeIfAbsent(namespace, k -> {
+            if (DEFAULT_NAMESPACE.equals(k)) {
+                return new DefaultLocalSessionRegistry(DEFAULT_NAMESPACE);
+            }
+            return null;
+        });
+        if (registry == null) {
+            throw new IllegalArgumentException("Unknown namespace: " + namespace);
+        }
+        return registry.newSession();
+    }
+
+    /**
+     * Lookup an existing session with the provided local URL hostname.
+     * <p>
+     * The hostname has two components, the namespace and the sessionId
+     * seperated with a period charter. The namespace is assigned when the
+     * registry is registered with the {@link LocalProtocol} class, and the
+     * sessionId is implementation specific to the registered
+     * {@link LocalSessionRegistry}.
+     * <p>
+     * E.g. {@code local://myregistry.231/path/to/resource.txt}
      *
-     * @param sessionId the session id that uniquely identifies an existing
+     * @param urlHost the URL hostname that uniquely identifies an existing
      * LocalSession instance.
-     * @return a LocalSession identified by the sessionId, or null of no such
+     * @return a LocalSession identified by the urlHost, or null of no such
      * session exists.
      */
-    protected static LocalSession getSession(Integer sessionId) {
-        if (sessionId == null) {
+    protected static LocalSession getSession(String urlHost) {
+        String namespace = namespaceOrNull(urlHost);
+        if (namespace == null) {
             return null;
         }
-        synchronized (SESSION_REGISTRY) {
-            return SESSION_REGISTRY.get(sessionId);
+        LocalSessionRegistry registry  = REGISTRY_MAP.get(namespace);
+        if (registry == null) {
+            return null;
         }
+        return registry.getSession(urlHost);
     }
 
-    /**
-     * Removes the provided Session from the Session register.
-     *
-     * @param session removes this session from the registry.
-     */
-    protected static void unregisterSession(LocalSession session) {
-        synchronized (SESSION_REGISTRY) {
-            SESSION_REGISTRY.remove(session.getId());
+    protected static LocalSessionRegistry getRegistry(String namespace) {
+        return REGISTRY_MAP.get(namespace);
+    }
+
+    protected static String namespaceOrNull(String hostname) {
+        if (hostname == null) {
+            return null;
         }
+        int dotIdx = hostname.indexOf('.');
+        if (dotIdx < 0) {
+            // no dot found, we won't be able to identify a registry without it.
+            return null;
+        }
+        return hostname.substring(0, dotIdx);
     }
 }

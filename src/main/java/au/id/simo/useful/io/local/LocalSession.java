@@ -25,7 +25,9 @@ import au.id.simo.useful.io.Latch;
  */
 public class LocalSession implements URLSession {
 
-    private final Integer id;
+    private final String namespace;
+    private final String id;
+    private final LocalSessionRegistry parentRegistry;
     private final Map<String, Resource> resourceMap;
     /**
      * Tracks session open/close status.
@@ -38,8 +40,10 @@ public class LocalSession implements URLSession {
      * @param id The assigned sessionId of this session. This is required to
      * build any full URL of this session.
      */
-    protected LocalSession(Integer id) {
+    protected LocalSession(LocalSessionRegistry parentRegistry, String id) {
+        this.namespace = parentRegistry.getNamespace();
         this.id = id;
+        this.parentRegistry = parentRegistry;
         resourceMap = new HashMap<>();
         latch = new Latch(SESSION_CLOSE_MSG);
     }
@@ -49,7 +53,7 @@ public class LocalSession implements URLSession {
      *
      * @return this instances session id.
      */
-    public Integer getId() {
+    protected String getId() {
         return id;
     }
 
@@ -72,7 +76,7 @@ public class LocalSession implements URLSession {
      * @return a full URL to a resource.
      */
     private String urlFromPath(String normalisedPath) {
-        return String.format("local://%s/%s", id, normalisedPath);
+        return String.format("local://%s.%s/%s", namespace, id, normalisedPath);
     }
 
     /**
@@ -122,9 +126,9 @@ public class LocalSession implements URLSession {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         latch.close();
-        LocalProtocol.unregisterSession(this);
+        parentRegistry.unregisterSession(this);
     }
 
     /**
