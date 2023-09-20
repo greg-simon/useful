@@ -1,5 +1,8 @@
 package au.id.simo.useful.io.local;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -134,7 +137,10 @@ public class LocalProtocol {
      * @throws SessionLimitReachedException if the number of active sessions
      * are exceeded for the {@link LocalSessionRegistry} implementation.
      * @throws IllegalArgumentException if there is no registry identified by the
-     * given namespace, or if the given namespace is null.
+     * given namespace, if the given namespace is null, or if the {@link LocalSessionRegistry}
+     * implementation fails to provide a <a href="http://www.ietf.org/rfc/rfc2396.txt">RFC&nbsp;2396</a>
+     * compliant base URL for the new session (Such as the hostname being too long
+     * due to an excessive combined namespace and session ID length).
      */
     public static LocalSession newSession(String namespace) {
         Handler.registerHandlerIfRequired();
@@ -150,7 +156,14 @@ public class LocalProtocol {
         if (registry == null) {
             throw new IllegalArgumentException("Unknown namespace: " + namespace);
         }
-        return registry.newSession();
+        LocalSession ls = registry.newSession();
+        try {
+            // check the base url is a valid URL
+            new URI(ls.getBaseUrl()).toURL();
+        } catch (MalformedURLException | URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return ls;
     }
 
     /**
