@@ -13,8 +13,8 @@ import au.id.simo.useful.io.LimitedReader;
  */
 public class DataGenFactory {
 
-    private static final String CHARS = "abcdefghijklmnopqrstuvwxyz ";
-    private static final byte[] CHARS_AS_BYTES = "abcdefghijklmnopqrstuvwxyz ".getBytes(StandardCharsets.UTF_8);
+    public static final String CHARS = "abcdefghijklmnopqrstuvwxyz";
+    static final byte[] CHARS_AS_BYTES = CHARS.getBytes(StandardCharsets.UTF_8);
     public static final String STREAM_MSG = "Stream Closed";
     public static final String READER_MSG = "Reader Closed";
     

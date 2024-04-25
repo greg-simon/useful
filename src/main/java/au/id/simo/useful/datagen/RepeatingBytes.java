@@ -6,11 +6,11 @@ public class RepeatingBytes {
 
     public RepeatingBytes(byte[] bytes) {
         this.bytes = bytes;
-        this.wrapIndex = new WrapIndex(bytes.length);
+        this.wrapIndex = new WrapIndex(bytes.length - 1);
     }
 
     public byte next() {
-        return bytes[wrapIndex.next()];
+        return bytes[wrapIndex.getAndAdd(1)];
     }
 
     public byte byteAt(int index) {

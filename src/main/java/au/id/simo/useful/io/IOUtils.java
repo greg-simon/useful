@@ -15,7 +15,7 @@ import java.util.concurrent.Callable;
  */
 public class IOUtils {
     
-    private static final int DEFAULT_BUFFER_SIZE = 4096;
+    public static final int DEFAULT_BUFFER_SIZE = 4096;
     
     /**
      * Discards all data written to it. Used in
@@ -51,6 +51,12 @@ public class IOUtils {
                 return copy(input, output);
             }
         };
+    }
+
+    public static long copyThenClose(InputStream input, OutputStream output) throws IOException {
+        try (InputStream in = input; OutputStream out = output) {
+            return copy(in, out);
+        }
     }
 
     /**

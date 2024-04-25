@@ -1,9 +1,14 @@
 package au.id.simo.useful;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Helps ensure resources are cleaned up.
@@ -222,6 +227,14 @@ public class Defer implements AutoCloseable {
         return service;
     }
 
+    public <L extends Lock> L unlock(L lock) {
+        if (lock == null) {
+            return null;
+        }
+        itemsToClose.push(new LockWrapper(lock));
+        return lock;
+    }
+
     public static abstract class AutoCloseableWrapper<T> implements AutoCloseable {
         private final T wrappedType;
 
@@ -288,6 +301,16 @@ public class Defer implements AutoCloseable {
                     Thread.currentThread().interrupt();
                 }
             }
+        }
+    }
+
+    private static class LockWrapper extends AutoCloseableWrapper<Lock> {
+        public LockWrapper(Lock wrappedType) {
+            super(wrappedType);
+        }
+        @Override
+        public void close() {
+            getWrappedType().unlock();
         }
     }
 

@@ -42,20 +42,15 @@ public class ManualExecutorService extends AbstractExecutorService {
      * @param pollWaitInMS the number of milliseconds to wait for a new task before looping and trying again.
      * each loop.
      */
-    public void runTaskLoop(long pollWaitInMS) {
-        try {
-            Runnable task;
-            while (!shutdown || !tasks.isEmpty()) {
-                task = tasks.poll(pollWaitInMS, TimeUnit.MILLISECONDS);
-                if (task == null) {
-                    notifyIfNeeded();
-                    continue;
-                }
-                task.run();
+    public void runTaskLoop(long pollWaitInMS) throws InterruptedException {
+        Runnable task;
+        while (!shutdown || !tasks.isEmpty()) {
+            task = tasks.poll(pollWaitInMS, TimeUnit.MILLISECONDS);
+            if (task == null) {
+                notifyIfNeeded();
+                continue;
             }
-        } catch (InterruptedException e) {
-            // can occur while tasks.poll is waiting for a task.
-            // do nothing
+            task.run();
         }
     }
     

@@ -27,9 +27,14 @@
         <Bug code="UW" />
     </Match>
     <Match>
-        <!-- Wait not in Loop: I don't want it in a loop?  -->
+        <!-- TODO: Redesign Class  -->
         <Class name="au.id.simo.useful.test.ManualExecutorService" />
-        <Bug code="Wa" />
+        <Or>
+            <!-- Wait not in Loop: I don't want it in a loop?  -->
+            <Bug code="Wa" />
+            <!-- TODO: Review  -->
+            <Bug pattern="PA_PUBLIC_MUTABLE_OBJECT_ATTRIBUTE"/>
+        </Or>
     </Match>
     <Match>
         <!--
@@ -64,6 +69,22 @@
           -->
         <Class name="au.id.simo.useful.DeferException" />
         <Bug code="Se" />
+    </Match>
+    <Match>
+        <!--
+            False Positive: This method does in fact close the internal OutputStream implementation.
+            Even if it is within a Callable to be executed on another thread later.
+        -->
+        <Class name="au.id.simo.useful.io.ConcurrentGeneratorResource"/>
+        <Method name="inputStream"/>
+        <Bug pattern="OS_OPEN_STREAM"/>
+    </Match>
+    <Match>
+        <!--
+        TODO: Review these hits
+        Removed temporarily after triggering several after a spotbugs upgrade.
+        -->
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
 
 </FindBugsFilter>

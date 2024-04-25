@@ -179,7 +179,7 @@ public interface ByteBundle extends Resource {
                 if (index >= length) {
                     return -1;
                 }
-                int remaining = length - index;
+                int remaining = available();
                 int bytesRequested = Math.min(b.length - off, len);
                 int bytesToCopy = Math.min(remaining, bytesRequested);
                 index += copyOut(index, b, off, bytesToCopy);
@@ -189,6 +189,11 @@ public interface ByteBundle extends Resource {
             @Override
             public void close() {
                 latch.close();
+            }
+
+            @Override
+            public int available() {
+                return length - index;
             }
         };
     }

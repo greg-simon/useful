@@ -49,13 +49,39 @@ public class ByteRingBuffer extends AbstractRingBuffer<Byte> {
                 String.format("Not enough free space for %d bytes", length)
             );
         }
-        System.arraycopy(src, srcInx, buffer, head, length);
-        head += incrementIndex(head, length);
+        // write data in two segments, to account for free space that is wrapped
+        // around at the end of the array. Write at the end, then write the
+        // remaining bytes to the start of the buffer array.
+        // Example:
+        // A 10 capacity buffer, with 8 bytes of free space, some at end of array.
+        // is to accept 8 bytes being written.
+        //
+        // (h is head index, t is tail index)
+        //          t h
+        // [ , , , ,0,0, , , , ]
+        // [^ seg2^]   [^ seg1^]
+        //
+        // So segment 1 is written first to the free space, then the remaining segment
+        // written to the start of the array.
+
+        int freeSpaceLengthAtEndOfArray = buffer.length - head;
+        int segment1Length = Math.min(freeSpaceLengthAtEndOfArray, length);
+        System.arraycopy(src, srcInx, buffer, head, segment1Length);
+        head = incrementIndex(head, segment1Length);
+
+        // segment 2 only required if there is remaining data to write
+        if (segment1Length < length) {
+            int segment2Length = length - segment1Length;
+            int segment2Index = srcInx + segment1Length;
+            System.arraycopy(src, segment2Index, buffer, head, segment2Length);
+            head = incrementIndex(head, segment2Length);
+        }
+
         size += length;
     }
 
     /**
-     * Copies bytes into the provided array.
+     * Copies bytes into the provided array, removing them from the buffer.
      *
      * @param dest destination array to copy values into
      * @param start the index of the destination array to start copying values

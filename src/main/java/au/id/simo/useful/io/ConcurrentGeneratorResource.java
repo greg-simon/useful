@@ -3,18 +3,8 @@ package au.id.simo.useful.io;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 /**
  * When the {@link InputStream} is requested, it runs the {@link Generator} in
@@ -126,17 +116,14 @@ public class ConcurrentGeneratorResource implements Resource {
      */
     @Override
     public InputStream inputStream() throws IOException {
-        PipedInputStream in = new PipedInputStream(bufferSize);
-        PipedOutputStream out = new PipedOutputStream(in);
+        PipeOutputStream out = new PipeOutputStream(bufferSize);
+        InputStream in = out.getInputStream();
+
         // use a callable so exceptions can be thrown by the generator thread.
         // Runnable.run() doesn't throw Exception.
         Callable<Object> producer = () -> {
             try (OutputStream localOut = out) {
                 generator.writeTo(localOut);
-            } catch (InterruptedIOException e) {
-                // reset interrupt status
-                Thread.currentThread().interrupt();
-                throw e;
             }
             return null;
         };
@@ -161,7 +148,7 @@ public class ConcurrentGeneratorResource implements Resource {
         try {
             // throws any exceptions in the consumer thread that were thrown
             // in the generator thread.
-            future.get(0, TimeUnit.MILLISECONDS);
+            future.get(1, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
             // this only occurs when the consumer thread is interrupted while
             // waiting <1ms for the future to complete. It's a very small window

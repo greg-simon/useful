@@ -2,6 +2,7 @@ package au.id.simo.useful.collections;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
 import au.id.simo.useful.datagen.DataGenFactory;
@@ -31,6 +32,50 @@ public class ByteRingBufferTest implements AbstractRingBufferTest<Byte>{
     @Override
     public AbstractRingBuffer<Byte> createRingBuffer(int capacity) {
         return new ByteRingBuffer(capacity);
+    }
+
+    @Test
+    public void testRepeatedReadWritesForCorrectness() {
+        ByteRingBuffer buffer = new ByteRingBuffer(1024);
+        for (int loopIndex=0;loopIndex<5;loopIndex++) {
+            String testString = String.format("%02d", loopIndex);
+            byte[] testStringBytes = testString.getBytes(StandardCharsets.UTF_8);
+            byte[] readBytesArray = new byte[testStringBytes.length];
+            buffer.write(testStringBytes, 0, testStringBytes.length);
+            assertEquals(buffer.size(), testStringBytes.length);
+
+            buffer.read(readBytesArray, 0, readBytesArray.length);
+            assertEquals(buffer.size(), 0);
+            String readStr = new String(readBytesArray);
+            assertEquals(testString, readStr);
+        }
+    }
+
+    /**
+     * Write data to a ByteRingBuffer that will fit, but writing starts at end of internal array and wraps around
+     * and writes to the beginning.
+     */
+    @Test
+    public void testWritingToWrappedFreeSpace() {
+        // create an empty buffer with head and tail near the end of the array, with only 3 bytes of free space
+        // remaining without wrapping.
+        ByteRingBuffer buffer = new ByteRingBuffer(10);
+        buffer.head = 7;
+        buffer.tail = 7;
+        assertEquals(0, buffer.size());
+
+        // write 5 bytes and verify it all went into the buffer.
+        byte[] fiveBytes = new byte[]{1,2,3,4,5};
+        buffer.write(fiveBytes, 0, fiveBytes.length);
+
+        assertEquals(fiveBytes.length, buffer.size());
+        //verify internal pointers
+        assertEquals(2, buffer.head);
+        assertEquals(7, buffer.tail);
+        // verify contents
+        for (int i=0;i< buffer.size(); i++) {
+            assertEquals(fiveBytes[i], buffer.peek(i));
+        }
     }
 
     @Test
@@ -182,21 +227,5 @@ public class ByteRingBufferTest implements AbstractRingBufferTest<Byte>{
         rb.read();
         assertEquals(1, rb.getFreeSpace());
         assertFalse(rb.isFull());
-    }
-    
-    public class DataGen {
-        private int counter;
-
-        public DataGen() {
-            counter = 0;
-        }
-        
-        public void setNext(int value) {
-            this.counter = value;
-        }
-        
-        public byte next() {
-            return (byte) (counter++ % Byte.MAX_VALUE);
-        }
     }
 }
