@@ -31,7 +31,7 @@ public class LocalURLConnectionTest {
 
             URL url = URI.create(urlStr).toURL();
             URLConnection connection = url.openConnection();
-            assertTrue(connection instanceof LocalURLConnection);
+            assertInstanceOf(LocalURLConnection.class, connection);
             connection.connect();
             assertTrue(((LocalURLConnection) connection).isConnected());
         }
@@ -44,7 +44,7 @@ public class LocalURLConnectionTest {
 
             URL url = URI.create(urlStr).toURL();
             URLConnection connection = url.openConnection();
-            assertTrue(connection instanceof LocalURLConnection);
+            assertInstanceOf(LocalURLConnection.class, connection);
             assertFalse(((LocalURLConnection) connection).isConnected());
 
             // read contents twice
@@ -59,9 +59,13 @@ public class LocalURLConnectionTest {
     
     @Test
     public void testGetInputStream_Unknown_Session() throws Exception {
+        // ensuring the local protocol is registered as we're relying on it first via URI and not via LocalProtocol class
+        Handler.registerHandlerIfRequired();
+        System.out.println(Thread.currentThread().getName());
+        System.out.println(System.getProperty("java.protocol.handler.pkgs", ""));
         URL url = URI.create("local://unknownsession/path").toURL();
         URLConnection connection = url.openConnection();
-        assertTrue(connection instanceof LocalURLConnection);
+        assertInstanceOf(LocalURLConnection.class, connection);
         assertFalse(((LocalURLConnection) connection).isConnected());
         
         IOException ioe = assertThrows(IOException.class, connection::getInputStream);

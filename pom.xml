@@ -43,7 +43,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
                 <configuration>
                     <!-- placeholder for large heap tests -->
                     <!--argLine>-Xmx20000m -XX:+UseG1GC</argLine-->

@@ -1,10 +1,11 @@
 package au.id.simo.useful.io.local;
 
-import java.io.IOException;
+import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.ResourceLock;
+import au.id.simo.useful.text.RepeatCharSequence;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,44 +13,45 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  */
 public class LocalProtocolTest {
-    @Test
-    @Disabled
-    public void testCreateAllSessions() throws IOException {
-        // creating all sessions is a lengthy operation, so test everything
-        // while we're at it.
-//        int minId = Integer.MAX_VALUE;
-//        int maxId = Integer.MIN_VALUE;
-//
-//        for (int i = 0; i < LocalProtocol.maxSessions(); i++) {
-//            LocalSession ls = LocalProtocol.newSession();
-//            minId = Math.min(minId, ls.getId());
-//            maxId = Math.max(maxId, ls.getId());
-//        }
-//        assertEquals(LocalProtocol.maxSessions(), LocalProtocol.sessionCount());
-//        assertEquals(LocalProtocol.MIN_SESSION_ID, minId, "Min");
-//        assertEquals(LocalProtocol.MAX_SESSION_ID, maxId, "Max");
-//
-//        SessionLimitReachedException ex = assertThrows(SessionLimitReachedException.class, LocalProtocol::newSession);
-//        assertTrue(ex.getMessage().startsWith("Session limit reached: "));
-//
-//        // close the last session, and create another to replace it
-//        LocalSession lastSession = LocalProtocol.getSession(LocalProtocol.MAX_SESSION_ID);
-//        assertNotNull(lastSession);
-//        lastSession.close();
-//        LocalProtocol.newSession();
-//
-//        // verify closeAll works
-//        assertEquals(LocalProtocol.maxSessions(), LocalProtocol.sessionCount());
-//        assertEquals(LocalProtocol.maxSessions(), LocalProtocol.closeAllSessions());
-//        assertEquals(0, LocalProtocol.sessionCount());
+
+    @ParameterizedTest
+    @MethodSource("testNamespaceOrNullParams")
+    public void testNamespaceOrNull(String nameSpace, String expected) {
+        if (expected == null) {
+            assertNull(LocalProtocol.namespaceOrNull(nameSpace));
+        } else {
+            assertEquals(expected, LocalProtocol.namespaceOrNull(nameSpace));
+        }
     }
 
-    @Test
-    public void testNamespaceOrNull() {
-        assertEquals("namespace", LocalProtocol.namespaceOrNull("namespace.sessionId"));
-        assertNull(LocalProtocol.namespaceOrNull("namespace,sessionId"));
-        assertNull(LocalProtocol.namespaceOrNull("namespacesessionId"));
-        assertEquals("", LocalProtocol.namespaceOrNull(".sessionId"));
-        assertEquals("namespace", LocalProtocol.namespaceOrNull("namespace."));
+    public static Stream<Arguments> testNamespaceOrNullParams() {
+        return Stream.of(
+                Arguments.of("namespace.sessionId", "namespace"),
+                Arguments.of("namespace,sessionId", null),
+                Arguments.of("namespacesessionId", null),
+                Arguments.of(".sessionId", null),
+                Arguments.of("namespace.", "namespace"),
+                Arguments.of("namespace.session.id", "namespace")
+        );
+    }
+    @ParameterizedTest
+    @MethodSource("testValidateRegistryNameParams")
+    public void testValidateRegistryName(String registryName, IllegalArgumentException expectedException) {
+        if (expectedException != null) {
+            Exception e = assertThrows(expectedException.getClass(), () -> LocalProtocol.validateRegistryName(registryName));
+            assertEquals(expectedException.getMessage(), e.getMessage());
+            return;
+        }
+        LocalProtocol.validateRegistryName(registryName);
+    }
+
+    public static Stream<Arguments> testValidateRegistryNameParams() {
+        return Stream.of(
+                Arguments.of("", new IllegalArgumentException("Registry name must be a non-null, non-zero length String.")),
+                Arguments.of(
+                        new RepeatCharSequence('a', 256).toString(),
+                        new IllegalArgumentException("Registry name must be less than 255 characters in length.")),
+                Arguments.of("namespace", null)
+        );
     }
 }

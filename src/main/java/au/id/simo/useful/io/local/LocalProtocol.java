@@ -61,7 +61,25 @@ public class LocalProtocol {
         // no-op
     }
 
-    protected static void validateRegistryName(String name) throws IllformedLocaleException {
+    /**
+     *
+     * @param name the proposed namespace for a registry.
+     * @throws IllegalArgumentException is thrown if:
+     *         <ul>
+     *             <li>The name is null or zero length</li>
+     *             <li>The name length is more than 255 characters</li>
+     *             <li>The name contains any character that is not one of the following:
+     *                  <ul>
+     *                      <li>'a' to 'z'</li>
+     *                      <li>'A' to 'Z'</li>
+     *                      <li>'0' to '9'</li>
+     *                      <li>'-'</li>
+     *                      <li>'_'</li>
+     *                  </ul>
+     *             </li>
+     *         </ul>
+     */
+    protected static void validateRegistryName(String name) throws IllegalArgumentException {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Registry name must be a non-null, non-zero length String.");
         }
@@ -198,13 +216,25 @@ public class LocalProtocol {
         return REGISTRY_MAP.get(namespace);
     }
 
+    /**
+     * Extracts the namespace from the local hostname.
+     * <p>
+     * Given the URL format as follows {@code local://namespace.sessionId/path/resource}.
+     * This method extracts the {@code namespace} component from the URLs hostname field ({@code namespace.sessionId}).
+     * <p>
+     * Is does this by returning one or more characters before the first period character, or null if that is not
+     * possible.
+     *
+     * @param hostname the hostname component of a local URL: {@code local://[namespace.sessionId]/path/resource}
+     * @return One or more characters before the first period in the hostname, or null if that is not possible.
+     */
     protected static String namespaceOrNull(String hostname) {
         if (hostname == null) {
             return null;
         }
         int dotIdx = hostname.indexOf('.');
-        if (dotIdx < 0) {
-            // no dot found, we won't be able to identify a registry without it.
+        if (dotIdx <= 0) {
+            // no dot found, or is the first char, we won't be able to identify a registry.
             return null;
         }
         return hostname.substring(0, dotIdx);

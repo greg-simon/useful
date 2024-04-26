@@ -5,8 +5,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The default implementation of a {@link LocalSessionRegistry}, using an integer for a session id.
+ * <p>
+ * As the local protocol defines the URL as {@code local://namespace.sessionId/path/to/resource},
+ * the {@code sessionId} field is required to be an integer between {@code minSessionId}
+ * and {@code maxSessionId} inclusively.
+ *
+ */
 public class DefaultLocalSessionRegistry implements LocalSessionRegistry {
 
+    private static final int DEFAULT_MIN_SESSION_ID = 1;
+    private static final int DEFAULT_MAX_SESSION_ID = Integer.MAX_VALUE;
     /**
      * The namespace this registry instance is registered with, in the LocalProtocol class.
      */
@@ -34,10 +44,22 @@ public class DefaultLocalSessionRegistry implements LocalSessionRegistry {
      */
     private int sessionCounter;
 
+    /**
+     * Constructor that uses {@link #DEFAULT_MIN_SESSION_ID} and
+     * {@link #DEFAULT_MAX_SESSION_ID} to define the session ID range.
+     *
+     * @param namespace the namespace this registry is responsible for.
+     */
     public DefaultLocalSessionRegistry(String namespace) {
-        this(namespace, 1, 100_000);
+        this(namespace, DEFAULT_MIN_SESSION_ID, DEFAULT_MAX_SESSION_ID);
     }
 
+    /**
+     *
+     * @param namespace the namespace this registry is responsible for.
+     * @param minSessionId the smallest ID to be assigned to a LocalSession.
+     * @param maxSessionId the largest ID to be assigned to a LocalSession.
+     */
     public DefaultLocalSessionRegistry(String namespace, int minSessionId, int maxSessionId) {
         this.namespace = namespace;
         this.minSessionId = minSessionId;
@@ -45,6 +67,20 @@ public class DefaultLocalSessionRegistry implements LocalSessionRegistry {
         this.capacity = maxSessionId - minSessionId + 1;
         this.sessionCounter = minSessionId - 1;
         this.registryMap = new HashMap<>();
+    }
+
+    /**
+     * @return The minimum session ID that can be allocated to a session.
+     */
+    public int getMinSessionId() {
+        return minSessionId;
+    }
+
+    /**
+     * @return The maximum session ID that can be allocated to a session.
+     */
+    public int getMaxSessionId() {
+        return maxSessionId;
     }
 
     @Override
@@ -64,9 +100,11 @@ public class DefaultLocalSessionRegistry implements LocalSessionRegistry {
      * Allocates an Integer for use as a LocalSession id, guaranteed to be
      * unique among already allocated session ids.
      *
-     * @return An incrementing Integer.
+     * @return An unused session ID between {@link #minSessionId} and
+     * {@code #maxSessionId} inclusively.
      * @throws SessionLimitReachedException if the number of active sessions
-     * equals {@link #capacity()} when this method is called.
+     * equals {@link #capacity()} when this method is called, as there is no more
+     * session IDs left to allocate.
      */
     private int allocateSessionId() {
         int sessionId = nextSessionId();
