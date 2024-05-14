@@ -142,8 +142,8 @@ public class DefaultLocalSessionRegistry implements LocalSessionRegistry {
     }
 
     @Override
-    public synchronized LocalSession getSession(String hostname) {
-        Integer intId = parseIntOrNull(getSessionIdOrNull(hostname));
+    public synchronized LocalSession getSession(String sessionId) {
+        Integer intId = parseIntOrNull(sessionId);
         if (intId == null) {
             return null;
         }
@@ -153,10 +153,9 @@ public class DefaultLocalSessionRegistry implements LocalSessionRegistry {
     @Override
     public synchronized void unregisterSession(LocalSession session) {
         Integer intId = parseIntOrNull(session.getId());
-        if (intId == null) {
-            throw new IllegalArgumentException("Session not found in registry: "+ session.getId());
+        if (intId != null) {
+            registryMap.remove(intId);
         }
-        registryMap.remove(intId);
     }
 
     @Override
@@ -188,6 +187,9 @@ public class DefaultLocalSessionRegistry implements LocalSessionRegistry {
      * @return An Integer, or null if the string is unable to be parsed.
      */
     protected static Integer parseIntOrNull(String integerStr) {
+        if (integerStr == null) {
+            return null;
+        }
         try {
             return Integer.parseInt(integerStr);
         } catch (NumberFormatException e) {

@@ -9,11 +9,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DefaultLocalSessionRegistryTest implements LocalSessionRegistryTest {
-    @Override
-    public LocalSessionRegistry getInstance() {
-        return new DefaultLocalSessionRegistry("default");
-    }
+public class DefaultLocalSessionRegistryTest {
 
     @ParameterizedTest
     @MethodSource("constructorParams")

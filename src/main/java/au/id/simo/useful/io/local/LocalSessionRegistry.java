@@ -25,38 +25,11 @@ public interface LocalSessionRegistry {
     LocalSession newSession();
 
     /**
-     * @param hostname The hostname field of a local URL. E.g. "{@code namespace.sessionID}"
-     *                 from the URL {@code local://namespace.sessionID/path/resource}.
-     * @return The session that is identified by the provided hostname, or null if no session with that ID was found.
+     * @param sessionId The string representation of the session ID allocated by this registry.
+     * @return The session that is identified by the provided hostname, or null if no session with that ID was found,
+     *         or also null if the sessionId was invalid in any way.
      */
-    LocalSession getSession(String hostname);
-
-    /**
-     * Parse the session ID from the hostname field in a local URL.
-     * <p>
-     * For example, using the local URL {@code local://namespace.sessionID/path/resource},
-     * this method will be provided the hostname field as an argument "{@code namespace.sessionID}"
-     * and should return the sessionID section "{@code sessionID}".
-     *
-     * @param hostname The hostname field of a local URL.
-     * @return The sessionID component within the provided hostname, or null if one could
-     * not be found.
-     */
-    default String getSessionIdOrNull(String hostname) {
-        if (hostname == null) {
-            return null;
-        }
-        int dotIdx = hostname.indexOf('.');
-        if (dotIdx < 0) {
-            // no dot found, we won't be able to identify a sessionId without it.
-            return null;
-        }
-        if (dotIdx == hostname.length() - 1) {
-            // last char is the first dot, making the session part zero length.
-            return null;
-        }
-        return hostname.substring(dotIdx + 1);
-    }
+    LocalSession getSession(String sessionId);
 
     /**
      * Removes the provided session from the registry.

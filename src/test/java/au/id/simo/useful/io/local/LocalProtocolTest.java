@@ -2,8 +2,8 @@ package au.id.simo.useful.io.local;
 
 import java.util.stream.Stream;
 
-import au.id.simo.useful.text.RepeatCharSequence;
 import au.id.simo.useful.text.Text;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -17,11 +17,11 @@ public class LocalProtocolTest {
 
     @ParameterizedTest
     @MethodSource("testNamespaceOrNullParams")
-    public void testNamespaceOrNull(String nameSpace, String expected) {
-        if (expected == null) {
-            assertNull(LocalProtocol.namespaceOrNull(nameSpace));
+    public void testNamespaceOrNull(String namespace, String expectedNamespace) {
+        if (expectedNamespace == null) {
+            assertNull(LocalProtocol.namespaceOrNull(namespace));
         } else {
-            assertEquals(expected, LocalProtocol.namespaceOrNull(nameSpace));
+            assertEquals(expectedNamespace, LocalProtocol.namespaceOrNull(namespace));
         }
     }
 
@@ -35,6 +35,33 @@ public class LocalProtocolTest {
                 Arguments.of("namespace.session.id", "namespace")
         );
     }
+
+    @ParameterizedTest
+    @MethodSource("testSessionIdOrNullParams")
+    public void testSessionIdOrNull(String hostname, String expectedSessionId) {
+        Assertions.assertEquals(
+                expectedSessionId,
+                LocalProtocol.sessionIdOrNull(hostname)
+        );
+    }
+    public static Stream<Arguments> testSessionIdOrNullParams() {
+        return Stream.of(
+                // should work
+                Arguments.of("namespace.sessionID", "sessionID"),
+                Arguments.of(".sessionID", "sessionID"),
+                Arguments.of("namespace.0", "0"),
+                Arguments.of("namespace.-12345", "-12345"),
+                Arguments.of("namespace.1.2.3.4.5.6.7.8", "1.2.3.4.5.6.7.8"),
+                // should be null with no exceptions thrown
+                Arguments.of("sessionID", null),
+                Arguments.of("namespace.", null),
+                Arguments.of("namespace,sessionID", null),
+                Arguments.of("namespacesessionID", null),
+                Arguments.of("", null),
+                Arguments.of(null, null)
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("testValidateRegistryNameParams")
     public void testValidateRegistryName(String registryName, Integer maxSessionIDLength, IllegalArgumentException expectedException) {

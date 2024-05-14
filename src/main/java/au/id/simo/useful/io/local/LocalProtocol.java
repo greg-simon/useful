@@ -211,11 +211,15 @@ public class LocalProtocol {
         if (namespace == null) {
             return null;
         }
+        String sessionId = sessionIdOrNull(urlHost);
+        if (sessionId == null) {
+            return null;
+        }
         LocalSessionRegistry registry  = REGISTRY_MAP.get(namespace);
         if (registry == null) {
             return null;
         }
-        return registry.getSession(urlHost);
+        return registry.getSession(sessionId);
     }
 
     protected static LocalSessionRegistry getRegistry(String namespace) {
@@ -244,5 +248,32 @@ public class LocalProtocol {
             return null;
         }
         return hostname.substring(0, dotIdx);
+    }
+
+    /**
+     * Parse the session ID from the hostname field in a local URL.
+     * <p>
+     * For example, using the local URL {@code local://namespace.sessionID/path/resource},
+     * this method will be provided the hostname field as an argument "{@code namespace.sessionID}"
+     * and should return the sessionID section "{@code sessionID}".
+     *
+     * @param hostname The hostname field of a local URL.
+     * @return The sessionID component within the provided hostname, or null if one could
+     * not be found.
+     */
+    protected static String sessionIdOrNull(String hostname) {
+        if (hostname == null) {
+            return null;
+        }
+        int dotIdx = hostname.indexOf('.');
+        if (dotIdx < 0) {
+            // no dot found, we won't be able to identify a sessionId without it.
+            return null;
+        }
+        if (dotIdx == hostname.length() - 1) {
+            // last char is the first dot, making the session part zero length.
+            return null;
+        }
+        return hostname.substring(dotIdx + 1);
     }
 }
