@@ -1,5 +1,12 @@
 package au.id.simo.useful.io.local;
 
+/**
+ * A managed collection of {@link LocalSession}s, it represents a namespace for the {@code local://} protocol.
+ * <pre>
+ *     local://name-of-local-session-registry-implementation.sessionId/path/to/resource
+ * </pre>
+ * @see LocalProtocol
+ */
 public interface LocalSessionRegistry {
     /**
      * @return The namespace that identifies this registry, usable with a local URL.

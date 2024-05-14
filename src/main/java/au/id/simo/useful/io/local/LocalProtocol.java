@@ -15,7 +15,7 @@ import au.id.simo.useful.io.Resource;
  * <p>
  * The components of the {@code local://} protocol are:
  * <pre>
- * local://[registryName].[sessionId]/[path]
+ * local://[registryNamespace].[sessionId]/[path]
  * </pre>
  * Example:
  * <pre>
@@ -29,7 +29,7 @@ import au.id.simo.useful.io.Resource;
  * registered to the session.
  * <p>
  * There is always a default {@link LocalSessionRegistry} registered under the
- * {@code default} namespace. Which is what the no-argument
+ * {@code default} namespace. Which is what the no-argument constructor uses.
  * <p>
  * Usage:
  * <pre>
