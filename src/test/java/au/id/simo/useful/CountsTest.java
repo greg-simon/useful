@@ -4,13 +4,16 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  */
+
 public class CountsTest {
+    private Object resourceLock = new Object();
 
     public CountsTest() {
     }
@@ -21,6 +24,7 @@ public class CountsTest {
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testIncrement() {
         String countName = "testIncrement";
         assertEquals(0l, Counts.get(countName));
@@ -30,6 +34,7 @@ public class CountsTest {
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testSetExistingCount() {
         String countName = "testSetExisting";
         assertEquals(0l, Counts.get(countName));
@@ -39,6 +44,7 @@ public class CountsTest {
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testSetNonExistingCount() {
         String countName = "testSetNonExisting";
         assertEquals(0l, Counts.set(countName, 5));
@@ -47,6 +53,7 @@ public class CountsTest {
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testGetExisting() {
         String countName = "testGetExisting";
         Counts.set(countName, 5);
@@ -54,12 +61,14 @@ public class CountsTest {
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testGetNonExisting() {
         String countName = "testGetNonExisting";
         assertEquals(0l, Counts.get(countName));
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testGetCountNamesEmpty() {
         List<String> names = Counts.getCountNames();
         assertNotNull(names);
@@ -67,6 +76,7 @@ public class CountsTest {
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testGetCountNamesNotEmpty() {
         Counts.increment("count1");
         Counts.increment("count2");
@@ -81,6 +91,7 @@ public class CountsTest {
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testRemoveCount() {
         // set up
         Counts.increment("count");
@@ -92,6 +103,7 @@ public class CountsTest {
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testRemoveCountNonExisting() {
         // set up assertion
         assertFalse(Counts.getCountNames().contains("count"));
@@ -102,6 +114,7 @@ public class CountsTest {
     }
 
     @Test
+    @ResourceLock(value = "resourceLock")
     public void testRemoveAll() {
         // set up
         Counts.increment("1");
