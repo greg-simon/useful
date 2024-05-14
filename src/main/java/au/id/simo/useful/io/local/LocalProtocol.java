@@ -67,7 +67,7 @@ public class LocalProtocol {
      * @throws IllegalArgumentException is thrown if:
      *         <ul>
      *             <li>The name is null or zero length</li>
-     *             <li>The name length is more than 255 characters</li>
+     *             <li>The name and max session ID length adds up to more than 255 characters</li>
      *             <li>The name contains any character that is not one of the following:
      *                  <ul>
      *                      <li>'a' to 'z'</li>
@@ -79,12 +79,18 @@ public class LocalProtocol {
      *             </li>
      *         </ul>
      */
-    protected static void validateRegistryName(String name) throws IllegalArgumentException {
+    protected static void validateRegistryName(String name, int maxRegistrySessionIDLength) throws IllegalArgumentException {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Registry name must be a non-null, non-zero length String.");
         }
-        if (name.length() > 255) {
-            throw new IllegalArgumentException("Registry name must be less than 255 characters in length.");
+        if ((name.length() + maxRegistrySessionIDLength) > 255) {
+            throw new IllegalArgumentException(String.join("",
+                    "Registry name and maximum session ID length ",
+                    "must be less than 255 characters in total: name=",
+                    String.valueOf(name.length()),
+                    ", sessionIDLength=",
+                    String.valueOf(maxRegistrySessionIDLength)
+            ));
         }
         boolean valid;
         for (int i = 0; i < name.length(); i++) {
@@ -107,7 +113,7 @@ public class LocalProtocol {
      *                 under the provided namespace.
      */
     public void register(String namespace, LocalSessionRegistry registry) {
-        validateRegistryName(namespace);
+        validateRegistryName(namespace, registry.getMaxSessionIdLength());
         REGISTRY_MAP.compute(namespace, (k,v) -> {
             if (v !=null) {
                 v.closeAllSessions();

@@ -73,4 +73,14 @@ public class DefaultLocalSessionRegistryTest implements LocalSessionRegistryTest
         assertTrue(session03.isClosed());
         assertTrue(session04.isClosed());
     }
+
+    @Test
+    void testGetMaxSessionId() {
+        assertEquals(2, new DefaultLocalSessionRegistry("default", 1, 10).getMaxSessionIdLength());
+        assertEquals(2, new DefaultLocalSessionRegistry("default", -9, 5).getMaxSessionIdLength());
+        assertEquals(1, new DefaultLocalSessionRegistry("default", 1, 5).getMaxSessionIdLength());
+        assertEquals(5, new DefaultLocalSessionRegistry("default", -1000, 1000).getMaxSessionIdLength());
+        assertEquals(4, new DefaultLocalSessionRegistry("default", 1, 1000).getMaxSessionIdLength());
+        assertEquals(10, new DefaultLocalSessionRegistry("default", 1, Integer.MAX_VALUE).getMaxSessionIdLength());
+    }
 }

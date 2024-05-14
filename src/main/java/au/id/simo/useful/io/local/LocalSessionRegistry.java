@@ -14,6 +14,12 @@ public interface LocalSessionRegistry {
     String getNamespace();
 
     /**
+     * @return the maximum number of characters that will be required to describe any session ID
+     * that could be allocated by this registry.
+     */
+    int getMaxSessionIdLength();
+
+    /**
      * @return A newly created session that is active and registered.
      */
     LocalSession newSession();

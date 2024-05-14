@@ -89,6 +89,14 @@ public class DefaultLocalSessionRegistry implements LocalSessionRegistry {
     }
 
     @Override
+    public int getMaxSessionIdLength() {
+        return Math.max(
+                Integer.toString(minSessionId).length(),
+                Integer.toString(maxSessionId).length()
+        );
+    }
+
+    @Override
     public synchronized LocalSession newSession() {
         Integer sessionId = allocateSessionId();
         LocalSession newSession = new LocalSession(this, String.valueOf(sessionId));
