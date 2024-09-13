@@ -32,7 +32,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * the End Of Stream.
  * <p>
  * While it is possible to use both streams in the same thread, it will
- * deadlock when trying to read and empty buffer, or write to a full
+ * deadlock when trying to read an empty buffer, or write to a full
  * buffer.
  */
 public class PipeOutputStream extends OutputStream {
