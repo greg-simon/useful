@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A Collection that sets a time-to-live for added items and provides a way to
@@ -20,10 +21,7 @@ import java.util.Objects;
  */
 public class ExpireCollection<E> extends AbstractCollection<E> {
 
-    /**
-     * Used in synchronised blocks when the array lists are modified.
-     */
-    private final Object syncLock = new Object();
+    private final ReentrantLock syncLock = new ReentrantLock();
     private final ArrayList<E> valueList;
     private final ArrayList<Instant> expiryList;
     private final Clock clock;
@@ -46,9 +44,12 @@ public class ExpireCollection<E> extends AbstractCollection<E> {
     }
 
     public boolean add(E e, Duration expiresIn) {
-        synchronized (syncLock) {
+        syncLock.lock();
+        try {
             valueList.add(e);
             expiryList.add(clock.instant().plus(expiresIn));
+        } finally {
+            syncLock.unlock();
         }
         return true;
     }
@@ -65,9 +66,12 @@ public class ExpireCollection<E> extends AbstractCollection<E> {
         List<E> expiredList = new ArrayList<>();
         for (int i = 0; i < expiryList.size(); i++) {
             if (now.isAfter(expiryList.get(i))) {
-                synchronized (syncLock) {
+                syncLock.lock();
+                try {
                     expiryList.remove(i);
                     expiredList.add(valueList.remove(i));
+                } finally {
+                    syncLock.unlock();
                 }
             }
         }
@@ -163,9 +167,12 @@ public class ExpireCollection<E> extends AbstractCollection<E> {
                 throw new IllegalStateException("next() has yet to be called.");
             }
             int removeIndex = nextIndex - 1;
-            synchronized (syncLock) {
+            syncLock.lock();
+            try {
                 valueList.remove(removeIndex);
                 expiryList.remove(removeIndex);
+            } finally {
+                syncLock.unlock();
             }
         }
     }
