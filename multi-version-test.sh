@@ -8,5 +8,5 @@ while IFS="" read -r p || [ -n "$p" ]
 do
   export JAVA_HOME="$p"
   mvn --version
-  mvn clean test
+  mvn clean test -e
 done
