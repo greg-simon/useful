@@ -3,6 +3,7 @@ package au.id.simo.useful.io.local;
 import au.id.simo.useful.io.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  *
  */
+@ResourceLock(HandlerTest.LOCAL_PROTOCOL_RESOURCE_LOCK)
 public class LocalSessionTest implements URLSessionTest {
 
     @AfterEach

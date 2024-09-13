@@ -3,14 +3,24 @@ package au.id.simo.useful.io.local;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  */
+@ResourceLock(HandlerTest.LOCAL_PROTOCOL_RESOURCE_LOCK)
 public class HandlerTest {
-    protected static final String SYS_PROP_KEY = "java.protocol.handler.pkgs";
+    /**
+     * NOTE: This is also used as a resource lock by Junit so that only one test can use LocalProtocol.newSession()
+     * at a time. Due to this class constantly clearing out the system properties, impacting other usages of
+     * LocalProtocol sessions.
+     * <p>
+     * The usage of junit resource lock keeps only one test using this running at a time.
+     */
+    public static final String LOCAL_PROTOCOL_RESOURCE_LOCK = "This exists to ensure unit tests run one at a time";
+    private static final String SYS_PROP_KEY = "java.protocol.handler.pkgs";
     private static String initialPropertyValue;
 
     @BeforeAll

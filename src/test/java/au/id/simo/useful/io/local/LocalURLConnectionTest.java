@@ -9,20 +9,16 @@ import java.net.URLConnection;
 import au.id.simo.useful.io.StringResource;
 import au.id.simo.useful.io.URLSession;
 import au.id.simo.useful.io.URLSessionTest;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
  */
+@ResourceLock(HandlerTest.LOCAL_PROTOCOL_RESOURCE_LOCK)
 public class LocalURLConnectionTest {
-
-    @BeforeAll
-    public static void init() {
-        Handler.registerHandlerIfRequired();
-    }
 
     @Test
     public void testConnect() throws Exception {

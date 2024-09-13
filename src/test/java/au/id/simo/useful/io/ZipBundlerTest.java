@@ -3,8 +3,6 @@ package au.id.simo.useful.io;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,8 +11,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import au.id.simo.useful.io.local.HandlerTest;
 import au.id.simo.useful.io.local.LocalProtocol;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -34,6 +34,7 @@ public class ZipBundlerTest {
 
     @ParameterizedTest
     @MethodSource("sessionsToTest")
+    @ResourceLock(HandlerTest.LOCAL_PROTOCOL_RESOURCE_LOCK)
     public void testBasicUsage(URLSession sessionInstance) throws Exception {
         try (URLSession session = sessionInstance) {
             session.register("/path/to/file1.txt", new StringResource("File1 contents"));
