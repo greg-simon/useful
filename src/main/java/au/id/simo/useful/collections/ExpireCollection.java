@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -146,27 +147,27 @@ public class ExpireCollection<E> extends AbstractCollection<E> {
 
     private class ExpireIterator implements Iterator<E> {
 
-        private int nextIndex = 0;
+        private AtomicInteger nextIndex = new AtomicInteger(0);
 
         @Override
         public boolean hasNext() {
-            return valueList.size() > nextIndex;
+            return valueList.size() > nextIndex.get();
         }
 
         @Override
         public E next() {
-            if (nextIndex >= valueList.size()) {
+            if (nextIndex.get() >= valueList.size()) {
                 throw new NoSuchElementException("No more elements");
             }
-            return valueList.get(nextIndex++);
+            return valueList.get(nextIndex.getAndIncrement());
         }
 
         @Override
         public void remove() {
-            if (nextIndex <= 0) {
+            if (nextIndex.get() <= 0) {
                 throw new IllegalStateException("next() has yet to be called.");
             }
-            int removeIndex = nextIndex - 1;
+            int removeIndex = nextIndex.get() - 1;
             syncLock.lock();
             try {
                 valueList.remove(removeIndex);
